@@ -1,0 +1,484 @@
+﻿@using AppPerfumaria.Api.ReinoCompany
+@using AppPerfumaria.Components.CmpsGerais
+@using AppPerfumaria.Models.Auth
+@using AppPerfumaria.Models.Tables
+@using System.Globalization
+
+@inject IDialogService Dialog
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject ISnackbar Snack
+
+<MudDialog ContentClass="bg-gray py-5" TitleClass="d-flex pb-0 pt-2">
+    <TitleContent>
+        <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft"
+                       OnClick="(() => Voltar())" />
+        <MudSpacer />
+        <MudIcon Icon="@Icons.Material.Filled.ShoppingBag" Class="mt-3" />
+    </TitleContent>
+    <DialogContent>
+        @if (!string.IsNullOrEmpty(_instalacaoProduto!.produto.img_1))
+        {
+            <MudCardMedia Class="rounded-lg w-100" Image="@($"data:image/png;base64,{_instalacaoProduto.produto!.img_1}")" Style="height: 350px;" />
+        }
+
+        <MudPaper Class="pa-2 mt-3" Elevation="0">
+            <MudAlert Icon="@(_instalacaoProduto!.produto.status == "Ativo" ? Icons.Material.Filled.ThumbUp : Icons.Material.Filled.ThumbDown)"
+                      Severity="Severity.Normal" Dense="true"
+                      ContentAlignment="HorizontalAlignment.Center" Class="fw-bold">
+                PRODUTO
+            </MudAlert>
+
+            <MudText Class="fw-bold mt-2" Typo="Typo.body1">
+                @_instalacaoProduto!.produto.nome.ToUpper()
+            </MudText>
+
+            <MudText Typo="Typo.body2">
+                @_instalacaoProduto!.produto.tipo.ToUpper()
+            </MudText>
+
+            <MudDivider Class="mt-2" />
+
+            <MudExpansionPanels Class="mt-2">
+                <MudExpansionPanel Text="Descrição:" HeaderClass="fw-bold py-0" Expanded="true">
+                    @_instalacaoProduto!.produto.descricao
+                </MudExpansionPanel>
+            </MudExpansionPanels>
+
+            <MudText Typo="Typo.body2">
+                @_instalacaoProduto!.produto.codigo_barras
+            </MudText>
+        </MudPaper>
+
+        <MudPaper Class="pa-2 mt-3" Elevation="0">
+            <MudAlert Icon="@(_instalacaoProduto!.status == "Ativo" ? Icons.Material.Filled.ThumbUp : Icons.Material.Filled.ThumbDown)"
+                      Severity="Severity.Normal" Dense="true" 
+                      ContentAlignment="HorizontalAlignment.Center" Class="fw-bold">
+                ASSOCIAÇÃO
+            </MudAlert>
+
+            @if (!string.IsNullOrEmpty(_instalacaoProduto!.observacoes))
+            {
+                <MudExpansionPanels Class="mt-2">
+                    <MudExpansionPanel Text="Observações:" HeaderClass="fw-bold py-0" Expanded="true">
+                        <pre>
+                            @_instalacaoProduto!.observacoes
+                        </pre>
+                    </MudExpansionPanel>
+                </MudExpansionPanels>
+            }
+        </MudPaper>
+
+        <MudPaper Class="pa-2 mt-3" Elevation="0">
+            <div class="fw-bold py-2 text-center rounded" style="background: rgba(66,66,66,0.058823529411764705);">
+                <MudText Class="fw-bold" Typo="Typo.body1">
+                    ESTOQUE
+                </MudText>
+            </div>
+
+            <div class="d-flex pl-2">
+                <MudBadge Content="_instalacaoProduto!.estoque!.Count()" Class="mt-3"
+                          Overlap="true" Visible="true" Color="Color.Dark">
+                    <MudIcon Icon="@Icons.Material.Filled.Storage" />
+                </MudBadge>
+                <MudSpacer />
+                <MudIconButton Size="Size.Medium" OnClick="CriarEstoque"
+                               Icon="@Icons.Material.Filled.Add" />
+            </div>
+
+            @if (_instalacaoProduto!.estoque != null && _instalacaoProduto!.estoque.Count() > 0)
+            {
+                <MudDivider Class="mt-2" />
+                <MudGrid Spacing="2" Justify="Justify.Center" Class="mb-1">
+                    @foreach (var (index, value) in _instalacaoProduto!.estoque.Select((value, index) => (index, value)).OrderBy(o => o.value.vencimento != null ? 0 : 1).ThenBy(o => o.value.vencimento))
+                    {
+                        <MudItem xs="12">
+                            <MudExpansionPanels Class="mt-2">
+                                <MudExpansionPanel Text="@($"{index + 1}º ITEM")" Style="@($"background:{Colors.BlueGray.Lighten5};")"
+                                                   HeaderClass="fw-bold py-0" Expanded="true" Dense="true">
+
+                                    <div class="d-flex">
+                                        <MudText Typo="Typo.body2">
+                                            Nº Referência:
+                                        </MudText>
+                                        <MudSpacer />
+                                        <MudText Class="fw-bold" Typo="Typo.body2">
+                                            @value.id
+                                        </MudText>
+                                    </div>
+                                    <MudDivider Class="my-1" />
+                                    <div class="d-flex">
+                                        <MudText Typo="Typo.body2">
+                                            Preço Compra:
+                                        </MudText>
+                                        <MudSpacer />
+                                        <MudText Class="fw-bold" Typo="Typo.body2">
+                                            @string.Format(new CultureInfo("pt-BR"), "{0:C}", value.preco_compra_original)
+                                        </MudText>
+                                    </div>
+                                    @if (value.preco_compra_desconto != null)
+                                    {
+                                        <div class="d-flex">
+                                            <MudText Typo="Typo.body2">
+                                                Preço Compra Desconto:
+                                            </MudText>
+                                            <MudSpacer />
+                                            <MudText Class="fw-bold" Typo="Typo.body2">
+                                                @string.Format(new CultureInfo("pt-BR"), "{0:C}", value.preco_compra_desconto)
+                                            </MudText>
+                                        </div>
+                                    }
+                                    @if (value.desconto_compra != null)
+                                    {
+                                        <div class="d-flex">
+                                            <MudText Typo="Typo.body2">
+                                                Desconto Compra:
+                                            </MudText>
+                                            <MudSpacer />
+                                            <MudText Class="fw-bold" Typo="Typo.body2">
+                                                @value.desconto_compra%
+                                            </MudText>
+                                        </div>
+                                    }
+                                    <div class="d-flex mt-2">
+                                        <MudText Typo="Typo.body2">
+                                            Preço Venda:
+                                        </MudText>
+                                        <MudSpacer />
+                                        <MudText Class="fw-bold" Typo="Typo.body2">
+                                            @string.Format(new CultureInfo("pt-BR"), "{0:C}", value.preco_venda_original)
+                                        </MudText>
+                                    </div>
+                                    @if (value.preco_venda_desconto != null)
+                                    {
+                                        <div class="d-flex">
+                                            <MudText Typo="Typo.body2">
+                                                Preço Venda Desconto:
+                                            </MudText>
+                                            <MudSpacer />
+                                            <MudText Class="fw-bold" Typo="Typo.body2">
+                                                @string.Format(new CultureInfo("pt-BR"), "{0:C}", value.preco_venda_desconto)
+                                            </MudText>
+                                        </div>
+                                    }
+                                    @if (value.desconto_venda != null)
+                                    {
+                                        <div class="d-flex">
+                                            <MudText Typo="Typo.body2">
+                                                Desconto Venda:
+                                            </MudText>
+                                            <MudSpacer />
+                                            <MudText Class="fw-bold" Typo="Typo.body2">
+                                                @value.desconto_venda%
+                                            </MudText>
+                                        </div>
+                                    }
+
+
+
+                                    <div class="d-flex mt-2">
+                                        <MudText Typo="Typo.body2">
+                                            Valor Lucro:
+                                        </MudText>
+                                        <MudSpacer />
+                                        <MudText Class="fw-bold" Typo="Typo.body2">
+                                            @string.Format(new CultureInfo("pt-BR"), "{0:C}", (value.preco_venda_original - value.preco_compra_original))
+                                        </MudText>
+                                    </div>
+                                    @if (value.preco_venda_desconto != null)
+                                    {
+                                        <div class="d-flex">
+                                            <MudText Typo="Typo.body2">
+                                                Valor Lucro Desconto:
+                                            </MudText>
+                                            <MudSpacer />
+                                            <MudText Class="fw-bold" Typo="Typo.body2">
+                                                @string.Format(new CultureInfo("pt-BR"), "{0:C}", CalcularLucro(value))
+                                            </MudText>
+                                        </div>
+                                    }
+                                    <div class="d-flex">
+                                        <MudText Typo="Typo.body2">
+                                            Porcentagem Lucro:
+                                        </MudText>
+                                        <MudSpacer />
+                                        <MudText Class="fw-bold" Typo="Typo.body2">
+                                            @CalcularPorcentagemLucro(value)?.ToString("F1")%
+                                        </MudText>
+                                    </div>
+
+
+
+                                    <MudDivider Class="my-1" />
+                                    @if (value.vencimento != null)
+                                    {
+                                        <div class="d-flex">
+                                            <MudText Typo="Typo.body2">
+                                                Data Vencimento:
+                                            </MudText>
+                                            <MudSpacer />
+                                            <MudText Class="fw-bold" Typo="Typo.body2">
+                                                @value.vencimento?.ToString("dd/MM/yyyy")
+                                            </MudText>
+                                        </div>
+                                    }
+                                    <div class="d-flex px-3">
+                                        <MudIconButton Size="Size.Medium" OnClick="(() => AtualizarEstoque(value))"
+                                                       Icon="@Icons.Material.Filled.Edit" />
+                                        <MudSpacer />
+                                        <MudIconButton Size="Size.Medium" OnClick="(() => CopiarEstoque(value))"
+                                                       Icon="@Icons.Material.Filled.ContentCopy" />
+                                        <MudSpacer />
+                                        <MudIconButton Size="Size.Medium" OnClick="(() => DeletarEstoque(value))"
+                                                       Icon="@Icons.Material.Filled.Delete" />
+                                    </div>
+                                </MudExpansionPanel>
+                            </MudExpansionPanels>
+                        </MudItem>
+                    }
+                </MudGrid>
+            }
+        </MudPaper>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance? _mudDialog { get; set; }
+    [Parameter]
+    public InstalacoesProdutos? _instalacaoProduto { get; set; }
+    private Auth? _auth;
+    private Instalacoes? _instalacao { get; set; }
+    private bool _carregando = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _auth = await LocalStorage.GetItemAsync<Auth>("auth");
+        _instalacao = await LocalStorage.GetItemAsync<Instalacoes>("instalacao");
+    }
+
+    private async Task BuscarInstalacoesProdutos()
+    {
+        try
+        {
+            string filtros = $"?instalacoes_id={_instalacao!.id}";
+
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.InstalacoesProdutosBuscar(_auth!.token!, _instalacaoProduto!.id!, filtros);
+
+            if (response!.status)
+            {
+                _instalacaoProduto = response!.data!;
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+            }
+
+            _carregando = false;
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar atualizar o produto!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    public double? CalcularLucro(Estoques estoque)
+    {
+        double? precoCompra = estoque.preco_compra_original;
+        double? precovenda = estoque.preco_venda_original;
+
+        if (estoque.preco_venda_desconto != null)
+        {
+            precovenda = estoque.preco_venda_desconto;
+        }
+
+        if (estoque.preco_compra_desconto != null && estoque.preco_compra_desconto > 0)
+        {
+            precoCompra = estoque.preco_compra_desconto;
+        }
+        else if (estoque.preco_compra_desconto != null && estoque.preco_compra_desconto == 0.0)
+        {
+            return precovenda;
+        }
+
+
+        return (precovenda - precoCompra);
+    }
+
+    public double? CalcularPorcentagemLucro(Estoques estoque)
+    {
+        double? precoCompra = estoque.preco_compra_original;
+        double? precovenda = estoque.preco_venda_original;
+        double? lucro = 0.0;
+
+        if (estoque.preco_venda_desconto != null)
+        {
+            precovenda = estoque.preco_venda_desconto;
+        }
+
+        if (estoque.preco_compra_desconto != null && estoque.preco_compra_desconto > 0)
+        {
+            precoCompra = estoque.preco_compra_desconto;
+        }
+        else if (estoque.preco_compra_desconto != null && estoque.preco_compra_desconto == 0.0)
+        {
+            return 100.0;
+        }
+
+        lucro = ((precovenda - precoCompra) / precoCompra) * 100;
+
+        return lucro;
+    }
+
+    public async Task CriarEstoque()
+    {
+        try
+        {
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullWidth = true,
+                    BackdropClick = false,
+                    CloseButton = true,
+                    Position = DialogPosition.TopCenter
+                };
+            var param = new DialogParameters { 
+                    ["_estoqueForm"] = new Estoques(),
+                    ["_instalacaoProduto"] = _instalacaoProduto
+            };
+            var dialog = Dialog.Show<EstoquesFormCmp>("Adicionar Estoque", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled && (bool)result.Data == true)
+            {
+                Snack.Add("Item criado no estoque com sucesso!", Severity.Success);
+                await BuscarInstalacoesProdutos();
+            }
+            else if (!result.Canceled && (bool)result.Data == false)
+            {
+                Snack.Add("Tivemos um problema ao tentar criar item no estoque!", Severity.Warning);
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar criar item no estoque!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    public async Task CopiarEstoque(Estoques estoque)
+    {
+        try
+        {
+            Estoques? estoqueCopia = estoque.Clone();
+            estoqueCopia!.id = 0;
+
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullWidth = true,
+                    BackdropClick = false,
+                    CloseButton = true,
+                    Position = DialogPosition.TopCenter
+                };
+            var param = new DialogParameters
+                {
+                    ["_estoqueForm"] = estoqueCopia,
+                    ["_instalacaoProduto"] = _instalacaoProduto
+                };
+            var dialog = Dialog.Show<EstoquesFormCmp>("Copiar Estoque", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled && (bool)result.Data == true)
+            {
+                Snack.Add("Item criado no estoque com sucesso!", Severity.Success);
+                await BuscarInstalacoesProdutos();
+            }
+            else if (!result.Canceled && (bool)result.Data == false)
+            {
+                Snack.Add("Tivemos um problema ao tentar criar item no estoque!", Severity.Warning);
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar criar item no estoque!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    public async Task AtualizarEstoque(Estoques estoque)
+    {
+        try
+        {
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullWidth = true,
+                    BackdropClick = false,
+                    CloseButton = true,
+                    Position = DialogPosition.TopCenter
+                };
+            var param = new DialogParameters { ["_estoqueForm"] = estoque.Clone() };
+            var dialog = Dialog.Show<EstoquesFormCmp>("Atualizar Estoque", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled && (bool)result.Data == true)
+            {
+                Snack.Add("Item atualizado no estoque com sucesso!", Severity.Success);
+                await BuscarInstalacoesProdutos();
+            }
+            else if (!result.Canceled && (bool)result.Data == false)
+            {
+                Snack.Add("Tivemos um problema ao tentar atualizar item no estoque!", Severity.Warning);
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar atualizar item no estoque!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    public async Task DeletarEstoque(Estoques estoque)
+    {
+        try
+        {
+            var param = new DialogParameters<AlertaDelete>
+            {
+                { x => x.ContentText, "Tem certeza que deseja deletar esse <b>ITEM</b> do <b>ESTOQUE</b> e todos os dados a ele ligados?" }
+            };
+            var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+            var dialog = Dialog.Show<AlertaDelete>("Deletar Estoque", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled)
+            {
+                _carregando = true;
+                var reinoCompany = new ReinoCompany();
+                var response = await reinoCompany.EstoquesDeletar(_auth!.token!, estoque);
+
+                if (response!.status)
+                {
+                    Snack.Add("Item deletado com sucesso!", Severity.Success);
+                    await BuscarInstalacoesProdutos();
+                }
+                else
+                {
+                    if (!string.IsNullOrEmpty(response.message))
+                    {
+                        Snack.Add(response.message, Severity.Warning);
+                    }
+                    _carregando = false;
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar deletar o item!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    private void Voltar() => _mudDialog!.Close(DialogResult.Ok<InstalacoesProdutos>(_instalacaoProduto!));
+}

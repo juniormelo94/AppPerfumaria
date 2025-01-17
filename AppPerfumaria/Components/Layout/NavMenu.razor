@@ -1,0 +1,232 @@
+﻿@using AppPerfumaria.Api.ReinoCompany
+@using AppPerfumaria.Components.CmpsGerais
+@using AppPerfumaria.Models.Auth
+@using AppPerfumaria.Models.Tables
+
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject NavigationManager Nav
+@inject ISnackbar Snack
+
+@if (_carregando)
+{
+    <Loading AlignCenter="true" Color="Color.Default" Size="Size.Medium" />
+}
+
+<MudLayout>
+    @* Barra de menu superior *@
+    <MudAppBar Bottom="false" Fixed="true" Color="Color.Inherit" Elevation="4" Style="@($"background:{Colors.Pink.Darken3};")">
+        <MudIconButton Icon="@Icons.Material.Filled.QrCodeScanner" 
+                       Color="Color.Inherit" Class="ml-2" OnClick="@(() => ToRedirect("/barcode"))" />
+        <MudSpacer />
+        <MudIconButton Color="Color.Inherit" OnClick="@Estoque" Class="mr-2">
+            <MudBadge Content="5" Overlap="true" Visible="true" Color="Color.Dark">
+                <MudIcon Icon="@Icons.Material.Filled.LocalGroceryStore" Color="Color.Inherit" />
+            </MudBadge>
+        </MudIconButton>
+    </MudAppBar>
+    @* Aba do carinho *@
+    <MudMainContent Class="mb-0">
+        <MudDrawer @bind-Open="_exibirEstoque" Anchor="MudBlazor.Anchor.Right" Variant="DrawerVariant.Temporary"
+                   Color="Color.Inherit" Style="margin-bottom: 100px;" Width="100vw">
+            <MudDrawerHeader>
+                <MudText Typo="Typo.h5" Class="mt-3">CARINHO</MudText>
+                <MudSpacer />
+                <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowRight" Size="Size.Large"
+                               Color="Color.Inherit" OnClick="@Estoque" />
+            </MudDrawerHeader>
+            <MudDivider />
+            <MudNavMenu Rounded="true" Margin="Margin.Dense" Color="Color.Primary" Style="height:100vh;">
+                <MudNavLink OnClick="@Estoque">
+                    <div class="d-flex">
+                        <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.Dashboard" Color="Color.Surface" />
+                        <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Dashboard</MudText>
+                    </div>
+                </MudNavLink>
+                <MudNavLink OnClick="@Estoque">
+                    <div class="d-flex">
+                        <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.Storage" Color="Color.Surface" />
+                        <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Storage</MudText>
+                    </div>
+                </MudNavLink>
+                <MudNavLink OnClick="@Estoque">
+                    <div class="d-flex">
+                        <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.Receipt" Color="Color.Surface" />
+                        <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Receipt</MudText>
+                    </div>
+                </MudNavLink>
+                <MudNavLink OnClick="@Estoque">
+                    <div class="d-flex">
+                        <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.Settings" Color="Color.Surface" />
+                        <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Settings</MudText>
+                    </div>
+                </MudNavLink>
+                <MudNavLink OnClick="@Estoque">
+                    <div class="d-flex">
+                        <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.People" Color="Color.Surface" />
+                        <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">People</MudText>
+                    </div>
+                </MudNavLink>
+                <MudNavLink OnClick="@Estoque">
+                    <div class="d-flex">
+                        <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.Security" Color="Color.Surface" />
+                        <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Security</MudText>
+                    </div>
+                </MudNavLink>
+                <MudNavLink Class="mt-5" OnClick="@(() => ToRedirect("/"))">
+                    <div class="d-flex">
+                        <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.Logout" Color="Color.Surface" />
+                        <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Sair</MudText>
+                    </div>
+                </MudNavLink>
+            </MudNavMenu>
+        </MudDrawer>
+    </MudMainContent>
+</MudLayout>
+
+
+<MudLayout>
+    @* Barra de menu inferior *@
+    <MudAppBar Bottom="true" Fixed="true" Color="Color.Inherit" Elevation="4" Style="@($"background:{Colors.Pink.Darken3};")">
+        <MudButton Class="d-block" Color="Color.Inherit" OnClick="@(() => ToRedirect("/home"))">
+            <MudIcon Icon="@Icons.Material.Filled.Home" Size="Size.Small" />
+            <MudText Typo="Typo.body1">Início</MudText>
+        </MudButton>
+        <MudSpacer />
+        <MudButton Class="d-block" Color="Color.Inherit" OnClick="@Menu">
+            <MudIcon Icon="@Icons.Material.Filled.FavoriteBorder" Size="Size.Small" />
+            <MudText Typo="Typo.body1">Favoritos</MudText>
+        </MudButton>
+        <MudSpacer />
+        <MudButton Class="d-block" Color="Color.Inherit" OnClick="@Menu">
+            <MudIcon Icon="@Icons.Material.Filled.Storefront" Size="Size.Small" />
+            <MudText Typo="Typo.body1">Vendas</MudText>
+        </MudButton>
+        <MudSpacer />
+        <MudButton Class="d-block" Color="Color.Inherit" OnClick="@Menu">
+            <MudIcon Icon="@Icons.Material.Filled.FavoriteBorder" Size="Size.Small" />
+            <MudText Typo="Typo.body1">Favoritos</MudText>
+        </MudButton>
+        <MudSpacer />
+        <MudButton Class="d-block" Color="Color.Inherit" OnClick="@Menu">
+            <MudIcon Icon="@Icons.Material.Filled.Menu" Size="Size.Small" />
+            <MudText Typo="Typo.body1">Menu</MudText>
+        </MudButton>
+    </MudAppBar>
+    @* Aba de opções do menu inferior *@
+    <MudMainContent Class="mb-0">
+        <MudDrawer @bind-Open="_exibirMenu" Anchor="MudBlazor.Anchor.Bottom"
+                   Variant="DrawerVariant.Temporary" Color="Color.Inherit" Style="margin-bottom: 100px;" Height="100vh">
+            <MudDrawerHeader>
+                <MudText Typo="Typo.h5" Class="mt-3">MENU</MudText>
+                <MudSpacer />
+                <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowDown" Size="Size.Large"
+                               Color="Color.Inherit" OnClick="@Menu" />
+            </MudDrawerHeader>
+            <MudDivider />
+            <MudNavMenu Rounded="true" Margin="Margin.Dense" Color="Color.Primary" Style="height:100vh;">
+                <MudNavLink OnClick="@(() => ToRedirect("/counter"))">
+                    <div class="d-flex">
+                        <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.Badge" Color="Color.Surface" />
+                        <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Colaboradores</MudText>
+                    </div>
+                </MudNavLink>
+                <MudNavLink OnClick="@Menu">
+                    <div class="d-flex">
+                        <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.Discount" Color="Color.Surface" />
+                        <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Marcas</MudText>
+                    </div>
+                </MudNavLink>
+                <MudNavLink OnClick="@Menu">
+                    <div class="d-flex">
+                        <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.Receipt" Color="Color.Surface" />
+                        <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Receipt</MudText>
+                    </div>
+                </MudNavLink>
+                <MudNavLink OnClick="@Menu">
+                    <div class="d-flex">
+                        <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.Settings" Color="Color.Surface" />
+                        <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Settings</MudText>
+                    </div>
+                </MudNavLink>
+                <MudNavLink OnClick="@Menu">
+                    <div class="d-flex">
+                        <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.People" Color="Color.Surface" />
+                        <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">People</MudText>
+                    </div>
+                </MudNavLink>
+                <MudNavLink OnClick="@Menu">
+                    <div class="d-flex">
+                        <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.Security" Color="Color.Surface" />
+                        <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Security</MudText>
+                    </div>
+                </MudNavLink>
+                <MudNavLink Class="mt-5" OnClick="@Sair">
+                    <div class="d-flex">
+                        <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.Logout" Color="Color.Surface" />
+                        <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Sair</MudText>
+                    </div>
+                </MudNavLink>
+            </MudNavMenu>
+        </MudDrawer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private Auth? _auth;
+    private bool _exibirMenu, _exibirEstoque = false;
+    private bool _carregando = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _auth = await LocalStorage.GetItemAsync<Auth>("auth");
+        if (_auth == null)
+        {
+            Nav.NavigateTo("/", true);
+        }
+    }
+
+    private void Menu()
+    {
+        _exibirMenu = !_exibirMenu;
+    }
+
+    private void Estoque()
+    {
+        _exibirEstoque = !_exibirEstoque;
+    }
+
+    private void ToRedirect(string url)
+    {
+        Nav.NavigateTo(url, true);
+    }
+
+    public async Task Sair()
+    {
+        try
+        {
+            _carregando = true;
+
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.Deslogar(_auth!.token!);
+
+            if (response!.status)
+            {
+                await LocalStorage.RemoveItemAsync("auth");
+                Nav.NavigateTo("/", true);
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+                _carregando = false;
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar deslogar!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+}

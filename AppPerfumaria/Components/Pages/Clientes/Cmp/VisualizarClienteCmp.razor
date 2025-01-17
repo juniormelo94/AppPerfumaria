@@ -1,0 +1,126 @@
+﻿@using AppPerfumaria.Models.Tables
+
+<MudDialog ContentClass="bg-gray py-5" TitleClass="d-flex pb-0 pt-2">
+    <TitleContent>
+        <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft"
+                 OnClick="(() => _mudDialog!.Cancel())" />
+        <MudSpacer />
+        <MudIcon Icon="@Icons.Material.Filled.People" Class="mt-3" />
+    </TitleContent>
+    <DialogContent>
+        @if (!string.IsNullOrEmpty(_cliente!.img))
+        {
+            <MudCardMedia Class="rounded-lg w-100" Image="@($"data:image/png;base64,{_cliente!.img}")" Style="height: 350px;" />
+        }
+
+        <MudPaper Class="pa-2 mt-3" Elevation="0">
+            <MudAlert Icon="@(_cliente.status == "Ativo" ? Icons.Material.Filled.ThumbUp : Icons.Material.Filled.ThumbDown)"
+                      Severity="Severity.Normal" Dense="true" 
+                      ContentAlignment="HorizontalAlignment.Center" Class="fw-bold">
+                CLIENTE
+            </MudAlert>
+
+            <MudText Class="fw-bold mt-2" Typo="Typo.body1">
+                @_cliente.nome_completo.ToUpper()
+            </MudText>
+
+            <MudText Typo="Typo.body2">
+                @($"{_cliente.primeiro_nome.ToUpper()} {_cliente.ultimo_nome.ToUpper()}")
+            </MudText>
+
+            <MudText Typo="Typo.body2">
+                @if (!string.IsNullOrEmpty(_cliente!.cpf))
+                {
+                    @_cliente!.apelido
+                }
+            </MudText>
+
+            <MudDivider Class="mt-2" />
+
+            <MudExpansionPanels Class="mt-2">
+                <MudExpansionPanel Text="Dados:" HeaderClass="fw-bold py-0" Expanded="true">
+                    <MudText Typo="Typo.body2">
+                        <b>CPF:</b> @_cliente!.cpf
+                    </MudText>
+
+                    <MudText Typo="Typo.body2">
+                        <b>Data Nasc.:</b> @_cliente!.data_nascimento?.ToString("dd/MM/yyyy")
+                    </MudText>
+
+                    <MudText Typo="Typo.body2">
+                        @if (!string.IsNullOrEmpty(_cliente!.rg))
+                        {
+                            <b>RG:</b> @_cliente!.rg
+                        }
+                    </MudText>
+
+                    <MudText Typo="Typo.body2">
+                        <b>Sexo:</b> @_cliente!.sexo
+                    </MudText>
+
+                    <MudText Typo="Typo.body2">
+                        @if (!string.IsNullOrEmpty(_cliente!.estado_civil))
+                        {
+                            <b>Estado Civil:</b> @_cliente!.estado_civil
+                        }
+                    </MudText>
+                </MudExpansionPanel>
+            </MudExpansionPanels>
+
+            <MudExpansionPanels Class="mt-2">
+                <MudExpansionPanel Text="Contato:" HeaderClass="fw-bold py-0" Expanded="true">
+                    <MudText Typo="Typo.body2">
+                        @if (!string.IsNullOrEmpty(_cliente!.email_pessoal))
+                        {
+                            <b>Email:</b> @_cliente!.email_pessoal
+                        }
+                    </MudText>
+
+                    <MudText Typo="Typo.body2">
+                        @if (!string.IsNullOrEmpty(_cliente!.telefone_pessoal))
+                        {
+                            <b>Telefone:</b> @_cliente!.telefone_pessoal
+                        }
+                    </MudText>
+
+                    <MudText Typo="Typo.body2">
+                        @if (!string.IsNullOrEmpty(_cliente!.celular_pessoal))
+                        {
+                            <b>Celular:</b> @_cliente!.celular_pessoal
+                        }
+                    </MudText>
+
+                    <MudText Typo="Typo.body2">
+                        @if (!string.IsNullOrEmpty(_cliente!.whatsapp_pessoal))
+                        {
+                            <b>WhatsApp:</b> @_cliente!.whatsapp_pessoal
+                        }
+                    </MudText>
+
+                    <MudText Typo="Typo.body2">
+                        @if (!string.IsNullOrEmpty(_cliente!.instagram_pessoal))
+                        {
+                            <b>Instagram:</b> @_cliente!.instagram_pessoal
+                        }
+                    </MudText>
+
+                    <MudText Typo="Typo.body2">
+                        @if (!string.IsNullOrEmpty(_cliente!.facebook_pessoal))
+                        {
+                            <b>Facebook:</b> @_cliente!.facebook_pessoal
+                        }
+                    </MudText>
+                </MudExpansionPanel>
+            </MudExpansionPanels>
+        </MudPaper>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance? _mudDialog { get; set; }
+    [Parameter]
+    public Clientes? _cliente { get; set; }
+
+    private void Ok() => _mudDialog!.Close(DialogResult.Ok(true));
+}

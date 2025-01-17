@@ -1,0 +1,13 @@
+﻿<MudDialog ContentClass="pb-4" Style="max-height: 70%;">
+    <TitleContent>
+        <MudIcon Icon="@Icons.Material.Filled.Image" Class="mt-1" />
+    </TitleContent>
+    <DialogContent>
+        <MudImage Src="@($"data:image/png;base64,{Imagem}")" Class="w-100" />
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [Parameter]
+    public string? Imagem { get; set; }
+}

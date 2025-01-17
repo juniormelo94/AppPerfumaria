@@ -1,0 +1,60 @@
+﻿@using AppPerfumaria.Models.Tables
+
+<MudDialog ContentClass="bg-gray py-5" TitleClass="d-flex pb-0 pt-2">
+    <TitleContent>
+        <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft"
+                 OnClick="(() => _mudDialog!.Cancel())" />
+        <MudSpacer />
+        <MudIcon Icon="@Icons.Material.Filled.ShoppingBag" Class="mt-3" />
+    </TitleContent>
+    <DialogContent>
+        @if (!string.IsNullOrEmpty(_produto!.img_1))
+        {
+            <MudCardMedia Class="rounded-lg w-100" Image="@($"data:image/png;base64,{_produto!.img_1}")" Style="height: 350px;" />
+        }
+
+        <MudPaper Class="pa-2 mt-3" Elevation="0">
+            <MudAlert Icon="@(_produto.status == "Ativo" ? Icons.Material.Filled.ThumbUp : Icons.Material.Filled.ThumbDown)"
+                      Severity="Severity.Normal" Dense="true" 
+                      ContentAlignment="HorizontalAlignment.Center" Class="fw-bold">
+                PRODUTO
+            </MudAlert>
+
+            <MudText Class="fw-bold mt-2" Typo="Typo.body1">
+                @_produto.nome.ToUpper()
+            </MudText>
+
+            <MudText Typo="Typo.body2">
+                @_produto.tipo.ToUpper()
+            </MudText>
+
+            <MudDivider Class="mt-2" />
+
+            <MudExpansionPanels Class="mt-2">
+                <MudExpansionPanel Text="Descrição:" HeaderClass="fw-bold py-0" Expanded="true">
+                    @_produto.descricao
+                </MudExpansionPanel>
+            </MudExpansionPanels>
+
+            <MudText Typo="Typo.body2">
+                @_produto.codigo_barras
+            </MudText>
+
+@*             <MudText Typo="Typo.body2">
+                @if (!string.IsNullOrEmpty(_produto!.cnpj))
+                {
+                    @($"CNPJ: {_produto!.cnpj}")
+                }
+            </MudText> *@
+        </MudPaper>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance? _mudDialog { get; set; }
+    [Parameter]
+    public Produtos? _produto { get; set; }
+
+    private void Ok() => _mudDialog!.Close(DialogResult.Ok(true));
+}

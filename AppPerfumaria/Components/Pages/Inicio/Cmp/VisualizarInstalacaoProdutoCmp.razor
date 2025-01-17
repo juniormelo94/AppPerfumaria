@@ -1,0 +1,278 @@
+﻿@using AppPerfumaria.Api.ReinoCompany
+@using AppPerfumaria.Components.CmpsGerais
+@using AppPerfumaria.Models.Auth
+@using AppPerfumaria.Models.Tables
+@using System.Globalization
+@using AppPerfumaria.Services
+
+@inject IDialogService Dialog
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject ISnackbar Snack
+@inject Carrinho Carrinho
+
+<MudDialog ContentClass="bg-gray py-5" TitleClass="d-flex pb-0 pt-2">
+    <TitleContent>
+        <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft"
+                       OnClick="(() => Voltar())" />
+        <MudSpacer />
+        <MudIcon Icon="@Icons.Material.Filled.ShoppingBag" Class="mt-3" />
+    </TitleContent>
+    <DialogContent>
+        @if (_carregando)
+        {
+            <Loading AlignCenter="true" Color="Color.Default" Size="Size.Medium" />
+        }
+        else
+        {
+            
+            @if (!string.IsNullOrEmpty(_instalacaoProduto!.produto.img_1))
+            {
+                <MudCardMedia Class="rounded-lg w-100" Image="@($"data:image/png;base64,{_instalacaoProduto.produto!.img_1}")" Style="height: 350px;" />
+            }
+
+            <MudPaper Class="pa-2 mt-3" Elevation="0">
+                <MudAlert Icon="@(_instalacaoProduto!.produto.status == "Ativo" ? Icons.Material.Filled.ThumbUp : Icons.Material.Filled.ThumbDown)"
+                          Severity="Severity.Normal" Dense="true"
+                          ContentAlignment="HorizontalAlignment.Center" Class="fw-bold">
+                    PRODUTO
+                </MudAlert>
+
+                <MudText Class="fw-bold mt-2" Typo="Typo.body1">
+                    @_instalacaoProduto!.produto.nome.ToUpper()
+                </MudText>
+
+                <MudText Typo="Typo.body2">
+                    @_instalacaoProduto!.produto.tipo.ToUpper()
+                </MudText>
+
+                <MudDivider Class="mt-2" />
+
+                <MudExpansionPanels Class="mt-2">
+                    <MudExpansionPanel Text="Descrição:" HeaderClass="fw-bold py-0" Expanded="true">
+                        @_instalacaoProduto!.produto.descricao
+                    </MudExpansionPanel>
+                </MudExpansionPanels>
+
+                <MudText Typo="Typo.body2">
+                    @_instalacaoProduto!.produto.codigo_barras
+                </MudText>
+            </MudPaper>
+
+            <MudPaper Class="pa-2 mt-3" Elevation="0">
+                <MudAlert Icon="@(_instalacaoProduto!.status == "Ativo" ? Icons.Material.Filled.ThumbUp : Icons.Material.Filled.ThumbDown)"
+                          Severity="Severity.Normal" Dense="true" 
+                          ContentAlignment="HorizontalAlignment.Center" Class="fw-bold">
+                    ASSOCIAÇÃO
+                </MudAlert>
+
+                @if (!string.IsNullOrEmpty(_instalacaoProduto!.observacoes))
+                {
+                    <MudExpansionPanels Class="mt-2">
+                        <MudExpansionPanel Text="Observações:" HeaderClass="fw-bold py-0" Expanded="true">
+                            <pre>
+                                @_instalacaoProduto!.observacoes
+                            </pre>
+                        </MudExpansionPanel>
+                    </MudExpansionPanels>
+                }
+            </MudPaper>
+
+            <MudPaper Class="pa-2 mt-3" Elevation="0">
+                <div class="fw-bold py-2 text-center rounded" style="background: rgba(66,66,66,0.058823529411764705);">
+                    <MudText Class="fw-bold" Typo="Typo.body1">
+                        ESTOQUE
+                    </MudText>
+                </div>
+
+                <div class="d-flex pl-2">
+                    <MudBadge Content="_instalacaoProduto!.estoque!.Count()" Class="mt-3"
+                              Overlap="true" Visible="true" Color="Color.Dark">
+                        <MudIcon Icon="@Icons.Material.Filled.Storage" />
+                    </MudBadge>
+                    <MudSpacer />
+                </div>
+
+                @if (_instalacaoProduto!.estoque != null && _instalacaoProduto!.estoque.Count() > 0)
+                {
+                    <MudDivider Class="mt-2" />
+                    <MudGrid Spacing="2" Justify="Justify.Center" Class="mb-1">
+                        @foreach (var (index, value) in _instalacaoProduto!.estoque.Select((value, index) => (index, value)).OrderBy(o => o.value.vencimento != null ? 0 : 1).ThenBy(o => o.value.vencimento))
+                        {
+                            <MudItem xs="12">
+                                <MudPaper Class="pa-2 mt-1" Elevation="1" Style="@($"background:{Colors.BlueGray.Lighten5};")">
+                                    <div class="d-flex">
+                                        @if (value.preco_venda_desconto != null)
+                                        {
+                                            <div style="@($"background:{Colors.Pink.Darken3}; font-size:12px;")"
+                                                 class="rounded pa-1 mb-1 fw-bold text-white">
+                                                -@value.desconto_venda%
+                                            </div>
+                                        }
+                                        <MudSpacer />
+                                        <MudIconButton Icon="@(_produtosCarinho?.FirstOrDefault(w => w.id == value!.id) != null ? Icons.Material.Filled.RemoveShoppingCart : Icons.Material.Filled.AddShoppingCart)"
+                                                       Variant="Variant.Filled" Color="Color.Secondary" Size="Size.Small" 
+                                                       OnClick="(() => AdicionarOuRemoverCarinho(value))" />
+                                    </div>
+
+                                    <div class="d-flex mt-1">
+                                        <MudText Typo="Typo.body2">
+                                            Preço:
+                                        </MudText>
+                                        <MudSpacer />
+                                        <MudText Class="@(value.preco_venda_desconto != null ? "fw-bold text-decoration-line-through" : "fw-bold")" Typo="Typo.body2">
+                                            @string.Format(new CultureInfo("pt-BR"), "{0:C}", value.preco_venda_original)
+                                        </MudText>
+                                    </div>
+
+                                    @if (value.preco_venda_desconto != null)
+                                    {
+                                        <div class="d-flex">
+                                            <MudText Typo="Typo.body2">
+                                                Preço Desconto:
+                                            </MudText>
+                                            <MudSpacer />
+                                            <MudText Class="fw-bold" Typo="Typo.body2">
+                                                @string.Format(new CultureInfo("pt-BR"), "{0:C}", value.preco_venda_desconto)
+                                            </MudText>
+                                        </div>
+                                    }
+
+                                    <div class="d-flex mt-1">
+                                        <MudText Typo="Typo.body2">
+                                            Nº Referência:
+                                        </MudText>
+                                        <MudSpacer />
+                                        <MudText Class="fw-bold" Typo="Typo.body2">
+                                            @value.id
+                                        </MudText>
+                                    </div>
+                                    @if (value.vencimento != null)
+                                    {
+                                        <div class="d-flex">
+                                            <MudText Typo="Typo.body2">
+                                                Vencimento:
+                                            </MudText>
+                                            <MudSpacer />
+                                            <MudText Class="fw-bold" Typo="Typo.body2">
+                                                @value.vencimento?.ToString("dd/MM/yyyy")
+                                            </MudText>
+                                        </div>
+                                    }
+                                </MudPaper>
+
+                            </MudItem> 
+                        }
+                    </MudGrid>
+                }
+            </MudPaper>
+        }
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance? _mudDialog { get; set; }
+    [Parameter]
+    public InstalacoesProdutos? _instalacaoProduto { get; set; }
+    [Parameter] 
+    public EventCallback AtualizarCarinho { get; set; }
+    private Auth? _auth;
+    private Instalacoes? _instalacao;
+    private List<Estoques>? _produtosCarinho;
+    private bool _carregando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _auth = await LocalStorage.GetItemAsync<Auth>("auth");
+        _instalacao = await LocalStorage.GetItemAsync<Instalacoes>("instalacao");
+        _produtosCarinho = await LocalStorage.GetItemAsync<List<Estoques>>("carinho");
+        // _produtosCarinho = Carrinho.estoques;
+        // if (_produtosCarinho == null)
+        // {
+        //     _produtosCarinho = new List<Estoques>();
+        // }
+
+        do
+        {
+            await Task.Delay(300);
+        }
+        while (_auth == null || _instalacao == null || _produtosCarinho == null);
+        _carregando = false;
+        StateHasChanged();
+    }
+
+    private async Task BuscarInstalacoesProdutos()
+    {
+        try
+        {
+            string filtros = $"?instalacoes_id={_instalacao!.id}";
+
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.InstalacoesProdutosBuscar(_auth!.token!, _instalacaoProduto!.id!, filtros);
+
+            if (response!.status)
+            {
+                _instalacaoProduto = response!.data!;
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+            }
+
+            _carregando = false;
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar atualizar o produto!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    public async Task AdicionarOuRemoverCarinho(Estoques item)
+    {
+        var itemProduto = _produtosCarinho!.FirstOrDefault(w => w.id == item.id);
+
+        if (itemProduto == null)
+        {
+            item.produto = _instalacaoProduto!.produto;
+            _produtosCarinho!.Add(item);
+            await LocalStorage.SetItemAsync("carinho", _produtosCarinho);
+            Snack.Add("Item adicionado no carinho!", Severity.Success);
+        }
+        else
+        {
+            _produtosCarinho!.Remove(itemProduto);
+            await LocalStorage.SetItemAsync("carinho", _produtosCarinho);
+            Snack.Add("Item removido do carinho!", Severity.Success);
+        }
+        await AtualizarCarinho.InvokeAsync();
+        StateHasChanged();
+    }
+
+    // public async Task AdicionarOuRemoverCarinho(Estoques item)
+    // {
+    //     var itemProduto = _produtosCarinho!.FirstOrDefault(w => w.id == item.id);
+
+    //     if (itemProduto == null)
+    //     {
+    //         item.produto = _instalacaoProduto!.produto;
+    //         _produtosCarinho!.Add(item);
+    //         Carrinho.estoques = _produtosCarinho;
+    //         Snack.Add("Item adicionado no carinho!", Severity.Success);
+    //     }
+    //     else
+    //     {
+    //         _produtosCarinho!.Remove(itemProduto);
+    //         Carrinho.estoques = _produtosCarinho;
+    //         Snack.Add("Item removido do carinho!", Severity.Success);
+    //     }
+    //     await AtualizarCarinho.InvokeAsync();
+    //     StateHasChanged();
+    // }
+
+    private void Voltar() => _mudDialog!.Close(DialogResult.Ok<InstalacoesProdutos>(_instalacaoProduto!));
+}

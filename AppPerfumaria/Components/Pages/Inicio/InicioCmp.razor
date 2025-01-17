@@ -1,0 +1,372 @@
+﻿@using AppPerfumaria.Api.ReinoCompany
+@using AppPerfumaria.Components.CmpsGerais
+@using AppPerfumaria.Components.Pages.Inicio.Cmp
+@using AppPerfumaria.Models.Auth
+@using System.Text.Json.Serialization
+@using AppPerfumaria.Models.Collections
+@using AppPerfumaria.Models.Pagination
+@using AppPerfumaria.Models.Tables
+@using ZXing.Net.Maui
+
+@inject IDialogService Dialog
+@inject ISnackbar Snack
+
+<MudOverlay DarkBackground Visible="_carregando" ZIndex="10">
+    <MudProgressCircular Indeterminate="true" Color="Color.Default" />
+</MudOverlay>
+
+<MudPaper Class="px-2 w-100" Elevation="4" Style="position:fixed; z-index: 9;">
+    <!-- Barra de leitor -->
+    <div class="d-flex">
+        <MudTextField Value="_leitorFiltro" Label="Código Barras ou QR Code" Variant="Variant.Outlined"
+                      Adornment="Adornment.End" Margin="Margin.Dense" Immediate="true"
+                      ValueChanged="(async (string v) => { _leitorFiltro = v; await Leitor(v); })"
+                      AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Inherit"
+                      ClearIcon="@Icons.Material.Filled.Clear" Clearable="true" />
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.QrCodeScanner" OnClick="AbrirScanner"
+                       Color="Color.Inherit" Size="Size.Medium" />
+    </div>
+    <!-- Barra de pesquisa e botão filtro -->
+    <div class="d-flex">
+        <MudTextField Value="_pesquisarFiltro" Label="Pesquisar" Variant="Variant.Outlined"
+                      Adornment="Adornment.End" Margin="Margin.Dense" Immediate="true"
+                      ValueChanged="(async (string v) => { _pesquisarFiltro = v; await Pesquisar(v); })"
+                      AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Inherit" 
+                      ClearIcon="@Icons.Material.Filled.Clear" Clearable="true" />
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.FilterList" OnClick="Filtro"
+                       Color="Color.Inherit" Size="Size.Medium" />
+    </div>
+    <!-- Barra de filtros -->
+    <MudPopover Open="@_exibirFiltro" Fixed="true" Class="px-4 pt-4 w-100"
+                AnchorOrigin="Origin.TopRight" TransformOrigin="Origin.TopRight">
+        <MudGrid Spacing="2" Justify="Justify.Center" Class="mb-1">
+            <MudItem xs="6">
+                <MudSelect @bind-Value="_porPagina" Variant="Variant.Outlined"
+                           Label="Carregar De" Margin="Margin.Dense">
+                    <MudSelectItem Value="@("10")" />
+                    <MudSelectItem Value="@("15")" />
+                    <MudSelectItem Value="@("20")" />
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="6">
+                <MudSelect T="string" @bind-Value="_statusFiltro" Variant="Variant.Outlined"
+                           Label="Status" Margin="Margin.Dense">
+                    <MudSelectItem Value="@("Todos")" />
+                    <MudSelectItem Value="@("Ativo")" />
+                    <MudSelectItem Value="@("Inativo")" />
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12">
+                <MudAutocomplete T="InstalacoesMarcas" Label="Marca"
+                                 Value="@(_listarInstalacoesMarcas?.FirstOrDefault(im => im!.marca!.id == _marcaFiltro))"
+                                 SearchFunc="@PesquisarMarcas" ToStringFunc="@(im => im!.marca!.nome.ToUpper())"
+                                 ValueChanged="@((InstalacoesMarcas im) => { _marcaFiltro = im!.marca!.id; })"
+                                 CloseIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Default" Variant="Variant.Outlined"
+                                 Strict="false" Margin="Margin.Dense" ShowProgressIndicator="true" ClearIcon="@Icons.Material.Filled.Clear" Clearable="true">
+                    <NoItemsTemplate>
+                        <MudText Align="Align.Center" Class="px-4 py-1">
+                            Nenhum resultado encontrado!
+                        </MudText>
+                    </NoItemsTemplate>
+                </MudAutocomplete>
+            </MudItem>
+        </MudGrid>
+        <MudDivider />
+        <div class="d-flex my-2 float-end">
+            <MudFab Label="Fechar" Size="Size.Small"
+                    OnClick="Filtro" Class="mr-2" />
+            <MudFab Label="Filtrar" Size="Size.Small"
+                    OnClick="AplicarFiltros" />
+        </div>
+    </MudPopover>
+</MudPaper>
+
+<div class="pa-2" style="margin-top: 110px;">
+    <!-- Listar resultados dos produtos associados -->
+    <MudGrid Spacing="2" Justify="Justify.Center">
+        @if (_listarInstalacoesProdutos != null && _listarInstalacoesProdutos.Count() > 0)
+        {
+            @foreach (var instalacaoProduto in _listarInstalacoesProdutos)
+            {
+                <MudItem xs="6">
+                    <MudCard Style="@(instalacaoProduto!.estoque!.Count() > 0 ? "height:350px;" : "height:350px; opacity:0.3;")" @onclick="(() => VisualizarInstalacaoProduto(instalacaoProduto))">
+                        @if (instalacaoProduto!.estoque!.Any(p => p.preco_venda_desconto > 0))
+                        {
+                            <div style="@($"background:{Colors.Pink.Darken3}; position:absolute; font-size:12px;")" 
+                                 class="rounded mt-2 ml-2 pa-1 fw-bold text-white">
+                                -@instalacaoProduto!.estoque!.Max(p => p.desconto_venda)?.ToString("F1")%
+                            </div>
+                        }
+                        <MudCardMedia Image="@($"data:image/png;base64,{instalacaoProduto!.produto!.img_1}")" Style="width:100%; height:100%;" />
+                        <MudCardContent Class="py-2">
+                            <MudText Class="fw-bold" Typo="Typo.body1">
+                                @instalacaoProduto!.produto.nome.ToUpper()
+                            </MudText>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            }
+
+            <MudItem Class="py-5" xs="12">
+                @if (_paginacaoInstalacoesProdutos!.current_page != _paginacaoInstalacoesProdutos!.last_page)
+                {
+                    <MudFab Class="w-100" Label="Carregar Mais" OnClick="CarregarMais"
+                            Disabled="false" Size="Size.Small" />
+                }
+
+                <MudText Align="Align.Center" Typo="Typo.body2" Class="mt-2 w-100">
+                    @($"Total: {_paginacaoInstalacoesProdutos!.total} | Exibidos: {_paginacaoInstalacoesProdutos!.to}")
+                </MudText>
+            </MudItem>
+        }
+        else
+        {
+            @if(!_carregando)
+            {
+                <MudItem Class="py-5" xs="12">
+                    <Animate class="w-100" Animation="Animations.FadeDown" Duration="TimeSpan.FromSeconds(0.5)" Delay="TimeSpan.FromSeconds(0.4)">
+                        <MudText Class="mt-5" Align="Align.Center" Typo="Typo.body1">Nenhum resultado foi encontrado!</MudText>
+                    </Animate>
+                </MudItem>
+            }
+        }
+    </MudGrid>
+</div>
+
+@code {
+    [Parameter] public Auth? Auth { get; set; }
+    [Parameter] public Instalacoes? Instalacao { get; set; }
+    [Parameter] public EventCallback AtualizarCarinho { get; set; }
+    private List<InstalacoesProdutos>? _listarInstalacoesProdutos = new List<InstalacoesProdutos>();
+    private List<InstalacoesMarcas>? _listarInstalacoesMarcas = new List<InstalacoesMarcas>
+    {
+        new InstalacoesMarcas { 
+            marca = new Marcas
+            {
+                id = 0,
+                nome = "Todas"
+            }
+        }
+    };
+    private MetaPagination? _paginacaoInstalacoesProdutos;
+    private bool _carregando = true;
+    private bool _exibirFiltro = false;
+    private string? _pesquisarFiltro;
+    private string? _leitorFiltro;
+    private string? _statusFiltro = "Todos";
+    private DateRange _dataCriacaoFiltro = new DateRange();
+    private int _marcaFiltro = 0;
+    private string _porPagina = "10";
+    private int _paginaPaginacao = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        do
+        {
+            await Task.Delay(300);
+        }
+        while (Auth == null || Instalacao == null);
+
+        _ = ListarInstalacaoMarcas();
+        await ListarInstalacaoProdutos();
+    }
+
+    private async Task Pesquisar(string pesquisar)
+    {
+        await Task.Delay(1500);
+
+        if (pesquisar == _pesquisarFiltro)
+        {
+            await AplicarFiltros();
+        }
+    }
+
+    private async Task Leitor(string leitor)
+    {
+        await Task.Delay(1500);
+
+        if (leitor == _leitorFiltro)
+        {
+            await AplicarFiltros();
+        }
+    }
+
+    public async Task AbrirScanner()
+    {
+        var resultados = await BuscarResultadoScan();
+        var barcode = resultados.FirstOrDefault();
+        if (barcode != null)
+        {  
+            _leitorFiltro = barcode.Value;
+            await AplicarFiltros();
+        }
+    }
+
+    public async Task<BarcodeResult[]> BuscarResultadoScan()
+    {
+        var cameraPage = new CameraPage();
+        await Application.Current!.MainPage!.Navigation.PushModalAsync(cameraPage);
+
+        return await cameraPage.WaitForResultAsync();
+    }
+
+    public async Task CarregarMais()
+    {
+        _paginaPaginacao++;
+        await ListarInstalacaoProdutos();
+    }
+
+    private void Filtro()
+    {
+        _exibirFiltro = !_exibirFiltro;
+    }
+
+    public string? PegarFiltros()
+    {
+        string filtros = $"?instalacoes_id={Instalacao!.id}&page={_paginaPaginacao}&por_pagina={_porPagina}";
+
+        if (!string.IsNullOrEmpty(_pesquisarFiltro))
+        {
+            filtros += $"&pesquisar={_pesquisarFiltro}";
+        }
+        if (!string.IsNullOrEmpty(_leitorFiltro))
+        {
+            filtros += $"&leitor={_leitorFiltro}";
+        }
+        if (!string.IsNullOrEmpty(_statusFiltro) && _statusFiltro != "Todos")
+        {
+            filtros += $"&status={_statusFiltro}";
+        }
+        if (_dataCriacaoFiltro.Start != null && _dataCriacaoFiltro.End != null)
+        {
+            filtros += $"&criado_de={_dataCriacaoFiltro.Start?.ToString("yyyy-MM-dd")}&criado_ate={_dataCriacaoFiltro.End?.ToString("yyyy-MM-dd")}";
+        }
+        if (_marcaFiltro > 0)
+        {
+            filtros += $"&marcas_id={_marcaFiltro}";
+        }
+
+        return filtros;
+    }
+
+    private async Task<IEnumerable<InstalacoesMarcas>?> PesquisarMarcas(string pesquisar, CancellationToken token)
+    {
+        if (string.IsNullOrEmpty(pesquisar))
+        {
+            return _listarInstalacoesMarcas!.OrderBy(o => o!.marca!.nome == "Todas" ? 0 : 1)
+                                            .ThenBy(o => o!.marca!.nome);
+        }
+
+        return _listarInstalacoesMarcas!.Where(im => im!.marca!.nome.Contains(pesquisar, StringComparison.OrdinalIgnoreCase))
+                                        .OrderBy(o => o!.marca!.nome);
+    }
+
+    public async Task ListarInstalacaoMarcas()
+    {
+        try
+        {
+            string filtros = $"?instalacoes_id={Instalacao!.id}";
+
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.InstalacoesMarcasListar(Auth!.token!, filtros);
+
+            if (response!.status)
+            {
+                _listarInstalacoesMarcas!.AddRange(response!.data!);
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+            }
+
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar listar as marcas!", Severity.Warning);
+        }
+    }
+
+    public async Task AplicarFiltros()
+    {
+        _exibirFiltro = false;
+        await LimparEListarInstalacaoProdutos();
+    }
+
+    public async Task LimparEListarInstalacaoProdutos()
+    {
+        _paginaPaginacao = 1;
+        _listarInstalacoesProdutos = new List<InstalacoesProdutos>();
+        await ListarInstalacaoProdutos();
+    }
+
+    public async Task ListarInstalacaoProdutos()
+    {
+        try
+        {
+            _carregando = true;
+            StateHasChanged();
+            string? filtros = PegarFiltros();
+
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.InstalacoesProdutosListar(Auth!.token!, filtros);
+
+            if (response!.status)
+            {
+                _paginacaoInstalacoesProdutos = response.meta;
+                _listarInstalacoesProdutos!.AddRange(response!.data!);
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+            }
+
+            _carregando = false;
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar listar os produtos!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    private async Task VisualizarInstalacaoProduto(InstalacoesProdutos instalacaoProduto)
+    {
+        try
+        {
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullWidth = true,
+                    FullScreen = true,
+                    CloseButton = false,
+                };
+            var param = new DialogParameters { 
+                ["_instalacaoProduto"] = instalacaoProduto,
+                ["AtualizarCarinho"] = AtualizarCarinho
+
+            };
+            var dialog = Dialog.Show<VisualizarInstalacaoProdutoCmp>("Visualizar Associação", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled)
+            {
+                instalacaoProduto = (InstalacoesProdutos)result.Data!;
+                _listarInstalacoesProdutos!.FirstOrDefault(w => w.id == instalacaoProduto.id)!.estoque = instalacaoProduto.estoque;
+                StateHasChanged();
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar exibir o produto!", Severity.Warning);
+        }
+    }
+}

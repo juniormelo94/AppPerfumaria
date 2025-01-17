@@ -1,0 +1,180 @@
+﻿@using AppPerfumaria.Api.ReinoCompany
+@using AppPerfumaria.Components.CmpsGerais
+@using AppPerfumaria.Models.Auth
+@using AppPerfumaria.Models.Resources
+@using AppPerfumaria.Models.Tables
+@using System.Globalization
+
+@inject IDialogService Dialog
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject ISnackbar Snack
+
+<MudDialog Style="max-height: 70%;">
+    <DialogContent>
+        <EditForm Model="_estoqueForm" OnValidSubmit="Salvar" @ref="_estoqueFormRef">
+            <DataAnnotationsValidator />
+
+            <MudFocusTrap Disabled="false" DefaultFocus="DefaultFocus.FirstChild">
+                <MudNumericField Immediate="false" Label="Preço Compra Original*" Format="N2" HideSpinButtons="true"
+                                 @bind-Value="_estoqueForm!.preco_compra_original" Margin="Margin.Dense"
+                                 T="double?" Culture="_convercaoMoeda" Variant="Variant.Outlined" Min="0.0"
+                                 AdornmentText="R$" Adornment="Adornment.Start" Placeholder="0,00" />
+                <ValidationMessage For="() => _estoqueForm!.preco_compra_original" />
+
+                <MudNumericField Immediate="false" Label="Preço Compra Desconto" Format="N2" HideSpinButtons="true"
+                                 @bind-Value="_estoqueForm!.preco_compra_desconto" Margin="Margin.Dense"
+                                 T="double?" Culture="_convercaoMoeda" Variant="Variant.Outlined" Min="0.0"
+                                 AdornmentText="R$" Adornment="Adornment.Start" />
+                <ValidationMessage For="() => _estoqueForm.preco_compra_desconto" />
+
+                <MudNumericField Immediate="false" Label="Preço Venda Original*" Format="N2" HideSpinButtons="true"
+                                 @bind-Value="_estoqueForm!.preco_venda_original" Margin="Margin.Dense"
+                                 T="double?" Culture="_convercaoMoeda" Variant="Variant.Outlined" Min="0.0"
+                                 AdornmentText="R$" Adornment="Adornment.Start" Placeholder="0,00" />
+                <ValidationMessage For="() => _estoqueForm!.preco_venda_original" />
+
+                <MudNumericField Immediate="false" Label="Preço Venda Desconto" Format="N2" HideSpinButtons="true"
+                                 @bind-Value="_estoqueForm!.preco_venda_desconto" Margin="Margin.Dense"
+                                 T="double?" Culture="_convercaoMoeda" Variant="Variant.Outlined" Min="0.0"
+                                 AdornmentText="R$" Adornment="Adornment.Start" />
+                <ValidationMessage For="() => _estoqueForm!.preco_venda_desconto" />
+
+                <MudDatePicker Label="Data Vencimento" Margin="Margin.Dense" DateFormat="dd/MM/yyyy"
+                               Variant="Variant.Outlined" @bind-Date="_estoqueForm!.vencimento" />
+                <ValidationMessage For="() => _estoqueForm!.vencimento" />
+
+                <MudSelect @bind-Value="_estoqueForm.status" Variant="Variant.Outlined"
+                           Label="Status*" Margin="Margin.Dense" >
+                    <MudSelectItem Value="@("Ativo")" />
+                    <MudSelectItem Value="@("Inativo")" />
+                </MudSelect>
+                <ValidationMessage For="() => _estoqueForm!.status" />
+            </MudFocusTrap>
+        </EditForm>
+    </DialogContent>
+    <DialogActions>
+        <div class="d-block w-100 px-2">
+            @if (_carregando)
+            {
+                <MudProgressLinear Color="Color.Secondary" Rounded="true" Striped="true"
+                                   Size="Size.Medium" Value="100" Class="mb-2" />
+            }
+            <MudFab Class="w-100" Label="Salvar" Size="Size.Medium"
+                    OnClick="ValidarDadosForm" Disabled="_verificando" />
+            <MudFab Class="w-100 mt-2 mb-5" Label="Fechar" OnClick="(() => _mudDialog!.Cancel())"
+                    Size="Size.Medium" Disabled="_verificando" />
+        </div>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance? _mudDialog { get; set; }
+    [Parameter]
+    public Estoques? _estoqueForm { get; set; }
+    [Parameter]
+    public InstalacoesProdutos? _instalacaoProduto { get; set; }
+    private Auth? _auth;
+    private EditForm? _estoqueFormRef;
+    private CultureInfo _convercaoMoeda = CultureInfo.GetCultureInfo("de-DE");
+    private bool _carregando = false;
+    private bool _verificando = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _auth = await LocalStorage.GetItemAsync<Auth>("auth");
+    }
+
+    private async Task ValidarDadosForm()
+    {
+        try
+        {
+            _carregando = true;
+            _verificando = true;
+
+            if (_estoqueFormRef!.EditContext!.Validate())
+            {
+                await Salvar();
+            }
+            else
+            {
+                Snack.Add("Por favor, verifique todos os campos!", Severity.Warning);
+                _verificando = false;
+                _carregando = false;
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar validar dados!", Severity.Warning);
+        }
+    }
+
+    public async Task Salvar()
+    {
+        try
+        {
+            var reinoCompany = new ReinoCompany();
+            EstoquesResource? response;
+
+            _estoqueForm!.desconto_compra = 0.0;
+            _estoqueForm!.desconto_venda = 0.0;
+
+            if (_estoqueForm!.preco_compra_desconto != null)
+            {
+                _estoqueForm!.desconto_compra = ((_estoqueForm!.preco_compra_original - _estoqueForm!.preco_compra_desconto) / _estoqueForm!.preco_compra_original) * 100;
+            }
+
+            if (_estoqueForm!.preco_venda_desconto != null)
+            {
+                _estoqueForm!.desconto_venda = ((_estoqueForm!.preco_venda_original - _estoqueForm!.preco_venda_desconto) / _estoqueForm!.preco_venda_original) * 100;
+            }
+
+            if (_estoqueForm!.id > 0)
+            {
+                response = await reinoCompany.EstoquesAtualizar(_auth!.token!, _estoqueForm!);
+            }
+            else
+            {
+                _estoqueForm!.produtos_id = _instalacaoProduto!.produtos_id;
+                _estoqueForm!.instalacoes_id = _instalacaoProduto!.instalacoes_id;
+                response = await reinoCompany.EstoquesCriar(_auth!.token!, _estoqueForm!);
+            }
+
+            if (response!.status)
+            {
+                _mudDialog!.Close(DialogResult.Ok<bool>(true));
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+
+                if (response.erros != null)
+                {
+                    var erros = response.erros;
+                    foreach (var propriedade in erros.GetType().GetProperties())
+                    {
+                        List<string>? propErros = (List<string>)erros.GetType().GetProperty(propriedade.Name).GetValue(erros, null);
+                        if (propErros != null)
+                        {
+                            foreach (var mensagem in propErros)
+                            {
+                                Snack.Add(mensagem, Severity.Warning);
+                            }
+                        }
+                    }
+                }
+                _verificando = false;
+                _carregando = false;
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar salvar!", Severity.Warning);
+            _verificando = false;
+            _carregando = false;
+        }
+    }
+}

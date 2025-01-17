@@ -1,0 +1,67 @@
+﻿@using AppPerfumaria.Models.Tables
+
+<MudDialog ContentClass="bg-gray py-5" TitleClass="d-flex pb-0 pt-2">
+    <TitleContent>
+        <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft"
+                 OnClick="(() => _mudDialog!.Cancel())" />
+        <MudSpacer />
+        <MudIcon Icon="@Icons.Material.Filled.Discount" Class="mt-3" />
+    </TitleContent>
+    <DialogContent>
+        @if (!string.IsNullOrEmpty(_instalacaoMarca!.marca!.logo_img))
+        {
+            <MudCardMedia Class="rounded-lg w-100" Image="@($"data:image/png;base64,{_instalacaoMarca!.marca!.logo_img}")" Style="height: 350px;" />
+        }
+
+        <MudPaper Class="pa-2 mt-3" Elevation="0">
+            <MudAlert Icon="@(_instalacaoMarca.marca.status == "Ativo" ? Icons.Material.Filled.ThumbUp : Icons.Material.Filled.ThumbDown)"
+                      Severity="Severity.Normal" Dense="true" 
+                      ContentAlignment="HorizontalAlignment.Center" Class="fw-bold">
+                MARCA
+            </MudAlert>
+
+            <MudText Class="fw-bold mt-2" Typo="Typo.body1">
+                @_instalacaoMarca.marca.nome.ToUpper()
+            </MudText>
+
+            <MudText Typo="Typo.body2">
+                @_instalacaoMarca.marca.ramo.ToUpper()
+            </MudText>
+
+            <MudText Typo="Typo.body2" Class="mt-2">
+                @if (!string.IsNullOrEmpty(_instalacaoMarca!.marca!.cnpj))
+                {
+                    @($"CNPJ: {_instalacaoMarca.marca.cnpj}")
+                }
+            </MudText>
+        </MudPaper>
+
+        <MudPaper Class="pa-2 mt-3" Elevation="0">
+            <MudAlert Icon="@(_instalacaoMarca.status == "Ativo" ? Icons.Material.Filled.ThumbUp : Icons.Material.Filled.ThumbDown)"
+                      Severity="Severity.Normal" Dense="true" 
+                      ContentAlignment="HorizontalAlignment.Center" Class="fw-bold">
+                ASSOCIAÇÃO
+            </MudAlert>
+
+            @if (!string.IsNullOrEmpty(_instalacaoMarca!.observacoes))
+            {
+                <MudExpansionPanels Class="mt-2">
+                    <MudExpansionPanel Text="Observações:" HeaderClass="fw-bold py-0" Expanded="true">
+                        <pre>
+                            @_instalacaoMarca!.observacoes
+                        </pre>
+                    </MudExpansionPanel>
+                </MudExpansionPanels>
+            }
+        </MudPaper>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance? _mudDialog { get; set; }
+    [Parameter]
+    public InstalacoesMarcas? _instalacaoMarca { get; set; }
+
+    private void Ok() => _mudDialog!.Close(DialogResult.Ok(true));
+}

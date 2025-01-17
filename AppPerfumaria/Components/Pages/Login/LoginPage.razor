@@ -1,0 +1,292 @@
+﻿@page "/"
+@layout Layout.WhiteLayout
+@using AppPerfumaria.Api.ReinoCompany
+@using AppPerfumaria.Components.CmpsGerais
+@using System.ComponentModel.DataAnnotations
+@using AppPerfumaria.Models.Auth
+@using AppPerfumaria.Models.Collections
+@using AppPerfumaria.Models.Forms
+@using AppPerfumaria.Models.Resources
+@using AppPerfumaria.Models.Tables
+
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject NavigationManager Nav
+@inject ISnackbar Snack
+
+@if (_carregando)
+{
+    <Loading AlignCenter="true" Color="Color.Default" Size="Size.Medium" />
+}
+
+<div class="px-4"> 
+    <div class="d-flex justify-content-center align-items-center" style="height: 100vh;">
+        @if (_pagina == 1)
+        {
+            <Animate Animation="Animations.FadeUp" Duration="TimeSpan.FromSeconds(0.5)" Delay="TimeSpan.FromSeconds(0.3)">
+                <MudImage Src="img/logo_circulo.png" Alt="Logo aroma suave" Width="300" Height="300" />
+            </Animate>
+        }
+        else if (_pagina == 2)
+        {
+            <Animate class="w-100" Animation="Animations.FadeUp" Duration="TimeSpan.FromSeconds(0.5)" Delay="TimeSpan.FromSeconds(0.3)">
+                <MudPaper Class="px-4 py-5 w-100" Elevation="4">
+                    <EditForm Model="@_loginForm" OnValidSubmit="Logar">
+                        <DataAnnotationsValidator />
+
+                        <MudText Class="mt-5 mb-2" Typo="Typo.h6" Align="Align.Center">AROMA SUAVE</MudText>
+                        <MudDivider />
+                        <MudText Class="mt-5" Typo="Typo.body1" Align="Align.Left">Olá, digite seus dados:</MudText>
+
+                        <MudFocusTrap Disabled="false" DefaultFocus="DefaultFocus.FirstChild">
+                            <MudTextField T="string" @bind-Value="_loginForm.Email" Variant="Variant.Outlined"
+                                          Label="Email" Disabled="_verificando" Margin="Margin.Dense" />
+                            <ValidationMessage For="() => _loginForm.Email" />
+
+                            <MudTextField @bind-Value="_loginForm.Senha" Label="Senha" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                          InputType="@_senhaInputType" Adornment="Adornment.End" AdornmentIcon="@_senhaInputTypeIcon"
+                                          OnAdornmentClick="ExibirSenha" AdornmentAriaLabel="Exibir Senha" IconSize="Size.Small" />
+                            <ValidationMessage For="() => _loginForm.Senha" />
+
+                            <MudFab Class="w-100 mt-5 mb-5" Label="Entrar"
+                                    ButtonType="ButtonType.Submit" Disabled="_verificando" />
+                        </MudFocusTrap>
+                    </EditForm>
+                </MudPaper>
+            </Animate>
+        }
+        else if (_pagina == 3)
+        {
+            <Animate class="w-100" Animation="Animations.FadeUp" Duration="TimeSpan.FromSeconds(0.5)" Delay="TimeSpan.FromSeconds(0.3)">
+                <MudPaper Class="px-4 py-5 w-100" Elevation="4">
+                    <MudText Class="mt-5 mb-2" Typo="Typo.h6" Align="Align.Center">AROMA SUAVE</MudText>
+                    <MudDivider />
+                    <MudText Class="mt-5" Typo="Typo.body1" Align="Align.Left">Por favor, selecione uma instalação:</MudText>
+
+                    <MudSelect Value="_instalacoes_id" Variant="Variant.Outlined"
+                               Label="Instalações" Margin="Margin.Dense" ValueChanged="(async (string id) => {_instalacoes_id = id; await SelecionarInstalacao(id);})">
+                        @foreach (var instalacao in _instalacoes)
+                        {
+                        <MudSelectItem Value="instalacao.id.ToString()">
+                            @($"{instalacao.endereco} {instalacao.numero}, {instalacao.bairro} - {instalacao.cidade}/{instalacao.uf}")
+                        </MudSelectItem>
+                        }
+                    </MudSelect>
+
+                    <MudFab Class="w-100 mt-5 mb-5" Label="Voltar" 
+                            OnClick="Voltar" Disabled="_verificando"  />
+                </MudPaper>
+            </Animate>
+        }
+    </div>
+</div>
+
+@code {
+    private LoginForm _loginForm = new LoginForm();
+    private Auth? _auth;
+    private Instalacoes? _instalacao;
+    private List<Instalacoes>? _instalacoes;
+    private int _pagina = 1;
+    private string _divisoes_id = "1";
+    private string? _instalacoes_id;
+    private bool _carregando = false;
+    private bool _verificando = false;
+    private bool _exibirSenha = false;
+    InputType _senhaInputType = InputType.Password;
+    string _senhaInputTypeIcon = Icons.Material.Filled.VisibilityOff;
+
+    protected override void OnInitialized()
+    {
+        Snack.Clear();
+        Snack.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _auth = await LocalStorage.GetItemAsync<Auth>("auth");
+        _instalacao = await LocalStorage.GetItemAsync<Instalacoes>("instalacao");
+
+        await Task.Delay(2000);
+
+        if (_auth != null && _instalacao != null)
+        {
+            Nav.NavigateTo("/base", true);
+            return;
+        }
+        else if (_auth != null)
+        {
+            _pagina = 3;
+            await ValidarPermissoes();
+            return;
+        }
+
+        _pagina = 2;
+        StateHasChanged();
+    }
+
+    public void ExibirSenha()
+    {
+        if (_exibirSenha)
+        {
+            _exibirSenha = false;
+            _senhaInputTypeIcon = Icons.Material.Filled.VisibilityOff;
+            _senhaInputType = InputType.Password;
+        }
+        else
+        {
+            _exibirSenha = true;
+            _senhaInputTypeIcon = Icons.Material.Filled.Visibility;
+            _senhaInputType = InputType.Text;
+        }
+    }
+
+    public async Task Logar()
+    {
+        try
+        {
+            _carregando = true;
+            _verificando = true;
+
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.Logar(_loginForm);
+
+            if (response!.status)
+            {
+                await LocalStorage.SetItemAsync("auth", response);
+                await ValidarPermissoes();
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+                _verificando = false;
+                _carregando = false;
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar logar!", Severity.Warning);
+            _verificando = false;
+            _carregando = false;
+        }
+    }
+
+    public async Task ValidarPermissoes()
+    {
+        try
+        {
+            _auth = await LocalStorage.GetItemAsync<Auth>("auth");
+            List<string>? divisoes_ids = _auth?.data?.colaborador_user?.divisoes_ids;
+            if (divisoes_ids?.Count() > 0 && divisoes_ids.Contains(_divisoes_id))
+            {
+                List<string>? instalacoes_ids = _auth?.data?.colaborador_user?.instalacoes_ids;
+                if (instalacoes_ids?.Count() > 0)
+                {
+                    var reinoCompany = new ReinoCompany();
+                    string filtros = $"?status=ativo&divisoes_id={_divisoes_id}";
+                    var response = await reinoCompany.InstalacoesListar(_auth!.token!, filtros);
+
+                    if (response!.status)
+                    {
+                        _instalacoes = response!.data!.Where(instalacao => instalacoes_ids.Contains(instalacao.id.ToString()))
+                                                        .ToList();
+
+                        if (_instalacoes?.Count() > 0)
+                        {
+                            if (_instalacoes?.Count() == 1)
+                            {
+                                await LocalStorage.SetItemAsync("instalacao", _instalacoes[0]);
+                                Nav.NavigateTo("/base", true);
+                                return;
+                            }
+                            _pagina = 3;
+                            StateHasChanged();
+                        }
+                        else
+                        {
+                            Snack.Add("Essas instalações não disponíveis para o seu acesso!", Severity.Warning);
+                        }
+                    }
+                    else
+                    {
+                        if (!string.IsNullOrEmpty(response.message))
+                        {
+                            Snack.Add(response.message, Severity.Warning);
+                        }
+                    }
+                }
+                else
+                {
+                    Snack.Add("Não existe nenhuma instalação disponível para o seu acesso!", Severity.Warning);
+                }
+            }
+            else
+            {
+                Snack.Add("Essa divisão não disponível para o seu acesso!", Severity.Warning);
+            }
+
+            _verificando = false;
+            _carregando = false;
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar validar acesso!", Severity.Warning);
+            _verificando = false;
+            _carregando = false;
+        }
+    }
+
+    public async Task Voltar()
+    {
+        try
+        {
+            _carregando = true;
+            _verificando = true;
+
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.Deslogar(_auth!.token!);
+
+            if (response!.status ||
+            !response.status && response.message == "Token de autenticação inválido.")
+            {
+                await LocalStorage.RemoveItemAsync("auth");
+                await LocalStorage.RemoveItemAsync("instalacao");
+                Nav.NavigateTo("/", true);
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+                _carregando = false;
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar voltar!", Severity.Warning);
+            _verificando = false;
+            _carregando = false;
+        }
+    }
+
+    public async Task SelecionarInstalacao(string id)
+    {
+        try
+        {
+            _carregando = true;
+            _verificando = true;
+
+            _instalacao = _instalacoes!.FirstOrDefault(w => w.id == int.Parse(id));
+            await LocalStorage.SetItemAsync("instalacao", _instalacao);
+            Nav.NavigateTo("/base", true);
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar voltar!", Severity.Warning);
+            _verificando = false;
+            _carregando = false;
+        }
+    }
+}

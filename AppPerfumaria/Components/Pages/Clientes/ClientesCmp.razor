@@ -1,0 +1,658 @@
+﻿@using AppPerfumaria.Api.ReinoCompany
+@using AppPerfumaria.Components.CmpsGerais
+@using AppPerfumaria.Components.Pages.Clientes.Cmp
+@using AppPerfumaria.Models.Auth
+@using System.Text.Json.Serialization
+@using AppPerfumaria.Models.Collections
+@using AppPerfumaria.Models.Pagination
+@using AppPerfumaria.Models.Tables
+
+@inject IDialogService Dialog
+@inject ISnackbar Snack
+
+<MudOverlay DarkBackground Visible="_carregando" ZIndex="10">
+    <MudProgressCircular Indeterminate="true" Color="Color.Default" />
+</MudOverlay>
+
+<MudPaper Class="px-2 w-100" Elevation="4" Style="position:fixed; z-index: 9;">
+    <!-- Barra de pesquisa e botão filtro -->
+    <div class="d-flex">
+        <MudTextField Value="_pesquisarFiltro" Label="Pesquisar" Variant="Variant.Outlined"
+                      Adornment="Adornment.End" Margin="Margin.Dense" Immediate="true" 
+                      ValueChanged="(async (string v) => { _pesquisarFiltro = v; await Pesquisar(v); })"
+                      AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Inherit" 
+                      ClearIcon="@Icons.Material.Filled.Clear" Clearable="true" />
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.FilterList" OnClick="Filtro"
+                       Color="Color.Inherit" Size="Size.Medium" />
+    </div>
+    <!-- Barra de filtros -->
+    <MudPopover Open="@_exibirFiltro" Fixed="true" Class="px-4 pt-4 w-100"
+                AnchorOrigin="Origin.TopRight" TransformOrigin="Origin.TopRight">
+        <MudGrid Spacing="2" Justify="Justify.Center" Class="mb-1">
+            <MudItem xs="6">
+                <MudSelect @bind-Value="_porPagina" Variant="Variant.Outlined"
+                           Label="Carregar De" Margin="Margin.Dense">
+                    <MudSelectItem Value="@("10")" />
+                    <MudSelectItem Value="@("15")" />
+                    <MudSelectItem Value="@("20")" />
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="6">
+                <MudSelect T="string" @bind-Value="_statusFiltro" Variant="Variant.Outlined"
+                           Label="Status" Margin="Margin.Dense">
+                    <MudSelectItem Value="@("Todos")" />
+                    <MudSelectItem Value="@("Ativo")" />
+                    <MudSelectItem Value="@("Inativo")" />
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12">
+                <MudDateRangePicker Label="Data de Criação" @bind-DateRange="_dataCriacaoFiltro"
+                                    Variant="Variant.Outlined"
+                                    PlaceholderStart="Data Início"
+                                    PlaceholderEnd="Data Fim" Clearable="true"
+                                    DateFormat="dd/MM/yyyy"
+                                    Margin="Margin.Dense" />
+            </MudItem>
+        </MudGrid>
+        <MudDivider />
+        <div class="d-flex my-2 float-end">
+            <MudFab Label="Fechar" Size="Size.Small"
+                    OnClick="Filtro" Class="mr-2" />
+            <MudFab Label="Filtrar" Size="Size.Small"
+                    OnClick="AplicarFiltros" />
+        </div>
+    </MudPopover>
+    <!-- Barra de card e botão criar -->
+    <div class="d-flex">
+        <MudTabs Elevation="4" Rounded="true" Centered="true" @ref="tabs">
+            <MudTabPanel Icon="@Icons.Material.Filled.Storefront" Text="Clientes"
+                         OnClick="LimparEListarInstalacaoClientes" />
+            <MudTabPanel Text="Clientes" OnClick="LimparEListarClientes" />
+        </MudTabs>
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.Add" OnClick="CriarCliente"
+                       Color="Color.Inherit" Size="Size.Medium" />
+    </div>
+</MudPaper>
+
+<div class="pa-2" style="margin-top: 100px;">
+    @if (_indiceMenuCliente == 0)
+    {
+        <!-- Listar resultados dos clientes associados -->
+        <MudGrid Spacing="2" Justify="Justify.Center">
+            @if (_listarInstalacoesClientes != null && _listarInstalacoesClientes.Count() > 0)
+            {
+                @foreach (var instalacaoCliente in _listarInstalacoesClientes)
+                {
+                    <MudItem xs="6">
+                        <MudCard Style="height: 350px;" @onclick="(() => VisualizarInstalacaoCliente(instalacaoCliente))">
+                            <MudIcon Style="position:absolute;" Class="mt-2 ml-2" Color="@(instalacaoCliente.status == "Ativo" ? Color.Dark : Color.Default)"
+                                     Icon="@(instalacaoCliente.status == "Ativo" ? Icons.Material.Filled.ThumbUp : @Icons.Material.Filled.ThumbDown)" />
+                            <MudCardMedia Image="@($"data:image/png;base64,{instalacaoCliente!.cliente!.img}")" Height="200" />
+                            <MudCardContent Class="py-2">
+                                <MudText Class="fw-bold" Typo="Typo.body1">
+                                    @if (instalacaoCliente!.cliente!.nome_completo.Length > 35)
+                                    {
+                                        @($"{instalacaoCliente!.cliente!.nome_completo.Substring(0, 35).ToUpper()}...")
+                                    }
+                                    else
+                                    {
+                                        @instalacaoCliente!.cliente!.nome_completo.ToUpper()
+                                    }
+                                </MudText>
+                            </MudCardContent>
+                            <MudCardActions Class="d-block py-0 pb-1">
+                                <div class="d-flex mt-1 px-3">
+                                    <MudIconButton Size="Size.Medium" OnClick="(() => AtualizarInstalacaoCliente(instalacaoCliente))"
+                                                   Icon="@Icons.Material.Filled.Edit" />
+                                    <MudSpacer />
+                                    <MudIconButton Size="Size.Medium" OnClick="(() => DeletarInstalacaoCliente(instalacaoCliente))"
+                                                   Icon="@Icons.Material.Filled.Delete" />
+                                </div>
+                            </MudCardActions>
+                        </MudCard>
+                    </MudItem>
+                }
+
+                <MudItem Class="py-5" xs="12">
+                    @if (_paginacaoInstalacoesClientes!.current_page != _paginacaoInstalacoesClientes!.last_page)
+                    {
+                        <MudFab Class="w-100" Label="Carregar Mais" OnClick="CarregarMais"
+                                Disabled="false" Size="Size.Small" />
+                    }
+
+                    <MudText Align="Align.Center" Typo="Typo.body2" Class="mt-2 w-100">
+                        @($"Total: {_paginacaoInstalacoesClientes!.total} | Exibidos: {_paginacaoInstalacoesClientes!.to}")
+                    </MudText>
+                </MudItem>
+            }
+            else
+            {
+                @if (!_carregando)
+                {
+                    <MudItem Class="py-5" xs="12">
+                        <Animate class="w-100" Animation="Animations.FadeDown" Duration="TimeSpan.FromSeconds(0.5)" Delay="TimeSpan.FromSeconds(0.4)">
+                            <MudText Class="mt-5" Align="Align.Center" Typo="Typo.body1">Nenhum resultado foi encontrado!</MudText>
+                        </Animate>
+                    </MudItem>
+                }
+            }
+        </MudGrid>
+    }
+    else if (_indiceMenuCliente == 1)
+    {
+        <!-- Listar resultados dos clientes -->
+        <MudGrid Spacing="2" Justify="Justify.Center">
+            @if (_listarClientes != null && _listarClientes.Count() > 0)
+            {
+                @foreach (var cliente in _listarClientes)
+                {
+                    <MudItem xs="6">
+                        <MudCard Style="height: 380px;" @onclick="(() => VisualizarCliente(cliente))">
+                            <MudIcon Style="position:absolute;" Class="mt-2 ml-2" Color="@(cliente.status == "Ativo" ? Color.Dark : Color.Default)"
+                                     Icon="@(cliente.status == "Ativo" ? Icons.Material.Filled.ThumbUp : Icons.Material.Filled.ThumbDown)" />
+                            <MudCardMedia Image="@($"data:image/png;base64,{cliente.img}")" Height="200" />
+                            <MudCardContent Class="py-2">
+                                <MudText Class="fw-bold" Typo="Typo.body1">
+                                    @if (cliente.nome_completo.Length > 35)
+                                    {
+                                        @($"{cliente.nome_completo.Substring(0, 35).ToUpper()}...")
+                                    }
+                                    else
+                                    {
+                                        @cliente.nome_completo.ToUpper()
+                                    }
+                                </MudText>
+                            </MudCardContent>
+                            <MudCardActions Class="d-block py-0 pb-1">
+                                @if (cliente!.instalacao_clientes!.Count() > 0)
+                                {
+                                    <MudFab Class="w-100" Label="Associado" StartIcon="@Icons.Material.Filled.Check"
+                                            Size="Size.Small" Disabled="true" />
+                                }
+                                else
+                                {
+                                    <MudFab Class="w-100" Label="Associar" Size="Size.Small"
+                                            OnClick="(() => CriarInstalacaoCliente(cliente))" />
+                                }
+                                <div class="d-flex mt-1 px-3">
+                                    <MudIconButton Size="Size.Medium" OnClick="(() => AtualizarCliente(cliente))"
+                                                   Icon="@Icons.Material.Filled.Edit" />
+                                    <MudSpacer />
+                                    <MudIconButton Size="Size.Medium" OnClick="(() => DeletarCliente(cliente))"
+                                                   Icon="@Icons.Material.Filled.Delete" />
+                                </div>
+                            </MudCardActions>
+                        </MudCard>
+                    </MudItem>
+                }
+
+                <MudItem Class="py-5" xs="12">
+                    @if (_paginacaoClientes!.current_page != _paginacaoClientes!.last_page)
+                    {
+                        <MudFab Class="w-100" Label="Carregar Mais" OnClick="CarregarMais"
+                                Disabled="false" Size="Size.Small" />
+                    }
+
+                    <MudText Align="Align.Center" Typo="Typo.body2" Class="mt-2 w-100">
+                        @($"Total: {_paginacaoClientes!.total} | Exibidos: {_paginacaoClientes!.to}")
+                    </MudText>
+                </MudItem>
+            }
+            else
+            {
+                @if (!_carregando)
+                {
+                    <MudItem Class="py-5" xs="12">
+                        <Animate class="w-100" Animation="Animations.FadeDown" Duration="TimeSpan.FromSeconds(0.5)" Delay="TimeSpan.FromSeconds(0.4)">
+                            <MudText Class="mt-5" Align="Align.Center" Typo="Typo.body1">Nenhum resultado foi encontrado!</MudText>
+                        </Animate>
+                    </MudItem>
+                }
+            }
+        </MudGrid>
+    }
+</div>
+
+@code {
+    [Parameter] public Auth? Auth { get; set; }
+    [Parameter] public Instalacoes? Instalacao { get; set; }
+    private List<Clientes>? _listarClientes = new List<Clientes>();
+    private List<InstalacoesClientes>? _listarInstalacoesClientes = new List<InstalacoesClientes>();
+    private MetaPagination? _paginacaoClientes;
+    private MetaPagination? _paginacaoInstalacoesClientes;
+    private MudTabs? tabs;
+    private int _indiceMenuCliente = 0;
+    private bool _carregando = true;
+    private bool _exibirFiltro = false;
+    private string? _pesquisarFiltro;
+    private string? _statusFiltro = "Todos";
+    private DateRange _dataCriacaoFiltro = new DateRange();
+    private string _porPagina = "10";
+    private int _paginaPaginacao = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        do
+        {
+            await Task.Delay(300);
+        }
+        while (Auth == null || Instalacao == null);
+
+        await ListarInstalacaoClientes();
+    }
+
+    private async Task Pesquisar(string pesquisar)
+    {
+        await Task.Delay(1500);
+
+        if (pesquisar == _pesquisarFiltro)
+        {
+            await AplicarFiltros();
+        }
+    }
+
+    public async Task CarregarMais()
+    {
+        if (_indiceMenuCliente == 0)
+        {
+            _paginaPaginacao++;
+            await ListarInstalacaoClientes();
+        }
+        else
+        {
+            _paginaPaginacao++;
+            await ListarClientes();
+        }
+    }
+
+    private void Filtro()
+    {
+        _exibirFiltro = !_exibirFiltro;
+    }
+
+    public string? PegarFiltros()
+    {
+        string filtros = $"?instalacoes_id={Instalacao!.id}&page={_paginaPaginacao}&por_pagina={_porPagina}";
+
+        if (!string.IsNullOrEmpty(_pesquisarFiltro))
+        {
+            filtros += $"&pesquisar={_pesquisarFiltro}";
+        }
+        if (!string.IsNullOrEmpty(_statusFiltro) && _statusFiltro != "Todos")
+        {
+            filtros += $"&status={_statusFiltro}";
+        }
+        if (_dataCriacaoFiltro.Start != null && _dataCriacaoFiltro.End != null)
+        {
+            filtros += $"&criado_de={_dataCriacaoFiltro.Start?.ToString("yyyy-MM-dd")}&criado_ate={_dataCriacaoFiltro.End?.ToString("yyyy-MM-dd")}";
+        }
+
+        return filtros;
+    }
+
+    public async Task AplicarFiltros()
+    {
+        _exibirFiltro = false;
+
+        if (_indiceMenuCliente == 0)
+        {
+            await LimparEListarInstalacaoClientes();
+        }
+        else
+        {
+            await LimparEListarClientes();
+        }
+    }
+
+    public async Task LimparEListarInstalacaoClientes()
+    {
+        _paginaPaginacao = 1;
+        _listarInstalacoesClientes = new List<InstalacoesClientes>();
+        await ListarInstalacaoClientes();
+    }
+
+    public async Task ListarInstalacaoClientes()
+    {
+        try
+        {
+            _carregando = true;
+            StateHasChanged();
+            string? filtros = PegarFiltros();
+
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.InstalacoesClientesListar(Auth!.token!, filtros);
+
+            if (response!.status)
+            {
+                _paginacaoInstalacoesClientes = response.meta;
+                _listarInstalacoesClientes!.AddRange(response!.data!);
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+            }
+
+            _indiceMenuCliente = 0;
+            _carregando = false;
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar listar os clientes dessa instalação!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    public async Task LimparEListarClientes()
+    {
+        _paginaPaginacao = 1;
+        _listarClientes = new List<Clientes>();
+        await ListarClientes();
+    }
+
+    public async Task ListarClientes()
+    {
+        try
+        {
+            _carregando = true;
+            StateHasChanged();
+            string? filtros = PegarFiltros();
+
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.ClientesListar(Auth!.token!, filtros);
+
+            if (response!.status)
+            {
+                _paginacaoClientes = response.meta;
+                _listarClientes!.AddRange(response!.data!);
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+            }
+
+            _indiceMenuCliente = 1;
+            _carregando = false;
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar listar os clientes!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    private void VisualizarInstalacaoCliente(InstalacoesClientes instalacaoCliente)
+    {
+        try
+        {
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullWidth = true,
+                    FullScreen = true,
+                    CloseButton = false,
+                };
+            var param = new DialogParameters { ["_instalacaoCliente"] = instalacaoCliente };
+            Dialog.Show<VisualizarInstalacaoClienteCmp>("Visualizar Associação", param, options);
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar exibir o cliente associado!", Severity.Warning);
+        }
+    }
+
+    private void VisualizarCliente(Clientes cliente)
+    {
+        try
+        {
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullWidth = true,
+                    FullScreen = true,
+                    CloseButton = false,
+                };
+            var param = new DialogParameters { ["_cliente"] = cliente };
+            Dialog.Show<VisualizarClienteCmp>("Visualizar Cliente", param, options);
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar exibir o cliente!", Severity.Warning);
+        }
+    }
+
+    public async Task CriarInstalacaoCliente(Clientes cliente)
+    {
+        try
+        {
+            if (cliente.status == "Inativo")
+            {
+                Snack.Add("Tivemos um problema ao tentar associar, pois o cliente está inativo!", Severity.Warning);
+                return;
+            }
+
+            var param = new DialogParameters<AlertaAssociacao>
+            {
+                { x => x.ContentText, "Deseja associar esse <b>CLIENTE</b> a instalação?" }
+            };
+            var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+            var dialog = Dialog.Show<AlertaAssociacao>("Associar Cliente", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled)
+            {
+                _carregando = true;
+
+                var instalacaoCliente = new InstalacoesClientes
+                    {
+                        instalacoes_id = Instalacao!.id,
+                        clientes_id = cliente.id,
+                        status = "Ativo",
+                    };
+                var reinoCompany = new ReinoCompany();
+                var response = await reinoCompany.InstalacoesClientesCriar(Auth!.token!, instalacaoCliente);
+
+                if (response!.status)
+                {
+                    Snack.Add("Cliente associado com sucesso!", Severity.Success);
+                    await LimparEListarClientes();
+                }
+                else
+                {
+                    if (!string.IsNullOrEmpty(response.message))
+                    {
+                        Snack.Add(response.message, Severity.Warning);
+                    }
+                    _carregando = false;
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar associar o cliente!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    public async Task CriarCliente()
+    {
+        try
+        {
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullWidth = true,
+                    BackdropClick = false,
+                    CloseButton = true,
+                    Position = DialogPosition.TopCenter
+                };
+            var param = new DialogParameters { ["_clienteForm"] = new Clientes() };
+            var dialog = Dialog.Show<ClientesFormCmp>("Adicionar Cliente", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled && (bool)result.Data == true)
+            {
+                Snack.Add("Cliente criado com sucesso!", Severity.Success);
+                tabs.ActivatePanel(1);
+            }
+            else if (!result.Canceled && (bool)result.Data == false)
+            {
+                Snack.Add("Tivemos um problema ao tentar criar o cliente!", Severity.Warning);
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar criar o cliente!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    public async Task AtualizarInstalacaoCliente(InstalacoesClientes instalacaoCliente)
+    {
+        try
+        {
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullWidth = true,
+                    BackdropClick = false,
+                    CloseButton = true,
+                    Position = DialogPosition.TopCenter
+                };
+            var param = new DialogParameters { ["_instalacaoClienteForm"] = instalacaoCliente.Clone() };
+            var dialog = Dialog.Show<InstalacoesClientesFormCmp>("Atualizar Associação", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled && (bool)result.Data == true)
+            {
+                Snack.Add("Cliente associado atualizado com sucesso!", Severity.Success);
+                await LimparEListarInstalacaoClientes();
+            }
+            else if (!result.Canceled && (bool)result.Data == false)
+            {
+                Snack.Add("Tivemos um problema ao tentar atualizar associação do cliente!", Severity.Warning);
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar atualizar associação do cliente!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    public async Task AtualizarCliente(Clientes cliente)
+    {
+        try
+        {
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullWidth = true,
+                    BackdropClick = false,
+                    CloseButton = true,
+                    Position = DialogPosition.TopCenter
+                };
+            var param = new DialogParameters { ["_clienteForm"] = cliente.Clone() };
+            var dialog = Dialog.Show<ClientesFormCmp>("Atualizar Cliente", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled && (bool)result.Data == true)
+            {
+                Snack.Add("Cliente atualizado com sucesso!", Severity.Success);
+                await LimparEListarClientes();
+            }
+            else if (!result.Canceled && (bool)result.Data == false)
+            {
+                Snack.Add("Tivemos um problema ao tentar atualizar o cliente!", Severity.Warning);
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar atualizar o cliente!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    public async Task DeletarInstalacaoCliente(InstalacoesClientes instalacaoCliente)
+    {
+        try
+        {
+            var param = new DialogParameters<AlertaDelete>
+            {
+                { x => x.ContentText, "Tem certeza que deseja deletar essa <b>ASSOCIAÇÃO</b> ao <b>CLIENTE</b> e todos os dados a ele ligados?" }
+            };
+            var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+            var dialog = Dialog.Show<AlertaDelete>("Deletar Associação", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled)
+            {
+                _carregando = true;
+                var reinoCompany = new ReinoCompany();
+                var response = await reinoCompany.InstalacoesClientesDeletar(Auth!.token!, instalacaoCliente);
+
+                if (response!.status)
+                {
+                    Snack.Add("Cliente associado deletado com sucesso!", Severity.Success);
+                    await LimparEListarInstalacaoClientes();
+                }
+                else
+                {
+                    if (!string.IsNullOrEmpty(response.message))
+                    {
+                        Snack.Add(response.message, Severity.Warning);
+                    }
+                    _carregando = false;
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar deletar associação o cliente!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    public async Task DeletarCliente(Clientes cliente)
+    {
+        try
+        {
+            var param = new DialogParameters<AlertaDelete>
+            {
+                { x => x.ContentText, "Tem certeza que deseja deletar esse <b>CLIENTE</b> e todos os dados a ele ligados?" }
+            };
+            var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+            var dialog = Dialog.Show<AlertaDelete>("Deletar Cliente", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled)
+            {
+                _carregando = true;
+                var reinoCompany = new ReinoCompany();
+                var response = await reinoCompany.ClientesDeletar(Auth!.token!, cliente);
+
+                if (response!.status)
+                {
+                    Snack.Add("Cliente deletado com sucesso!", Severity.Success);
+                    await LimparEListarClientes();
+                }
+                else
+                {
+                    if (!string.IsNullOrEmpty(response.message))
+                    {
+                        Snack.Add(response.message, Severity.Warning);
+                    }
+                    _carregando = false;
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar deletar o cliente!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+}

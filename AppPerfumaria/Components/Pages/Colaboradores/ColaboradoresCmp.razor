@@ -1,0 +1,658 @@
+﻿@using AppPerfumaria.Api.ReinoCompany
+@using AppPerfumaria.Components.CmpsGerais
+@using AppPerfumaria.Components.Pages.Colaboradores.Cmp
+@using AppPerfumaria.Models.Auth
+@using System.Text.Json.Serialization
+@using AppPerfumaria.Models.Collections
+@using AppPerfumaria.Models.Pagination
+@using AppPerfumaria.Models.Tables
+
+@inject IDialogService Dialog
+@inject ISnackbar Snack
+
+<MudOverlay DarkBackground Visible="_carregando" ZIndex="10">
+    <MudProgressCircular Indeterminate="true" Color="Color.Default" />
+</MudOverlay>
+
+<MudPaper Class="px-2 w-100" Elevation="4" Style="position:fixed; z-index: 9;">
+    <!-- Barra de pesquisa e botão filtro -->
+    <div class="d-flex">
+        <MudTextField Value="_pesquisarFiltro" Label="Pesquisar" Variant="Variant.Outlined"
+                      Adornment="Adornment.End" Margin="Margin.Dense" Immediate="true"
+                      ValueChanged="(async (string v) => { _pesquisarFiltro = v; await Pesquisar(v); })"
+                      AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Inherit" 
+                      ClearIcon="@Icons.Material.Filled.Clear" Clearable="true" />
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.FilterList" OnClick="Filtro"
+                       Color="Color.Inherit" Size="Size.Medium" />
+    </div>
+    <!-- Barra de filtros -->
+    <MudPopover Open="@_exibirFiltro" Fixed="true" Class="px-4 pt-4 w-100"
+                AnchorOrigin="Origin.TopRight" TransformOrigin="Origin.TopRight">
+        <MudGrid Spacing="2" Justify="Justify.Center" Class="mb-1">
+            <MudItem xs="6">
+                <MudSelect @bind-Value="_porPagina" Variant="Variant.Outlined"
+                           Label="Carregar De" Margin="Margin.Dense">
+                    <MudSelectItem Value="@("10")" />
+                    <MudSelectItem Value="@("15")" />
+                    <MudSelectItem Value="@("20")" />
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="6">
+                <MudSelect T="string" @bind-Value="_statusFiltro" Variant="Variant.Outlined"
+                           Label="Status" Margin="Margin.Dense">
+                    <MudSelectItem Value="@("Todos")" />
+                    <MudSelectItem Value="@("Ativo")" />
+                    <MudSelectItem Value="@("Inativo")" />
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12">
+                <MudDateRangePicker Label="Data de Criação" @bind-DateRange="_dataCriacaoFiltro"
+                                    Variant="Variant.Outlined"
+                                    PlaceholderStart="Data Início"
+                                    PlaceholderEnd="Data Fim" Clearable="true"
+                                    DateFormat="dd/MM/yyyy"
+                                    Margin="Margin.Dense" />
+            </MudItem>
+        </MudGrid>
+        <MudDivider />
+        <div class="d-flex my-2 float-end">
+            <MudFab Label="Fechar" Size="Size.Small"
+                    OnClick="Filtro" Class="mr-2" />
+            <MudFab Label="Filtrar" Size="Size.Small"
+                    OnClick="AplicarFiltros" />
+        </div>
+    </MudPopover>
+    <!-- Barra de card e botão criar -->
+    <div class="d-flex">
+        <MudTabs Elevation="4" Rounded="true" Centered="true" @ref="tabs">
+            <MudTabPanel Icon="@Icons.Material.Filled.Storefront" Text="Colaboradores"
+                         OnClick="LimparEListarInstalacaoColaborador" />
+            <MudTabPanel Text="Colaboradores" OnClick="LimparEListarColaboradores" />
+        </MudTabs>
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.Add" OnClick="CriarColaborador"
+                       Color="Color.Inherit" Size="Size.Medium" />
+    </div>
+</MudPaper>
+
+<div class="pa-2" style="margin-top: 100px;">
+    @if (_indiceMenuColaborador == 0)
+    {
+        <!-- Listar resultados dos colaboradores associados -->
+        <MudGrid Spacing="2" Justify="Justify.Center">
+            @if (_listarInstalacoesColaboradores != null && _listarInstalacoesColaboradores.Count() > 0)
+            {
+                @foreach (var instalacaoColaborador in _listarInstalacoesColaboradores)
+                {
+                    <MudItem xs="6">
+                        <MudCard Style="height: 350px;" @onclick="(() => VisualizarInstalacaoColaborador(instalacaoColaborador))">
+                            <MudIcon Style="position:absolute;" Class="mt-2 ml-2" Color="@(instalacaoColaborador.status == "Ativo" ? Color.Dark : Color.Default)"
+                                     Icon="@(instalacaoColaborador.status == "Ativo" ? Icons.Material.Filled.ThumbUp : @Icons.Material.Filled.ThumbDown)" />
+                            <MudCardMedia Image="@($"data:image/png;base64,{instalacaoColaborador!.colaborador!.img}")" Height="200" />
+                            <MudCardContent Class="py-2">
+                                <MudText Class="fw-bold" Typo="Typo.body1">
+                                    @if (instalacaoColaborador!.colaborador!.nome_completo.Length > 35)
+                                    {
+                                        @($"{instalacaoColaborador!.colaborador!.nome_completo.Substring(0, 35).ToUpper()}...")
+                                    }
+                                    else
+                                    {
+                                        @instalacaoColaborador!.colaborador!.nome_completo.ToUpper()
+                                    }
+                                </MudText>
+                            </MudCardContent>
+                            <MudCardActions Class="d-block py-0 pb-1">
+                                <div class="d-flex mt-1 px-3">
+                                    <MudIconButton Size="Size.Medium" OnClick="(() => AtualizarInstalacaoColaborador(instalacaoColaborador))"
+                                                   Icon="@Icons.Material.Filled.Edit" />
+                                    <MudSpacer />
+                                    <MudIconButton Size="Size.Medium" OnClick="(() => DeletarInstalacaoColaborador(instalacaoColaborador))"
+                                                   Icon="@Icons.Material.Filled.Delete" />
+                                </div>
+                            </MudCardActions>
+                        </MudCard>
+                    </MudItem>
+                }
+
+                <MudItem Class="py-5" xs="12">
+                    @if (_paginacaoInstalacoesColaboradores!.current_page != _paginacaoInstalacoesColaboradores!.last_page)
+                    {
+                        <MudFab Class="w-100" Label="Carregar Mais" OnClick="CarregarMais"
+                                Disabled="false" Size="Size.Small" />
+                    }
+
+                    <MudText Align="Align.Center" Typo="Typo.body2" Class="mt-2 w-100">
+                        @($"Total: {_paginacaoInstalacoesColaboradores!.total} | Exibidos: {_paginacaoInstalacoesColaboradores!.to}")
+                    </MudText>
+                </MudItem>
+            }
+            else
+            {
+                @if (!_carregando)
+                {
+                    <MudItem Class="py-5" xs="12">
+                        <Animate class="w-100" Animation="Animations.FadeDown" Duration="TimeSpan.FromSeconds(0.5)" Delay="TimeSpan.FromSeconds(0.4)">
+                            <MudText Class="mt-5" Align="Align.Center" Typo="Typo.body1">Nenhum resultado foi encontrado!</MudText>
+                        </Animate>
+                    </MudItem>
+                }
+            }
+        </MudGrid>
+    }
+    else if (_indiceMenuColaborador == 1)
+    {
+        <!-- Listar resultados dos colaboradores -->
+        <MudGrid Spacing="2" Justify="Justify.Center">
+            @if (_listarColaboradores != null && _listarColaboradores.Count() > 0)
+            {
+                @foreach (var colaborador in _listarColaboradores)
+                {
+                    <MudItem xs="6">
+                        <MudCard Style="height: 380px;" @onclick="(() => VisualizarColaborador(colaborador))">
+                            <MudIcon Style="position:absolute;" Class="mt-2 ml-2" Color="@(colaborador.status == "Ativo" ? Color.Dark : Color.Default)"
+                                     Icon="@(colaborador.status == "Ativo" ? Icons.Material.Filled.ThumbUp : Icons.Material.Filled.ThumbDown)" />
+                            <MudCardMedia Image="@($"data:image/png;base64,{colaborador.img}")" Height="200" />
+                            <MudCardContent Class="py-2">
+                                <MudText Class="fw-bold" Typo="Typo.body1">
+                                    @if (colaborador.nome_completo.Length > 35)
+                                    {
+                                        @($"{colaborador.nome_completo.Substring(0, 35).ToUpper()}...")
+                                    }
+                                    else
+                                    {
+                                        @colaborador.nome_completo.ToUpper()
+                                    }
+                                </MudText>
+                            </MudCardContent>
+                            <MudCardActions Class="d-block py-0 pb-1">
+                                @if (colaborador!.instalacao_colaboradores!.Count() > 0)
+                                {
+                                    <MudFab Class="w-100" Label="Associado" StartIcon="@Icons.Material.Filled.Check"
+                                            Size="Size.Small" Disabled="true" />
+                                }
+                                else
+                                {
+                                    <MudFab Class="w-100" Label="Associar" Size="Size.Small"
+                                            OnClick="(() => CriarInstalacaoColaborador(colaborador))" />
+                                }
+                                <div class="d-flex mt-1 px-3">
+                                    <MudIconButton Size="Size.Medium" OnClick="(() => AtualizarColaborador(colaborador))"
+                                                   Icon="@Icons.Material.Filled.Edit" />
+                                    <MudSpacer />
+                                    <MudIconButton Size="Size.Medium" OnClick="(() => DeletarColaborador(colaborador))"
+                                                   Icon="@Icons.Material.Filled.Delete" />
+                                </div>
+                            </MudCardActions>
+                        </MudCard>
+                    </MudItem>
+                }
+
+                <MudItem Class="py-5" xs="12">
+                    @if (_paginacaoColaboradores!.current_page != _paginacaoColaboradores!.last_page)
+                    {
+                        <MudFab Class="w-100" Label="Carregar Mais" OnClick="CarregarMais"
+                                Disabled="false" Size="Size.Small" />
+                    }
+
+                    <MudText Align="Align.Center" Typo="Typo.body2" Class="mt-2 w-100">
+                        @($"Total: {_paginacaoColaboradores!.total} | Exibidos: {_paginacaoColaboradores!.to}")
+                    </MudText>
+                </MudItem>
+            }
+            else
+            {
+                @if (!_carregando)
+                {
+                    <MudItem Class="py-5" xs="12">
+                        <Animate class="w-100" Animation="Animations.FadeDown" Duration="TimeSpan.FromSeconds(0.5)" Delay="TimeSpan.FromSeconds(0.4)">
+                            <MudText Class="mt-5" Align="Align.Center" Typo="Typo.body1">Nenhum resultado foi encontrado!</MudText>
+                        </Animate>
+                    </MudItem>
+                }
+            }
+        </MudGrid>
+    }
+</div>
+
+@code {
+    [Parameter] public Auth? Auth { get; set; }
+    [Parameter] public Instalacoes? Instalacao { get; set; }
+    private List<Colaboradores>? _listarColaboradores = new List<Colaboradores>();
+    private List<InstalacoesColaboradores>? _listarInstalacoesColaboradores = new List<InstalacoesColaboradores>();
+    private MetaPagination? _paginacaoColaboradores;
+    private MetaPagination? _paginacaoInstalacoesColaboradores;
+    private MudTabs? tabs;
+    private int _indiceMenuColaborador = 0;
+    private bool _carregando = true;
+    private bool _exibirFiltro = false;
+    private string? _pesquisarFiltro;
+    private string? _statusFiltro = "Todos";
+    private DateRange _dataCriacaoFiltro = new DateRange();
+    private string _porPagina = "10";
+    private int _paginaPaginacao = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        do
+        {
+            await Task.Delay(300);
+        }
+        while (Auth == null || Instalacao == null);
+
+        await ListarInstalacaoColaborador();
+    }
+
+    private async Task Pesquisar(string pesquisar)
+    {
+        await Task.Delay(1500);
+
+        if (pesquisar == _pesquisarFiltro)
+        {
+            await AplicarFiltros();
+        }
+    }
+
+    public async Task CarregarMais()
+    {
+        if (_indiceMenuColaborador == 0)
+        {
+            _paginaPaginacao++;
+            await ListarInstalacaoColaborador();
+        }
+        else
+        {
+            _paginaPaginacao++;
+            await ListarColaboradores();
+        }
+    }
+
+    private void Filtro()
+    {
+        _exibirFiltro = !_exibirFiltro;
+    }
+
+    public string? PegarFiltros()
+    {
+        string filtros = $"?instalacoes_id={Instalacao!.id}&page={_paginaPaginacao}&por_pagina={_porPagina}";
+
+        if (!string.IsNullOrEmpty(_pesquisarFiltro))
+        {
+            filtros += $"&pesquisar={_pesquisarFiltro}";
+        }
+        if (!string.IsNullOrEmpty(_statusFiltro) && _statusFiltro != "Todos")
+        {
+            filtros += $"&status={_statusFiltro}";
+        }
+        if (_dataCriacaoFiltro.Start != null && _dataCriacaoFiltro.End != null)
+        {
+            filtros += $"&criado_de={_dataCriacaoFiltro.Start?.ToString("yyyy-MM-dd")}&criado_ate={_dataCriacaoFiltro.End?.ToString("yyyy-MM-dd")}";
+        }
+
+        return filtros;
+    }
+
+    public async Task AplicarFiltros()
+    {
+        _exibirFiltro = false;
+
+        if (_indiceMenuColaborador == 0)
+        {
+            await LimparEListarInstalacaoColaborador();
+        }
+        else
+        {
+            await LimparEListarColaboradores();
+        }
+    }
+
+    public async Task LimparEListarInstalacaoColaborador()
+    {
+        _paginaPaginacao = 1;
+        _listarInstalacoesColaboradores = new List<InstalacoesColaboradores>();
+        await ListarInstalacaoColaborador();
+    }
+
+    public async Task ListarInstalacaoColaborador()
+    {
+        try
+        {
+            _carregando = true;
+            StateHasChanged();
+            string? filtros = PegarFiltros();
+
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.InstalacoesColaboradoresListar(Auth!.token!, filtros);
+
+            if (response!.status)
+            {
+                _paginacaoInstalacoesColaboradores = response.meta;
+                _listarInstalacoesColaboradores!.AddRange(response!.data!);
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+            }
+
+            _indiceMenuColaborador = 0;
+            _carregando = false;
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar listar os colaboradores dessa instalação!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    public async Task LimparEListarColaboradores()
+    {
+        _paginaPaginacao = 1;
+        _listarColaboradores = new List<Colaboradores>();
+        await ListarColaboradores();
+    }
+
+    public async Task ListarColaboradores()
+    {
+        try
+        {
+            _carregando = true;
+            StateHasChanged();
+            string? filtros = PegarFiltros();
+
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.ColaboradoresListar(Auth!.token!, filtros);
+
+            if (response!.status)
+            {
+                _paginacaoColaboradores = response.meta;
+                _listarColaboradores!.AddRange(response!.data!);
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+            }
+
+            _indiceMenuColaborador = 1;
+            _carregando = false;
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar listar os colaboradores!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    private void VisualizarInstalacaoColaborador(InstalacoesColaboradores instalacaoColaborador)
+    {
+        try
+        {
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullWidth = true,
+                    FullScreen = true,
+                    CloseButton = false,
+                };
+            var param = new DialogParameters { ["_instalacaoColaborador"] = instalacaoColaborador };
+            Dialog.Show<VisualizarInstalacaoColaboradorCmp>("Visualizar Associação", param, options);
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar exibir o colaborador associado!", Severity.Warning);
+        }
+    }
+
+    private void VisualizarColaborador(Colaboradores colaborador)
+    {
+        try
+        {
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullWidth = true,
+                    FullScreen = true,
+                    CloseButton = false,
+                };
+            var param = new DialogParameters { ["_colaborador"] = colaborador };
+            Dialog.Show<VisualizarColaboradorCmp>("Visualizar Colaborador", param, options);
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar exibir o colaborador!", Severity.Warning);
+        }
+    }
+
+    public async Task CriarInstalacaoColaborador(Colaboradores colaborador)
+    {
+        try
+        {
+            if (colaborador.status == "Inativo")
+            {
+                Snack.Add("Tivemos um problema ao tentar associar, pois o colaborador está inativo!", Severity.Warning);
+                return;
+            }
+
+            var param = new DialogParameters<AlertaAssociacao>
+            {
+                { x => x.ContentText, "Deseja associar esse <b>COLABORADOR</b> a instalação?" }
+            };
+            var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+            var dialog = Dialog.Show<AlertaAssociacao>("Associar Colaborador", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled)
+            {
+                _carregando = true;
+
+                var instalacaoColaborador = new InstalacoesColaboradores
+                    {
+                        instalacoes_id = Instalacao!.id,
+                        colaboradores_id = colaborador.id,
+                        status = "Ativo",
+                    };
+                var reinoCompany = new ReinoCompany();
+                var response = await reinoCompany.InstalacoesColaboradoresCriar(Auth!.token!, instalacaoColaborador);
+
+                if (response!.status)
+                {
+                    Snack.Add("Colaborador associado com sucesso!", Severity.Success);
+                    await LimparEListarColaboradores();
+                }
+                else
+                {
+                    if (!string.IsNullOrEmpty(response.message))
+                    {
+                        Snack.Add(response.message, Severity.Warning);
+                    }
+                    _carregando = false;
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar associar o colaborador!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    public async Task CriarColaborador()
+    {
+        try
+        {
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullWidth = true,
+                    BackdropClick = false,
+                    CloseButton = true,
+                    Position = DialogPosition.TopCenter
+                };
+            var param = new DialogParameters { ["_colaboradorForm"] = new Colaboradores() };
+            var dialog = Dialog.Show<ColaboradoresFormCmp>("Adicionar Colaborador", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled && (bool)result.Data == true)
+            {
+                Snack.Add("Colaborador criado com sucesso!", Severity.Success);
+                tabs.ActivatePanel(1);
+            }
+            else if (!result.Canceled && (bool)result.Data == false)
+            {
+                Snack.Add("Tivemos um problema ao tentar criar o colaborador!", Severity.Warning);
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar criar o colaborador!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    public async Task AtualizarInstalacaoColaborador(InstalacoesColaboradores instalacaoColaborador)
+    {
+        try
+        {
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullWidth = true,
+                    BackdropClick = false,
+                    CloseButton = true,
+                    Position = DialogPosition.TopCenter
+                };
+            var param = new DialogParameters { ["_instalacaoColaboradorForm"] = instalacaoColaborador.Clone() };
+            var dialog = Dialog.Show<InstalacoesColaboradoresFormCmp>("Atualizar Associação", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled && (bool)result.Data == true)
+            {
+                Snack.Add("Colaborador associado atualizado com sucesso!", Severity.Success);
+                await LimparEListarInstalacaoColaborador();
+            }
+            else if (!result.Canceled && (bool)result.Data == false)
+            {
+                Snack.Add("Tivemos um problema ao tentar atualizar associação do colaborador!", Severity.Warning);
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar atualizar associação do colaborador!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    public async Task AtualizarColaborador(Colaboradores colaborador)
+    {
+        try
+        {
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullWidth = true,
+                    BackdropClick = false,
+                    CloseButton = true,
+                    Position = DialogPosition.TopCenter
+                };
+            var param = new DialogParameters { ["_colaboradorForm"] = colaborador.Clone() };
+            var dialog = Dialog.Show<ColaboradoresFormCmp>("Atualizar Colaborador", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled && (bool)result.Data == true)
+            {
+                Snack.Add("Colaborador atualizada com sucesso!", Severity.Success);
+                await LimparEListarColaboradores();
+            }
+            else if (!result.Canceled && (bool)result.Data == false)
+            {
+                Snack.Add("Tivemos um problema ao tentar atualizar o colaborador!", Severity.Warning);
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar atualizar o colaborador!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    public async Task DeletarInstalacaoColaborador(InstalacoesColaboradores instalacaoColaborador)
+    {
+        try
+        {
+            var param = new DialogParameters<AlertaDelete>
+            {
+                { x => x.ContentText, "Tem certeza que deseja deletar essa <b>ASSOCIAÇÃO</b> ao <b>COLABORADOR</b> e todos os dados a ele ligados?" }
+            };
+            var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+            var dialog = Dialog.Show<AlertaDelete>("Deletar Associação", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled)
+            {
+                _carregando = true;
+                var reinoCompany = new ReinoCompany();
+                var response = await reinoCompany.InstalacoesColaboradoresDeletar(Auth!.token!, instalacaoColaborador);
+
+                if (response!.status)
+                {
+                    Snack.Add("Colaborador associado deletado com sucesso!", Severity.Success);
+                    await LimparEListarInstalacaoColaborador();
+                }
+                else
+                {
+                    if (!string.IsNullOrEmpty(response.message))
+                    {
+                        Snack.Add(response.message, Severity.Warning);
+                    }
+                    _carregando = false;
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar deletar associação o colaborador!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    public async Task DeletarColaborador(Colaboradores colaborador)
+    {
+        try
+        {
+            var param = new DialogParameters<AlertaDelete>
+            {
+                { x => x.ContentText, "Tem certeza que deseja deletar esse <b>COLABORADOR</b> e todos os dados a ele ligados?" }
+            };
+            var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+            var dialog = Dialog.Show<AlertaDelete>("Deletar Colaborador", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled)
+            {
+                _carregando = true;
+                var reinoCompany = new ReinoCompany();
+                var response = await reinoCompany.ColaboradoresDeletar(Auth!.token!, colaborador);
+
+                if (response!.status)
+                {
+                    Snack.Add("Colaborador deletado com sucesso!", Severity.Success);
+                    await LimparEListarColaboradores();
+                }
+                else
+                {
+                    if (!string.IsNullOrEmpty(response.message))
+                    {
+                        Snack.Add(response.message, Severity.Warning);
+                    }
+                    _carregando = false;
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar deletar o colaborador!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+}

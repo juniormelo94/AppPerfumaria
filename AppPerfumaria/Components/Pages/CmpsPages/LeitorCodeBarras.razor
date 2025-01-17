@@ -1,0 +1,29 @@
+﻿@page "/barcode"
+@using ZXing.Net.Maui;
+@using ZXing.Net.Maui.Controls;
+
+@* <zxing:CameraBarcodeReaderView x:Name="cameraBarcodeReaderView"
+                               BarcodesDetected="BarcodesDetected" /> *@
+
+@code {
+    // CameraBarcodeReaderView.Options = new BarcodeReaderOptions
+    // {
+    //   Formats = BarcodeFormats.OneDimensional,
+    //   AutoRotate = true,
+    //   Multiple = true
+    // };
+
+
+    // public void BarcodesDetected(object sender, BarcodeDetectionEventArgs e)
+    // {
+    //     if (e is null)
+    //     {
+    //         throw new ArgumentNullException(nameof(e));
+    //     }
+
+    //     foreach (var barcode in e.Results)
+    //     {
+    //         //Console.WriteLine($"Barcodes: {barcode.Format} -> {barcode.Value}");
+    //     }
+    // }
+}

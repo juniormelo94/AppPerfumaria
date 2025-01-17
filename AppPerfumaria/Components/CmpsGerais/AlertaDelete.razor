@@ -1,0 +1,19 @@
+﻿<MudDialog Class="mx-4">
+    <DialogContent>
+        <MudText>@((MarkupString)ContentText!)</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudFab Label="Fechar" OnClick="(() => _mudDialog!.Cancel())"
+                Size="Size.Small" Class="mr-2" />
+        <MudFab Label="Deletar" OnClick="Ok" Size="Size.Small" />
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance? _mudDialog { get; set; }
+    [Parameter]
+    public string? ContentText { get; set; }
+
+    private void Ok() => _mudDialog!.Close(DialogResult.Ok(true));
+}

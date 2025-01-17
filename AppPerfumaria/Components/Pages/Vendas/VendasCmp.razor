@@ -1,0 +1,436 @@
+﻿@using AppPerfumaria.Api.ReinoCompany
+@using AppPerfumaria.Components.CmpsGerais
+@using AppPerfumaria.Components.Pages.Vendas.Cmp
+@using AppPerfumaria.Models.Auth
+@using System.Text.Json.Serialization
+@using AppPerfumaria.Models.Collections
+@using AppPerfumaria.Models.Pagination
+@using AppPerfumaria.Models.Tables
+@using System.Globalization
+
+@inject IDialogService Dialog
+@inject ISnackbar Snack
+
+<MudOverlay DarkBackground Visible="_carregando" ZIndex="10">
+    <MudProgressCircular Indeterminate="true" Color="Color.Default" />
+</MudOverlay>
+
+<MudPaper Class="px-2 w-100" Elevation="4" Style="position:fixed; z-index: 9;">
+    <!-- Barra de pesquisa e botão filtro -->
+    <div class="d-flex">
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.FilterList" OnClick="Filtro"
+                       Color="Color.Inherit" Size="Size.Medium" />
+    </div>
+    <!-- Barra de filtros -->
+    <MudPopover Open="@_exibirFiltro" Fixed="true" Class="px-4 pt-4 w-100"
+                AnchorOrigin="Origin.TopRight" TransformOrigin="Origin.TopRight">
+        <MudGrid Spacing="2" Justify="Justify.Center" Class="mb-1">
+            <MudItem xs="6">
+                <MudSelect @bind-Value="_porPagina" Variant="Variant.Outlined"
+                           Label="Carregar De" Margin="Margin.Dense">
+                    <MudSelectItem Value="@("10")" />
+                    <MudSelectItem Value="@("15")" />
+                    <MudSelectItem Value="@("20")" />
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="6">
+                <MudSelect T="string" @bind-Value="_statusFiltro" Variant="Variant.Outlined"
+                           Label="Status" Margin="Margin.Dense">
+                    <MudSelectItem Value="@("Todos")" />
+                    <MudSelectItem Value="@("Ativo")" />
+                    <MudSelectItem Value="@("Inativo")" />
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12">
+                <MudDateRangePicker Label="Data de Criação" @bind-DateRange="_dataCriacaoFiltro"
+                                    Variant="Variant.Outlined"
+                                    PlaceholderStart="Data Início"
+                                    PlaceholderEnd="Data Fim" Clearable="true"
+                                    DateFormat="dd/MM/yyyy"
+                                    Margin="Margin.Dense" />
+            </MudItem>
+        </MudGrid>
+        <MudDivider />
+        <div class="d-flex my-2 float-end">
+            <MudFab Label="Fechar" Size="Size.Small"
+                    OnClick="Filtro" Class="mr-2" />
+            <MudFab Label="Filtrar" Size="Size.Small"
+                    OnClick="AplicarFiltros" />
+        </div>
+    </MudPopover>
+</MudPaper>
+
+<div class="pa-2" style="margin-top: 55px;">
+    <!-- Listar resultados dos vendas da instalação -->
+    @if (_listarVendas != null && _listarVendas.Count() > 0)
+    {
+        @foreach (var venda in _listarVendas)
+        {
+            <MudPaper Class="px-4 py-2 mb-3" Elevation="2" @onclick="(() => VisualizarVenda(venda!.id))">
+                <MudGrid Spacing="2" Justify="Justify.Center">
+                    <MudItem xs="10">
+                        <div class="d-flex">
+                            <MudText Typo="Typo.body2">
+                                Nº Referência:
+                            </MudText>
+                            <MudSpacer />
+                            <MudText Typo="Typo.body2" Class="fw-bold">
+                                @venda!.id
+                            </MudText>
+                        </div>
+                        <div class="d-flex mt-1">
+                            <MudText Typo="Typo.body2">
+                                Cliente:
+                            </MudText>
+                            <MudSpacer />
+                            <MudText Typo="Typo.body2" Class="fw-bold">
+                                @venda!.cliente!.nome_completo.ToUpper()
+                            </MudText>
+                        </div>
+                        <div class="d-flex">
+                            <MudText Typo="Typo.body2">
+                                Colaborador:
+                            </MudText>
+                            <MudSpacer />
+                            <MudText Typo="Typo.body2" Class="fw-bold">
+                                @venda!.colaborador!.nome_completo.ToUpper()
+                            </MudText>
+                        </div>
+                        <div class="d-flex mt-1">
+                            <MudText Typo="Typo.body2">
+                                Preço Total:
+                            </MudText>
+                            <MudSpacer />
+                            <MudText Typo="Typo.body2" Class="fw-bold">
+                                @string.Format(new CultureInfo("pt-BR"), "{0:C}", venda.preco_total)
+                            </MudText>
+                        </div>
+                        <div class="d-flex">
+                            <MudText Typo="Typo.body2">
+                                Lucro Total:
+                            </MudText>
+                            <MudSpacer />
+                            <MudText Typo="Typo.body2" Class="@(venda.lucro_total_desconto > 0 ? "fw-bold text-decoration-line-through" : "fw-bold")">
+                                @string.Format(new CultureInfo("pt-BR"), "{0:C}", venda.lucro_total_original)
+                            </MudText>
+                        </div>
+                        @if (venda.lucro_total_desconto > 0)
+                        {
+                            <div class="d-flex">
+                                <MudText Typo="Typo.body2">
+                                    Lucro Desconto:
+                                </MudText>
+                                <MudSpacer />
+                                <MudText Class="fw-bold" Typo="Typo.body2">
+                                    @string.Format(new CultureInfo("pt-BR"), "{0:C}", venda.lucro_total_desconto)
+                                </MudText>
+                            </div>
+                        }
+                        @if (venda!.taxa_juros != null)
+                        {
+                            <div class="d-flex">
+                                <MudText Typo="Typo.body2">
+                                    <!-- Dinheiro ou Pix -->
+                                    @(new[] { 1, 4 }.Contains(venda!.formas_pagamentos_id) ? "Desconto Pagamento(Dinheiro/Pix)" : "Taxa Máquina")
+                                </MudText>
+                                <MudSpacer />
+                                <MudText Class="fw-bold" Typo="Typo.body2">
+                                    @venda!.taxa_juros%
+                                </MudText>
+                            </div>
+                        }
+                        <div class="d-flex mt-1">
+                            <MudText Typo="Typo.body2">
+                                Forma Pagamento:
+                            </MudText>
+                            <MudSpacer />
+                            <MudText Typo="Typo.body2" Class="fw-bold">
+                                @venda!.forma_pagamento!.nome
+                            </MudText>
+                        </div>
+                        @if (venda.quantidade_parcelas != null)
+                        {
+                            <div class="d-flex">
+                                <MudText Typo="Typo.body2">
+                                    Quantidade Parcelas:
+                                </MudText>
+                                <MudSpacer />
+                                <MudText Class="fw-bold" Typo="Typo.body2">
+                                    @(venda.quantidade_parcelas == 1 ? $"{venda.quantidade_parcelas} - Parcela" : $"{venda.quantidade_parcelas} - Parcelas")
+                                </MudText>
+                            </div>
+                        }
+                        @if (venda.valor_pacelas != null)
+                        {
+                            <div class="d-flex">
+                                <MudText Typo="Typo.body2">
+                                    Valor Parcela(s):
+                                </MudText>
+                                <MudSpacer />
+                                <MudText Class="fw-bold" Typo="Typo.body2">
+                                    @string.Format(new CultureInfo("pt-BR"), "{0:C}", venda.valor_pacelas)
+                                </MudText>
+                            </div>
+                        }
+                        <div class="d-flex mt-1">
+                            <MudText Typo="Typo.body2">
+                                Data Venda:
+                            </MudText>
+                            <MudSpacer />
+                            <MudText Typo="Typo.body2" Class="fw-bold">
+                                @venda!.created_at.ToString("dd/MM/yyyy")
+                            </MudText>
+                        </div>
+                        <div class="d-flex">
+                            <MudText Typo="Typo.body2">
+                                Quantidade Produtos:
+                            </MudText>
+                            <MudSpacer />
+                            <MudText Typo="Typo.body2" Class="fw-bold">
+                                @venda!.vendas_estoques?.Count()
+                            </MudText>
+                        </div>
+                    </MudItem>
+                    <MudItem xs="2" Class="d-flex align-items-center justify-content-center">
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Medium"
+                                       OnClick="(() => DeletarVenda(venda))" />
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+        }
+
+        <MudItem Class="py-5" xs="12">
+            @if (_paginacaoVendas!.current_page != _paginacaoVendas!.last_page)
+            {
+                <MudFab Class="w-100" Label="Carregar Mais" OnClick="CarregarMais"
+                        Disabled="false" Size="Size.Small" />
+            }
+
+            <MudText Align="Align.Center" Typo="Typo.body2" Class="mt-2 w-100">
+                @($"Total: {_paginacaoVendas!.total} | Exibidos: {_paginacaoVendas!.to}")
+            </MudText>
+        </MudItem>
+    }
+    else
+    {
+        @if (!_carregando)
+        {
+            <MudItem Class="py-5" xs="12">
+                <Animate class="w-100" Animation="Animations.FadeDown" Duration="TimeSpan.FromSeconds(0.5)" Delay="TimeSpan.FromSeconds(0.4)">
+                    <MudText Class="mt-5" Align="Align.Center" Typo="Typo.body1">Nenhum resultado foi encontrado!</MudText>
+                </Animate>
+            </MudItem>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public Auth? Auth { get; set; }
+    [Parameter] public Instalacoes? Instalacao { get; set; }
+    [Parameter] public EventCallback AtualizarCarinho { get; set; }
+    private List<Vendas>? _listarVendas = new List<Vendas>();
+    private MetaPagination? _paginacaoVendas;
+    private MudTabs? tabs;
+    private bool _carregando = true;
+    private bool _exibirFiltro = false;
+    private string? _pesquisarFiltro;
+    private string? _statusFiltro = "Todos";
+    private DateRange _dataCriacaoFiltro = new DateRange();
+    private string _porPagina = "10";
+    private int _paginaPaginacao = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        do
+        {
+            await Task.Delay(300);
+        }
+        while (Auth == null || Instalacao == null);
+
+        await ListarVendas();
+    }
+
+    private async Task Pesquisar(string pesquisar)
+    {
+        await Task.Delay(1500);
+
+        if (pesquisar == _pesquisarFiltro)
+        {
+            await AplicarFiltros();
+        }
+    }
+
+    public async Task CarregarMais()
+    {
+
+        _paginaPaginacao++;
+        await ListarVendas();
+    }
+
+    private void Filtro()
+    {
+        _exibirFiltro = !_exibirFiltro;
+    }
+
+    public string? PegarFiltros()
+    {
+        string filtros = $"?instalacoes_id={Instalacao!.id}&page={_paginaPaginacao}&por_pagina={_porPagina}";
+
+        if (!string.IsNullOrEmpty(_pesquisarFiltro))
+        {
+            filtros += $"&pesquisar={_pesquisarFiltro}";
+        }
+        if (!string.IsNullOrEmpty(_statusFiltro) && _statusFiltro != "Todos")
+        {
+            filtros += $"&status={_statusFiltro}";
+        }
+        if (_dataCriacaoFiltro.Start != null && _dataCriacaoFiltro.End != null)
+        {
+            filtros += $"&criado_de={_dataCriacaoFiltro.Start?.ToString("yyyy-MM-dd")}&criado_ate={_dataCriacaoFiltro.End?.ToString("yyyy-MM-dd")}";
+        }
+
+        return filtros;
+    }
+
+    public async Task AplicarFiltros()
+    {
+        _exibirFiltro = false;
+        await LimparEListarVendas();
+    }
+
+    public async Task LimparEListarVendas()
+    {
+        _paginaPaginacao = 1;
+        _listarVendas = new List<Vendas>();
+        await ListarVendas();
+    }
+
+    public async Task ListarVendas()
+    {
+        try
+        {
+            _carregando = true;
+            StateHasChanged();
+            string? filtros = PegarFiltros();
+
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.VendasListar(Auth!.token!, filtros);
+
+            if (response!.status)
+            {
+                _paginacaoVendas = response.meta;
+                _listarVendas!.AddRange(response!.data!);
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+            }
+
+            _carregando = false;
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar listar as vendas!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    private void VisualizarVenda(int id)
+    {
+        try
+        {
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullWidth = true,
+                    FullScreen = true,
+                    CloseButton = false,
+                };
+            var param = new DialogParameters 
+            { 
+                ["_venda_id"] = id
+            };
+            Dialog.Show<VisualizarVendaCmp>("Visualizar Venda", param, options);
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar exibir a venda!", Severity.Warning);
+        }
+    }
+
+    // public async Task AtualizarProduto(Produtos produto)
+    // {
+    //     try
+    //     {
+    //         var options = new DialogOptions
+    //             {
+    //                 MaxWidth = MaxWidth.ExtraExtraLarge,
+    //                 FullWidth = true,
+    //                 BackdropClick = false,
+    //                 CloseButton = true,
+    //                 Position = DialogPosition.TopCenter
+    //             };
+    //         var param = new DialogParameters { ["_produtoForm"] = produto.Clone() };
+    //         var dialog = Dialog.Show<ProdutosFormCmp>("Atualizar Produto", param, options);
+    //         var result = await dialog.Result;
+    //         if (!result.Canceled && (bool)result.Data == true)
+    //         {
+    //             Snack.Add("Produto atualizado com sucesso!", Severity.Success);
+    //             await LimparEListarVendas();
+    //         }
+    //         else if (!result.Canceled && (bool)result.Data == false)
+    //         {
+    //             Snack.Add("Tivemos um problema ao tentar atualizar o produto!", Severity.Warning);
+    //         }
+    //     }
+    //     catch (Exception e)
+    //     {
+    //         Snack.Add("Tivemos um problema ao tentar atualizar o produto!", Severity.Warning);
+    //         _carregando = false;
+    //     }
+    // }
+
+    public async Task DeletarVenda(Vendas venda)
+    {
+        try
+        {
+            var param = new DialogParameters<AlertaDelete>
+            {
+                { x => x.ContentText, "Tem certeza que deseja deletar essa <b>VENDA</b> e todos os dados a ela ligados?" }
+            };
+            var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+            var dialog = Dialog.Show<AlertaDelete>("Deletar Venda", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled)
+            {
+                _carregando = true;
+                var reinoCompany = new ReinoCompany();
+                var response = await reinoCompany.VendasDeletar(Auth!.token!, venda);
+
+                if (response!.status)
+                {
+                    Snack.Add("Venda deletada com sucesso!", Severity.Success);
+                    await LimparEListarVendas();
+                }
+                else
+                {
+                    if (!string.IsNullOrEmpty(response.message))
+                    {
+                        Snack.Add(response.message, Severity.Warning);
+                    }
+                    _carregando = false;
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar deletar a venda!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+}

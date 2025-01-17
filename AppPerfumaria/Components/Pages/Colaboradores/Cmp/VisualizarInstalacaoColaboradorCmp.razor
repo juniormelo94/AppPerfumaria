@@ -1,0 +1,145 @@
+﻿@using AppPerfumaria.Models.Tables
+
+<MudDialog ContentClass="bg-gray py-5" TitleClass="d-flex pb-0 pt-2">
+    <TitleContent>
+        <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft"
+                 OnClick="(() => _mudDialog!.Cancel())" />
+        <MudSpacer />
+        <MudIcon Icon="@Icons.Material.Filled.Badge" Class="mt-3" />
+    </TitleContent>
+    <DialogContent>
+        @if (!string.IsNullOrEmpty(_instalacaoColaborador!.colaborador!.img))
+        {
+            <MudCardMedia Class="rounded-lg w-100" Image="@($"data:image/png;base64,{_instalacaoColaborador!.colaborador!.img}")" Style="height: 350px;" />
+        }
+
+        <MudPaper Class="pa-2 mt-3" Elevation="0">
+            <MudAlert Icon="@(_instalacaoColaborador!.colaborador.status == "Ativo" ? Icons.Material.Filled.ThumbUp : Icons.Material.Filled.ThumbDown)"
+                      Severity="Severity.Normal" Dense="true"
+                      ContentAlignment="HorizontalAlignment.Center" Class="fw-bold">
+                COLABORADOR
+            </MudAlert>
+
+            <MudText Class="fw-bold mt-2" Typo="Typo.body1">
+                @_instalacaoColaborador!.colaborador.nome_completo.ToUpper()
+            </MudText>
+
+            <MudText Typo="Typo.body2">
+                @($"{_instalacaoColaborador!.colaborador.primeiro_nome.ToUpper()} {_instalacaoColaborador!.colaborador.ultimo_nome.ToUpper()}")
+            </MudText>
+
+            <MudText Typo="Typo.body2">
+                @if (!string.IsNullOrEmpty(_instalacaoColaborador!.colaborador!.cpf))
+                {
+                    @_instalacaoColaborador!.colaborador!.apelido
+                }
+            </MudText>
+
+            <MudDivider Class="mt-2" />
+
+            <MudExpansionPanels Class="mt-2">
+                <MudExpansionPanel Text="Dados:" HeaderClass="fw-bold py-0" Expanded="true">
+                    <MudText Typo="Typo.body2">
+                        <b>CPF:</b> @_instalacaoColaborador!.colaborador!.cpf
+                    </MudText>
+
+                    <MudText Typo="Typo.body2">
+                        <b>Data Nasc.:</b> @_instalacaoColaborador!.colaborador!.data_nascimento?.ToString("dd/MM/yyyy")
+                    </MudText>
+
+                    <MudText Typo="Typo.body2">
+                        @if (!string.IsNullOrEmpty(_instalacaoColaborador!.colaborador!.rg))
+                        {
+                            <b>RG:</b> @_instalacaoColaborador!.colaborador!.rg
+                        }
+                    </MudText>
+
+                    <MudText Typo="Typo.body2">
+                        <b>Sexo:</b> @_instalacaoColaborador!.colaborador!.sexo
+                    </MudText>
+
+                    <MudText Typo="Typo.body2">
+                        @if (!string.IsNullOrEmpty(_instalacaoColaborador!.colaborador!.estado_civil))
+                        {
+                            <b>Estado Civil:</b> @_instalacaoColaborador!.colaborador!.estado_civil
+                        }
+                    </MudText>
+                </MudExpansionPanel>
+            </MudExpansionPanels>
+
+            <MudExpansionPanels Class="mt-2">
+                <MudExpansionPanel Text="Contato:" HeaderClass="fw-bold py-0" Expanded="true">
+                    <MudText Typo="Typo.body2">
+                        @if (!string.IsNullOrEmpty(_instalacaoColaborador!.colaborador!.email_pessoal))
+                        {
+                            <b>Email:</b> @_instalacaoColaborador!.colaborador!.email_pessoal
+                        }
+                    </MudText>
+
+                    <MudText Typo="Typo.body2">
+                        @if (!string.IsNullOrEmpty(_instalacaoColaborador!.colaborador!.telefone_pessoal))
+                        {
+                            <b>Telefone:</b> @_instalacaoColaborador!.colaborador!.telefone_pessoal
+                        }
+                    </MudText>
+
+                    <MudText Typo="Typo.body2">
+                        @if (!string.IsNullOrEmpty(_instalacaoColaborador!.colaborador!.celular_pessoal))
+                        {
+                            <b>Celular:</b> @_instalacaoColaborador!.colaborador!.celular_pessoal
+                        }
+                    </MudText>
+
+                    <MudText Typo="Typo.body2">
+                        @if (!string.IsNullOrEmpty(_instalacaoColaborador!.colaborador!.whatsapp_pessoal))
+                        {
+                            <b>WhatsApp:</b> @_instalacaoColaborador!.colaborador!.whatsapp_pessoal
+                        }
+                    </MudText>
+
+                    <MudText Typo="Typo.body2">
+                        @if (!string.IsNullOrEmpty(_instalacaoColaborador!.colaborador!.instagram_pessoal))
+                        {
+                            <b>Instagram:</b> @_instalacaoColaborador!.colaborador!.instagram_pessoal
+                        }
+                    </MudText>
+
+                    <MudText Typo="Typo.body2">
+                        @if (!string.IsNullOrEmpty(_instalacaoColaborador!.colaborador!.facebook_pessoal))
+                        {
+                            <b>Facebook:</b> @_instalacaoColaborador!.colaborador!.facebook_pessoal
+                        }
+                    </MudText>
+                </MudExpansionPanel>
+            </MudExpansionPanels>
+        </MudPaper>
+
+        <MudPaper Class="pa-2 mt-3" Elevation="0">
+            <MudAlert Icon="@(_instalacaoColaborador!.status == "Ativo" ? Icons.Material.Filled.ThumbUp : Icons.Material.Filled.ThumbDown)"
+                      Severity="Severity.Normal" Dense="true" 
+                      ContentAlignment="HorizontalAlignment.Center" Class="fw-bold">
+                ASSOCIAÇÃO
+            </MudAlert>
+
+            @if (!string.IsNullOrEmpty(_instalacaoColaborador!.observacoes))
+            {
+                <MudExpansionPanels Class="mt-2">
+                    <MudExpansionPanel Text="Observações:" HeaderClass="fw-bold py-0" Expanded="true">
+                        <pre>
+                            @_instalacaoColaborador!.observacoes
+                        </pre>
+                    </MudExpansionPanel>
+                </MudExpansionPanels>
+            }
+        </MudPaper>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance? _mudDialog { get; set; }
+    [Parameter]
+    public InstalacoesColaboradores? _instalacaoColaborador { get; set; }
+
+    private void Ok() => _mudDialog!.Close(DialogResult.Ok(true));
+}
