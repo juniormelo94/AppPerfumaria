@@ -1,3 +1,4 @@
+using ZXing;
 using ZXing.Net.Maui;
 using ZXing.Net.Maui.Controls;
 
@@ -29,6 +30,7 @@ public partial class CameraPage : ContentPage
 
     protected void BarcodesDetected(object sender, BarcodeDetectionEventArgs e)
     {
+        cameraBarcodeReaderView.IsTorchOn = false;
         StopAutoFocusTimer();
 
         Application.Current.MainPage.Navigation.PopModalAsync();
@@ -40,7 +42,7 @@ public partial class CameraPage : ContentPage
     {
         _focusTimerCancellation = new CancellationTokenSource();
 
-        Device.StartTimer(TimeSpan.FromSeconds(5), () =>
+        Dispatcher.StartTimer(TimeSpan.FromSeconds(5), () =>
         {
             if (_focusTimerCancellation == null)
             {
@@ -59,6 +61,18 @@ public partial class CameraPage : ContentPage
         _focusTimerCancellation = null;
     }
 
+    private void StopCamera(object sender, EventArgs e)
+    {
+        Application.Current.MainPage.Navigation.PopModalAsync(); 
+
+        Dispatcher.Dispatch(() =>
+        {
+            StopAutoFocusTimer();
+            cameraBarcodeReaderView.IsDetecting = false;
+            cameraBarcodeReaderView.Handler?.DisconnectHandler();
+        });
+    }
+
     private void OnFlash(object sender, EventArgs e)
     {
         cameraBarcodeReaderView.IsTorchOn = !cameraBarcodeReaderView.IsTorchOn;
@@ -68,5 +82,17 @@ public partial class CameraPage : ContentPage
     {
         cameraBarcodeReaderView.CameraLocation
         = cameraBarcodeReaderView.CameraLocation == CameraLocation.Rear ? CameraLocation.Front : CameraLocation.Rear;
+    }
+
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+
+        Dispatcher.Dispatch(() =>
+        {
+            StopAutoFocusTimer();
+            cameraBarcodeReaderView.IsDetecting = false;
+            cameraBarcodeReaderView.Handler?.DisconnectHandler();
+        });
     }
 }

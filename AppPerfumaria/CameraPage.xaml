@@ -27,6 +27,7 @@
                 x:Name="cameraBarcodeReaderView"
                 IsDetecting="True"
                 IsTorchOn="True"
+                x:FieldModifier="public"
                 BarcodesDetected="BarcodesDetected" />
 
             <Grid>
@@ -35,10 +36,10 @@
                     VerticalOptions="End"
                     Clicked="OnFlash" />
 
-                <!--<Button Text="Flash"
+                <Button Text="Fechar"
                     HorizontalOptions="Center"
                     VerticalOptions="End"
-                    Clicked="OnFlashButtonClicked" />-->
+                    Clicked="StopCamera" />
 
                 <Button Text="Inverter"
                         class="btn btn-success"
