@@ -91,7 +91,7 @@
             @foreach (var instalacaoProduto in _listarInstalacoesProdutos)
             {
                 <MudItem xs="6">
-                    <MudCard Style="@(instalacaoProduto!.estoque!.Count() > 0 ? "height:350px;" : "height:350px; opacity:0.3;")" @onclick="(() => VisualizarInstalacaoProduto(instalacaoProduto))">
+                    <MudCard Style="@(VerificarEstoque(instalacaoProduto!.estoque!) ? "height:350px;" : "height:350px; opacity:0.3;")" @onclick="(() => VisualizarInstalacaoProduto(instalacaoProduto))">
                         @if (instalacaoProduto!.estoque!.Any(p => p.preco_venda_desconto > 0))
                         {
                             <div style="@($"background:{Colors.Pink.Darken3}; position:absolute; font-size:12px;")" 
@@ -171,6 +171,16 @@
 
         _ = ListarInstalacaoMarcas();
         await ListarInstalacaoProdutos();
+    }
+
+    private bool VerificarEstoque(List<Estoques>? estoques)
+    {
+        if (estoques!.Count() > 0 && estoques!.Any(p => p.status == "Ativo"))
+        {
+            return true;
+        }
+
+        return false;
     }
 
     private async Task Pesquisar(string pesquisar)
