@@ -19,6 +19,7 @@ public partial class CameraPage : ContentPage
             Multiple = true
         };
 
+        cameraBarcodeReaderView.IsTorchOn = !cameraBarcodeReaderView.IsTorchOn;
         StartAutoFocusTimer();
     }
 
@@ -63,12 +64,13 @@ public partial class CameraPage : ContentPage
 
     private void StopCamera(object sender, EventArgs e)
     {
-        Application.Current.MainPage.Navigation.PopModalAsync(); 
+        Application.Current.MainPage.Navigation.PopModalAsync();
 
         Dispatcher.Dispatch(() =>
         {
-            StopAutoFocusTimer();
+            cameraBarcodeReaderView.IsTorchOn = false;
             cameraBarcodeReaderView.IsDetecting = false;
+            StopAutoFocusTimer();
             cameraBarcodeReaderView.Handler?.DisconnectHandler();
         });
     }
@@ -80,6 +82,8 @@ public partial class CameraPage : ContentPage
 
     private void OnLocation(object sender, EventArgs e)
     {
+        cameraBarcodeReaderView.IsTorchOn = false;
+
         cameraBarcodeReaderView.CameraLocation
         = cameraBarcodeReaderView.CameraLocation == CameraLocation.Rear ? CameraLocation.Front : CameraLocation.Rear;
     }
@@ -90,8 +94,9 @@ public partial class CameraPage : ContentPage
 
         Dispatcher.Dispatch(() =>
         {
-            StopAutoFocusTimer();
+            cameraBarcodeReaderView.IsTorchOn = false;
             cameraBarcodeReaderView.IsDetecting = false;
+            StopAutoFocusTimer();
             cameraBarcodeReaderView.Handler?.DisconnectHandler();
         });
     }

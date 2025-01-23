@@ -6,6 +6,7 @@
 @using AppPerfumaria.Models.Collections
 @using AppPerfumaria.Models.Pagination
 @using AppPerfumaria.Models.Tables
+@using ZXing.Net.Maui
 
 @inject IDialogService Dialog
 @inject ISnackbar Snack
@@ -15,6 +16,17 @@
 </MudOverlay>
 
 <MudPaper Class="px-2 w-100" Elevation="4" Style="position:fixed; z-index: 9;">
+    <!-- Barra de leitor -->
+    <div class="d-flex">
+        <MudTextField Value="_leitorFiltro" Label="Código Barras ou QR Code" Variant="Variant.Outlined"
+                      Adornment="Adornment.End" Margin="Margin.Dense" Immediate="true"
+                      ValueChanged="(async (string v) => { _leitorFiltro = v; await Leitor(v); })"
+                      AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Inherit"
+                      ClearIcon="@Icons.Material.Filled.Clear" Clearable="true" />
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.QrCodeScanner" OnClick="AbrirScanner"
+                       Color="Color.Inherit" Size="Size.Medium" />
+    </div>
     <!-- Barra de pesquisa e botão filtro -->
     <div class="d-flex">
         <MudTextField Value="_pesquisarFiltro" Label="Pesquisar" Variant="Variant.Outlined"
@@ -90,7 +102,7 @@
     </div>
 </MudPaper>
 
-<div class="pa-2" style="margin-top: 100px;">
+<div class="pa-2" style="margin-top: 158px;">
     @if (_indiceMenuProduto == 0)
     {
         <!-- Listar resultados dos produtos associados -->
@@ -255,6 +267,7 @@
     private bool _carregando = true;
     private bool _exibirFiltro = false;
     private string? _pesquisarFiltro;
+    private string? _leitorFiltro;
     private string? _statusFiltro = "Todos";
     private DateRange _dataCriacaoFiltro = new DateRange();
     private int _marcaFiltro = 0;
@@ -283,6 +296,35 @@
         }
     }
 
+    private async Task Leitor(string leitor)
+    {
+        await Task.Delay(1500);
+
+        if (leitor == _leitorFiltro)
+        {
+            await AplicarFiltros();
+        }
+    }
+
+    public async Task AbrirScanner()
+    {
+        var resultados = await BuscarResultadoScan();
+        var barcode = resultados.FirstOrDefault();
+        if (barcode != null)
+        {
+            _leitorFiltro = barcode.Value;
+            await AplicarFiltros();
+        }
+    }
+
+    public async Task<BarcodeResult[]> BuscarResultadoScan()
+    {
+        var cameraPage = new CameraPage();
+        await Application.Current!.MainPage!.Navigation.PushModalAsync(cameraPage);
+
+        return await cameraPage.WaitForResultAsync();
+    }
+
     public async Task CarregarMais()
     {
         if (_indiceMenuProduto == 0)
@@ -309,6 +351,10 @@
         if (!string.IsNullOrEmpty(_pesquisarFiltro))
         {
             filtros += $"&pesquisar={_pesquisarFiltro}";
+        }
+        if (!string.IsNullOrEmpty(_leitorFiltro))
+        {
+            filtros += $"&leitor={_leitorFiltro}";
         }
         if (!string.IsNullOrEmpty(_statusFiltro) && _statusFiltro != "Todos")
         {

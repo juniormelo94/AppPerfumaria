@@ -3,6 +3,7 @@
 @using AppPerfumaria.Models.Auth
 @using AppPerfumaria.Models.Resources
 @using AppPerfumaria.Models.Tables
+@using ZXing.Net.Maui
 
 @inject IDialogService Dialog
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
@@ -34,8 +35,14 @@
                               Label="Descrição*" Disabled="_verificando" Margin="Margin.Dense" />
                 <ValidationMessage For="() => _produtoForm.descricao" />
 
-                <MudTextField T="string" @bind-Value="_produtoForm.codigo_barras" Variant="Variant.Outlined"
-                              Label="Código de Barras" Disabled="_verificando" Margin="Margin.Dense" />
+                <div class="d-flex">
+                    <MudTextField T="string" @bind-Value="_produtoForm.codigo_barras" Variant="Variant.Outlined"
+                                  Label="Código de Barras" Disabled="_verificando" Margin="Margin.Dense" />
+                    <div>
+                        <MudIconButton Icon="@Icons.Material.Filled.QrCodeScanner"
+                                       OnClick="AbrirScanner" Size="Size.Medium" Style="margin-top: 3px;" />
+                    </div>
+                </div>
                 <ValidationMessage For="() => _produtoForm.codigo_barras" />
 
                 <MudTextField T="string" @bind-Value="_produtoForm.qr_code" Variant="Variant.Outlined"
@@ -244,6 +251,24 @@
         {
             Snack.Add("Tivemos um problema ao tentar validar dados!", Severity.Warning);
         }
+    }
+
+    public async Task AbrirScanner()
+    {
+        var resultados = await BuscarResultadoScan();
+        var barcode = resultados.FirstOrDefault();
+        if (barcode != null)
+        {
+            _produtoForm!.codigo_barras = barcode.Value;
+        }
+    }
+
+    public async Task<BarcodeResult[]> BuscarResultadoScan()
+    {
+        var cameraPage = new CameraPage();
+        await Application.Current!.MainPage!.Navigation.PushModalAsync(cameraPage);
+
+        return await cameraPage.WaitForResultAsync();
     }
 
     private async void UploadFiles(IBrowserFile file)

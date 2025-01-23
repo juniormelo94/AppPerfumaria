@@ -20,8 +20,6 @@ namespace AppPerfumaria
 
             cameraBarcodeReaderView.CameraLocation
             = cameraBarcodeReaderView.CameraLocation == CameraLocation.Rear ? CameraLocation.Front : CameraLocation.Rear;
-
-
         }
 
         protected void BarcodesDetected(object sender, BarcodeDetectionEventArgs e)
