@@ -324,7 +324,7 @@
             Nav.NavigateTo("/", true);
         }
 
-        _multiplosAcessos = _auth?.data?ce.colaborador_user?.instalacoes_ids?.Count() > 1;
+        _multiplosAcessos = _auth?.data?.colaborador_user?.instalacoes_ids?.Count() > 1;
         await AtualizarCarinho();
         _carregando = false;
     }
