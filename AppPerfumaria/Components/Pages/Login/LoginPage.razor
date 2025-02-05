@@ -67,7 +67,7 @@
                         @foreach (var instalacao in _instalacoes)
                         {
                         <MudSelectItem Value="instalacao.id.ToString()">
-                            @($"{instalacao.endereco} {instalacao.numero}, {instalacao.bairro} - {instalacao.cidade}/{instalacao.uf}")
+                                @($"{instalacao.endereco.ToUpper()} {instalacao.numero.ToUpper()}, {instalacao.bairro.ToUpper()} - {instalacao.cidade.ToUpper()}/{instalacao.uf.ToUpper()}")
                         </MudSelectItem>
                         }
                     </MudSelect>
