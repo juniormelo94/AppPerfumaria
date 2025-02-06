@@ -16,14 +16,16 @@
 </MudOverlay>
 
 <MudPaper Class="px-2 w-100" Elevation="4" Style="position:fixed; z-index: 9;">
-    <!-- Barra de card e botão filtro -->
+    <!-- Barra de card, botão gráficos e botão filtro -->
     <div class="d-flex">
         <MudTabs Elevation="4" Rounded="true" Centered="true" @ref="tabs">
             <MudTabPanel Icon="@Icons.Material.Filled.Storefront" Text="Vendas" 
-                         OnClick="LimparEListarVendas" />
-            <MudTabPanel Text="Dados" OnClick="LimparEListarDados" />
+                         OnClick="(() => LimparEListarVendas(true))" />
+            <MudTabPanel Text="Vendas" OnClick="(() => LimparEListarVendas(false))" />
         </MudTabs>
         <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.InsertChartOutlined" OnClick="VisualizarGraficos"
+                       Color="Color.Inherit" Size="Size.Medium" />
         <MudIconButton Icon="@Icons.Material.Filled.FilterList" OnClick="Filtro"
                        Color="Color.Inherit" Size="Size.Medium" />
     </div>
@@ -219,7 +221,7 @@
                         </MudItem>
                         <MudItem xs="2" Class="d-flex align-items-center justify-content-center">
                             <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Medium"
-                                           OnClick="(() => DeletarVenda(venda))" />
+                                           OnClick="(() => DeletarVenda(venda, true))" />
                         </MudItem>
                     </MudGrid>
                 </MudPaper>
@@ -228,7 +230,7 @@
             <MudItem Class="py-5" xs="12">
                 @if (_paginacaoVendas!.current_page != _paginacaoVendas!.last_page)
                 {
-                    <MudFab Class="w-100" Label="Carregar Mais" OnClick="CarregarMais"
+                    <MudFab Class="w-100" Label="Carregar Mais" OnClick="(() => CarregarMais(true))"
                             Disabled="false" Size="Size.Small" />
                 }
 
@@ -251,7 +253,167 @@
     }
     else if (_indiceMenuVenda == 1)
     {
+        <!-- Listar resultados dos vendas da instalação -->
+        @if (_listarVendas != null && _listarVendas.Count() > 0)
+        {
+            @foreach (var venda in _listarVendas)
+            {
+                <MudPaper Class="px-4 py-2 mb-3" Elevation="2" @onclick="(() => VisualizarVenda(venda!.id))">
+                    <MudGrid Spacing="2" Justify="Justify.Center">
+                        <MudItem xs="10">
+                            <div class="d-flex">
+                                <MudText Typo="Typo.body2">
+                                    Nº Referência:
+                                </MudText>
+                                <MudSpacer />
+                                <MudText Typo="Typo.body2" Class="fw-bold">
+                                    @venda!.id
+                                </MudText>
+                            </div>
+                            <div class="d-flex mt-1">
+                                <MudText Typo="Typo.body2">
+                                    Cliente:
+                                </MudText>
+                                <MudSpacer />
+                                <MudText Typo="Typo.body2" Class="fw-bold">
+                                    @venda!.cliente!.nome_completo.ToUpper()
+                                </MudText>
+                            </div>
+                            <div class="d-flex">
+                                <MudText Typo="Typo.body2">
+                                    Colaborador:
+                                </MudText>
+                                <MudSpacer />
+                                <MudText Typo="Typo.body2" Class="fw-bold">
+                                    @venda!.colaborador!.nome_completo.ToUpper()
+                                </MudText>
+                            </div>
+                            <div class="d-flex mt-1">
+                                <MudText Typo="Typo.body2">
+                                    Preço Total:
+                                </MudText>
+                                <MudSpacer />
+                                <MudText Typo="Typo.body2" Class="fw-bold">
+                                    @string.Format(new CultureInfo("pt-BR"), "{0:C}", venda.preco_total)
+                                </MudText>
+                            </div>
+                            <div class="d-flex">
+                                <MudText Typo="Typo.body2">
+                                    Lucro Total:
+                                </MudText>
+                                <MudSpacer />
+                                <MudText Typo="Typo.body2" Class="@(venda.lucro_total_desconto > 0 ? "fw-bold text-decoration-line-through" : "fw-bold")">
+                                    @string.Format(new CultureInfo("pt-BR"), "{0:C}", venda.lucro_total_original)
+                                </MudText>
+                            </div>
+                            @if (venda.lucro_total_desconto > 0)
+                            {
+                                <div class="d-flex">
+                                    <MudText Typo="Typo.body2">
+                                        Lucro Desconto:
+                                    </MudText>
+                                    <MudSpacer />
+                                    <MudText Class="fw-bold" Typo="Typo.body2">
+                                        @string.Format(new CultureInfo("pt-BR"), "{0:C}", venda.lucro_total_desconto)
+                                    </MudText>
+                                </div>
+                            }
+                            @if (venda!.taxa_juros != null)
+                            {
+                                <div class="d-flex">
+                                    <MudText Typo="Typo.body2">
+                                        <!-- Dinheiro ou Pix -->
+                                        @(new[] { 1, 4 }.Contains(venda!.formas_pagamentos_id) ? "Desconto Pagamento(Dinheiro/Pix)" : "Taxa Máquina")
+                                    </MudText>
+                                    <MudSpacer />
+                                    <MudText Class="fw-bold" Typo="Typo.body2">
+                                        @venda!.taxa_juros%
+                                    </MudText>
+                                </div>
+                            }
+                            <div class="d-flex mt-1">
+                                <MudText Typo="Typo.body2">
+                                    Forma Pagamento:
+                                </MudText>
+                                <MudSpacer />
+                                <MudText Typo="Typo.body2" Class="fw-bold">
+                                    @venda!.forma_pagamento!.nome
+                                </MudText>
+                            </div>
+                            @if (venda.quantidade_parcelas != null)
+                            {
+                                <div class="d-flex">
+                                    <MudText Typo="Typo.body2">
+                                        Quantidade Parcelas:
+                                    </MudText>
+                                    <MudSpacer />
+                                    <MudText Class="fw-bold" Typo="Typo.body2">
+                                        @(venda.quantidade_parcelas == 1 ? $"{venda.quantidade_parcelas} - Parcela" : $"{venda.quantidade_parcelas} - Parcelas")
+                                    </MudText>
+                                </div>
+                            }
+                            @if (venda.valor_pacelas != null)
+                            {
+                                <div class="d-flex">
+                                    <MudText Typo="Typo.body2">
+                                        Valor Parcela(s):
+                                    </MudText>
+                                    <MudSpacer />
+                                    <MudText Class="fw-bold" Typo="Typo.body2">
+                                        @string.Format(new CultureInfo("pt-BR"), "{0:C}", venda.valor_pacelas)
+                                    </MudText>
+                                </div>
+                            }
+                            <div class="d-flex mt-1">
+                                <MudText Typo="Typo.body2">
+                                    Data Venda:
+                                </MudText>
+                                <MudSpacer />
+                                <MudText Typo="Typo.body2" Class="fw-bold">
+                                    @venda!.created_at.ToString("dd/MM/yyyy")
+                                </MudText>
+                            </div>
+                            <div class="d-flex">
+                                <MudText Typo="Typo.body2">
+                                    Quantidade Produtos:
+                                </MudText>
+                                <MudSpacer />
+                                <MudText Typo="Typo.body2" Class="fw-bold">
+                                    @venda!.vendas_estoques?.Count()
+                                </MudText>
+                            </div>
+                        </MudItem>
+                        <MudItem xs="2" Class="d-flex align-items-center justify-content-center">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Medium"
+                                           OnClick="(() => DeletarVenda(venda, false))" />
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
+            }
 
+            <MudItem Class="py-5" xs="12">
+                @if (_paginacaoVendas!.current_page != _paginacaoVendas!.last_page)
+                {
+                    <MudFab Class="w-100" Label="Carregar Mais" OnClick="(() => CarregarMais(false))"
+                            Disabled="false" Size="Size.Small" />
+                }
+
+                <MudText Align="Align.Center" Typo="Typo.body2" Class="mt-2 w-100">
+                    @($"Total: {_paginacaoVendas!.total} | Exibidos: {_paginacaoVendas!.to}")
+                </MudText>
+            </MudItem>
+        }
+        else
+        {
+            @if (!_carregando)
+            {
+                <MudItem Class="py-5" xs="12">
+                    <Animate class="w-100" Animation="Animations.FadeDown" Duration="TimeSpan.FromSeconds(0.5)" Delay="TimeSpan.FromSeconds(0.4)">
+                        <MudText Class="mt-5" Align="Align.Center" Typo="Typo.body1">Nenhum resultado foi encontrado!</MudText>
+                    </Animate>
+                </MudItem>
+            }
+        }
     }
 </div>
 
@@ -266,7 +428,6 @@
     private int _indiceMenuVenda = 0;
     private bool _carregando = true;
     private bool _exibirFiltro = false;
-    private string? _pesquisarFiltro;
     private string? _statusFiltro = "Todos";
     private int _statusFormaPagamento = 0;
     private DateRange _dataCriacaoFiltro = new DateRange();
@@ -281,32 +442,14 @@
         }
         while (Auth == null || Instalacao == null);
 
-        await ListarVendas();
+        await ListarVendas(true);
         _ = ListarFormasPagamentos();
     }
 
-    private async Task Pesquisar(string pesquisar)
+    public async Task CarregarMais(bool vendasInstalacao)
     {
-        await Task.Delay(1500);
-
-        if (pesquisar == _pesquisarFiltro)
-        {
-            await AplicarFiltros();
-        }
-    }
-
-    public async Task CarregarMais()
-    {
-        if (_indiceMenuVenda == 0)
-        {
-            _paginaPaginacao++;
-            await ListarVendas();
-        }
-        else
-        {
-            // _paginaPaginacao++;
-            // await ListarMarcas();
-        }
+        _paginaPaginacao++;
+        await ListarVendas(vendasInstalacao);
     }
 
     private void Filtro()
@@ -314,13 +457,13 @@
         _exibirFiltro = !_exibirFiltro;
     }
 
-    public string? PegarFiltros()
+    public string? PegarFiltros(bool vendasInstalacao)
     {
-        string filtros = $"?instalacoes_id={Instalacao!.id}&page={_paginaPaginacao}&por_pagina={_porPagina}";
+        string filtros = $"?page={_paginaPaginacao}&por_pagina={_porPagina}";
 
-        if (!string.IsNullOrEmpty(_pesquisarFiltro))
+        if (vendasInstalacao)
         {
-            filtros += $"&pesquisar={_pesquisarFiltro}";
+            filtros += $"&instalacoes_id={Instalacao!.id}";
         }
         if (!string.IsNullOrEmpty(_statusFiltro) && _statusFiltro != "Todos")
         {
@@ -344,11 +487,11 @@
 
         if (_indiceMenuVenda == 0)
         {
-            await LimparEListarVendas();
+            await LimparEListarVendas(true);
         }
         else
         {
-            // await LimparEListarMarcas();
+            await LimparEListarVendas(false);
         }
     }
 
@@ -381,20 +524,20 @@
         }
     }
 
-    public async Task LimparEListarVendas()
+    public async Task LimparEListarVendas(bool vendasInstalacao)
     {
         _paginaPaginacao = 1;
         _listarVendas = new List<Vendas>();
-        await ListarVendas();
+        await ListarVendas(vendasInstalacao);
     }
 
-    public async Task ListarVendas()
+    public async Task ListarVendas(bool vendasInstalacao)
     {
         try
         {
             _carregando = true;
             StateHasChanged();
-            string? filtros = PegarFiltros();
+            string? filtros = PegarFiltros(vendasInstalacao);
 
             var reinoCompany = new ReinoCompany();
             var response = await reinoCompany.VendasListar(Auth!.token!, filtros);
@@ -412,7 +555,14 @@
                 }
             }
 
-            _indiceMenuVenda = 0;
+            if (vendasInstalacao)
+            {
+                _indiceMenuVenda = 0;
+            }
+            else
+            {
+                _indiceMenuVenda = 1;
+            }
             _carregando = false;
             StateHasChanged();
         }
@@ -421,16 +571,6 @@
             Snack.Add("Tivemos um problema ao tentar listar as vendas!", Severity.Warning);
             _carregando = false;
         }
-    }
-
-    public async Task LimparEListarDados()
-    {
-        _indiceMenuVenda = 1;
-
-
-        // _paginaPaginacao = 1;
-        // _listarMarcas = new List<Marcas>();
-        // await ListarMarcas();
     }
 
     private void VisualizarVenda(int id)
@@ -453,6 +593,30 @@
         catch (Exception e)
         {
             Snack.Add("Tivemos um problema ao tentar exibir a venda!", Severity.Warning);
+        }
+    }
+
+    private void VisualizarGraficos()
+    {
+        try
+        {
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullWidth = true,
+                    FullScreen = true,
+                    CloseButton = false,
+                };
+            // var param = new DialogParameters
+            //     {
+            //         ["_venda_id"] = id
+            //     };
+            // Dialog.Show<VisualizarVendaCmp>("Visualizar Gráficos", param, options);
+            Dialog.Show<VisualizarGraficosCmp>("Visualizar Gráficos", options);
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar exibir os gráficos!", Severity.Warning);
         }
     }
 
@@ -488,7 +652,7 @@
     //     }
     // }
 
-    public async Task DeletarVenda(Vendas venda)
+    public async Task DeletarVenda(Vendas venda, bool vendasInstalacao)
     {
         try
         {
@@ -508,7 +672,7 @@
                 if (response!.status)
                 {
                     Snack.Add("Venda deletada com sucesso!", Severity.Success);
-                    await LimparEListarVendas();
+                    await LimparEListarVendas(vendasInstalacao);
                 }
                 else
                 {

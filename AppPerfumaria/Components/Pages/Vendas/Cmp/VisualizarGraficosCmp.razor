@@ -1,0 +1,233 @@
+﻿@using AppPerfumaria.Api.ReinoCompany
+@using AppPerfumaria.Components.CmpsGerais
+@using AppPerfumaria.Models.Auth
+@using AppPerfumaria.Models.Tables
+@using System.Globalization
+
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject ISnackbar Snack
+
+<MudDialog ContentClass="bg-gray py-5" TitleClass="d-flex pb-0 pt-2">
+    <TitleContent>
+        <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft"
+                       OnClick="(() => Voltar())" />
+        <MudSpacer />
+        <MudIcon Icon="@Icons.Material.Filled.InsertChartOutlined" Class="mt-3" />
+    </TitleContent>
+    <DialogContent>
+        @if (_carregando)
+        {
+            <Loading AlignCenter="true" Color="Color.Default" Size="Size.Medium" />
+        }
+        else
+        {
+            <MudPaper Class="pa-2 mt-3" Elevation="0">
+                <MudAlert Severity="Severity.Normal" Dense="true" NoIcon="true"
+                          ContentAlignment="HorizontalAlignment.Center" Class="fw-bold">
+                    GRÁFICOS VENDAS
+                </MudAlert>
+
+                <MudGrid Spacing="2" Justify="Justify.Center" Class="mt-1">
+                    <MudItem xs="6">
+                        <MudSelect T="string" @bind-Value="_statusFiltro" Variant="Variant.Outlined"
+                                   Label="Status" Margin="Margin.Dense">
+                            <MudSelectItem Value="@("Todos")" />
+                            <MudSelectItem Value="@("Ativo")" />
+                            <MudSelectItem Value="@("Inativo")" />
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="6">
+                        <MudSelect T="int" @bind-Value="_statusFormaPagamento" Variant="Variant.Outlined"
+                                   Label="Forma de Pagamento" Margin="Margin.Dense">
+                            <MudSelectItem Value="0">Todas</MudSelectItem>
+                            @if (_listarFormasPagamentos != null)
+                            {
+                                @foreach (var formaPagamento in _listarFormasPagamentos)
+                                {
+                                    <MudSelectItem Value="@formaPagamento.id">
+                                        @formaPagamento.nome
+                                    </MudSelectItem>
+                                }
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="6">
+                        <MudDatePicker Margin="Margin.Dense" Variant="Variant.Outlined" Label="Mês"
+                                       IsDateDisabledFunc="DisabitarDatas" ShowToolbar="false"
+                                       @bind-Date="_mesFiltro" FixDay="1" DateFormat="MM/yyyy" />
+                    </MudItem>
+                    <MudItem xs="6">
+                        <MudFab Label="Filtrar" Size="Size.Small"
+                                OnClick="ListarVendas" Class="mt-2" />
+                    </MudItem>
+@*                     <MudItem xs="12">
+                        <MudDateRangePicker Label="Data de Criação" @bind-DateRange="_dataCriacaoFiltro"
+                                            Variant="Variant.Outlined"
+                                            PlaceholderStart="Data Início"
+                                            PlaceholderEnd="Data Fim" Clearable="true"
+                                            DateFormat="dd/MM/yyyy"
+                                            Margin="Margin.Dense" />
+                    </MudItem> *@
+                </MudGrid>
+            </MudPaper>
+
+            <MudPaper Class="pa-2 mt-3" Elevation="0">
+                <MudText>Formas de Pagamentos</MudText>
+                <MudChart ChartType="ChartType.Donut" Width="300px" Height="300px" InputData="(VendasPorFormaPagamento()).Select(x => Convert.ToDouble(x.Total ?? 0)).ToArray()" InputLabels="(VendasPorFormaPagamento()).Select(x => x.FormaPagamento).ToArray()">
+                    <CustomGraphics>
+                        <text class="donut-inner-text" x="50%" y="37%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="2">Total</text>
+                        <text class="donut-inner-text" x="50%" y="45%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="4">@string.Format(new CultureInfo("pt-BR"), "{0:C}", (VendasPorFormaPagamento()).Select(x => Convert.ToDouble(x.Total ?? 0)).Sum())</text>
+                        <text class="donut-inner-text" x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="2">Quantidade</text>
+                        <text class="donut-inner-text" x="50%" y="63%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="4">@(_listarVendas?.Count().ToString())</text>
+                    </CustomGraphics>
+                </MudChart>
+            </MudPaper>
+
+            <MudPaper Class="pa-2 mt-3" Elevation="0">
+                <MudText>Formas de Pagamentos</MudText>
+                <MudChart ChartType="ChartType.Donut" Width="300px" Height="300px" 
+                          InputData="(VendasPorFormaPagamento()).Select(x => Convert.ToDouble(x.Total ?? 0)).ToArray()" 
+                          InputLabels="(VendasPorFormaPagamento()).Select(x => x.FormaPagamento).ToArray()"
+                          LegendPosition="Position.Left" >
+                    <CustomGraphics>
+                        <text class="donut-inner-text" x="50%" y="35%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="2">Total</text>
+                        <text class="donut-inner-text" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="4">@string.Format(new CultureInfo("pt-BR"), "{0:C}", (VendasPorFormaPagamento()).Select(x => Convert.ToDouble(x.Total ?? 0)).Sum())</text>
+                    </CustomGraphics>
+                </MudChart>
+            </MudPaper>
+        }
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance? _mudDialog { get; set; }
+    public Auth? _auth;
+    public Instalacoes? _instalacao;
+    private List<Vendas>? _listarVendas = new List<Vendas>();
+    private List<FormasPagamentos>? _listarFormasPagamentos;
+    private bool _carregando = true;
+    private bool _vendasInstalacao = true;
+    private string? _statusFiltro = "Todos";
+    private int _statusFormaPagamento = 0;
+    private DateTime? _mesFiltro = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+
+    protected override async Task OnInitializedAsync()
+    {
+        _auth = await LocalStorage.GetItemAsync<Auth>("auth");
+        _instalacao = await LocalStorage.GetItemAsync<Instalacoes>("instalacao");
+        await ListarVendas();
+        await ListarFormasPagamentos();
+    }
+
+    private bool DisabitarDatas(DateTime date)
+    {
+        // Data mínima: 1º de janeiro/2025
+        DateTime minData = new DateTime(2025, 1, 1);
+
+        // Data máxima: Data atual
+        DateTime maxData = DateTime.Now;
+
+        // Desabilitar datas antes de 1º de janeiro/2025 ou depois da data atual
+        return date < minData || date > maxData;
+    }
+
+    public string? PegarFiltros()
+    {
+        string filtros = $"?";
+
+        if (_vendasInstalacao)
+        {
+            filtros += $"&instalacoes_id={_instalacao!.id}";
+        }
+        if (!string.IsNullOrEmpty(_statusFiltro) && _statusFiltro != "Todos")
+        {
+            filtros += $"&status={_statusFiltro}";
+        }
+        if (_statusFormaPagamento > 0)
+        {
+            filtros += $"&formas_pagamentos_id={_statusFormaPagamento}";
+        }
+        if (_mesFiltro != null)
+        {
+            int ultimoDiaMes = DateTime.DaysInMonth(_mesFiltro.Value.Year, _mesFiltro.Value.Month);
+            DateTime? fimMes = new DateTime(_mesFiltro.Value.Year, _mesFiltro.Value.Month, ultimoDiaMes);
+
+            filtros += $"&criado_de={_mesFiltro?.ToString("yyyy-MM-dd")}&criado_ate={fimMes?.ToString("yyyy-MM-dd")}";
+        }
+
+        return filtros;
+    }
+
+    public async Task ListarFormasPagamentos()
+    {
+        try
+        {
+            string filtros = $"?instalacoes_id={_instalacao!.id}&por_pagina=20&status=Ativo";
+
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.FormasPagamentosListar(_auth!.token!, filtros);
+
+            if (response!.status)
+            {
+                _listarFormasPagamentos = response!.data!;
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+            }
+
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar listar as formas de pagamento!", Severity.Warning);
+        }
+    }
+
+    public async Task ListarVendas()
+    {
+        try
+        {
+            _carregando = true;
+            StateHasChanged();
+            string? filtros = PegarFiltros();
+
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.VendasListar(_auth!.token!, filtros);
+
+            if (response!.status)
+            {
+                _listarVendas = response!.data!;
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+            }
+
+            _carregando = false;
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar listar as vendas!", Severity.Warning);
+            _carregando = false;
+        }
+    } 
+
+    private List<(string FormaPagamento, double? Total)> VendasPorFormaPagamento()
+    {
+        return _listarVendas.GroupBy(p => p.forma_pagamento.nome)
+                            .Select(g => (FormaPagamento: g.Key, Total: g.Sum(p => p.preco_total)))
+                            .OrderByDescending(o => o.Total)
+                            .ToList();
+    }
+
+    private void Voltar() => _mudDialog!.Close(DialogResult.Ok(true));
+}
