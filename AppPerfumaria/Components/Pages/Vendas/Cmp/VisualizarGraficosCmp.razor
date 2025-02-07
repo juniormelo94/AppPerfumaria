@@ -3,6 +3,7 @@
 @using AppPerfumaria.Models.Auth
 @using AppPerfumaria.Models.Tables
 @using System.Globalization
+@using ApexCharts
 
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 @inject ISnackbar Snack
@@ -17,7 +18,7 @@
     <DialogContent>
         @if (_carregando)
         {
-            <Loading AlignCenter="true" Color="Color.Default" Size="Size.Medium" />
+            <Loading AlignCenter="true" Color="MudBlazor.Color.Default" Size="MudBlazor.Size.Medium" />
         }
         else
         {
@@ -57,7 +58,7 @@
                                        @bind-Date="_mesFiltro" FixDay="1" DateFormat="MM/yyyy" />
                     </MudItem>
                     <MudItem xs="6">
-                        <MudFab Label="Filtrar" Size="Size.Small"
+                        <MudFab Label="Filtrar" Size="MudBlazor.Size.Small"
                                 OnClick="ListarVendas" Class="mt-2" />
                     </MudItem>
 @*                     <MudItem xs="12">
@@ -73,10 +74,25 @@
 
             <MudPaper Class="pa-2 mt-3" Elevation="0">
                 <MudText>Formas de Pagamentos</MudText>
-                <MudChart ChartType="ChartType.Donut" Width="300px" Height="300px" InputData="(VendasPorFormaPagamento()).Select(x => Convert.ToDouble(x.Total ?? 0)).ToArray()" InputLabels="(VendasPorFormaPagamento()).Select(x => x.FormaPagamento).ToArray()">
+                <ApexChart TItem="ChartModelo" @ref="_chartFormasPagamentos"
+                           Options="_optionsDonutFormasPagamentos">
+
+                    <ApexPointSeries TItem="ChartModelo"
+                                     Items="_dadosFormasPagamentos"
+                                     SeriesType="SeriesType.Donut"
+                                     Name="Gross Value"
+                                     XValue="@(e => e.Nome)"
+                                     YAggregate="@(e => e.Sum(e => Convert.ToDecimal(e.Valor)))"
+                                     OrderByDescending="e=>e.Y" />
+                    </ApexChart>
+            </MudPaper>
+
+            <MudPaper Class="pa-2 mt-3" Elevation="0">
+                <MudText>Formas de Pagamentos</MudText>
+                <MudChart ChartType="MudBlazor.ChartType.Donut" Width="300px" Height="300px" InputData="(VendasPorFormaPagamento()).Select(x => Convert.ToDouble(x.Valor)).ToArray()" InputLabels="(VendasPorFormaPagamento()).Select(x => x.Nome).ToArray()">
                     <CustomGraphics>
                         <text class="donut-inner-text" x="50%" y="37%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="2">Total</text>
-                        <text class="donut-inner-text" x="50%" y="45%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="4">@string.Format(new CultureInfo("pt-BR"), "{0:C}", (VendasPorFormaPagamento()).Select(x => Convert.ToDouble(x.Total ?? 0)).Sum())</text>
+                        <text class="donut-inner-text" x="50%" y="45%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="4">@string.Format(new CultureInfo("pt-BR"), "{0:C}", (VendasPorFormaPagamento()).Select(x => Convert.ToDouble(x.Valor)).Sum())</text>
                         <text class="donut-inner-text" x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="2">Quantidade</text>
                         <text class="donut-inner-text" x="50%" y="63%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="4">@(_listarVendas?.Count().ToString())</text>
                     </CustomGraphics>
@@ -85,13 +101,13 @@
 
             <MudPaper Class="pa-2 mt-3" Elevation="0">
                 <MudText>Formas de Pagamentos</MudText>
-                <MudChart ChartType="ChartType.Donut" Width="300px" Height="300px" 
-                          InputData="(VendasPorFormaPagamento()).Select(x => Convert.ToDouble(x.Total ?? 0)).ToArray()" 
-                          InputLabels="(VendasPorFormaPagamento()).Select(x => x.FormaPagamento).ToArray()"
+                <MudChart ChartType="MudBlazor.ChartType.Donut" Width="300px" Height="300px"
+                          InputData="(VendasPorFormaPagamento()).Select(x => Convert.ToDouble(x.Valor)).ToArray()" 
+                          InputLabels="(VendasPorFormaPagamento()).Select(x => x.Nome).ToArray()"
                           LegendPosition="Position.Left" >
                     <CustomGraphics>
                         <text class="donut-inner-text" x="50%" y="35%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="2">Total</text>
-                        <text class="donut-inner-text" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="4">@string.Format(new CultureInfo("pt-BR"), "{0:C}", (VendasPorFormaPagamento()).Select(x => Convert.ToDouble(x.Total ?? 0)).Sum())</text>
+                        <text class="donut-inner-text" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="4">@string.Format(new CultureInfo("pt-BR"), "{0:C}", (VendasPorFormaPagamento()).Select(x => Convert.ToDouble(x.Valor)).Sum())</text>
                     </CustomGraphics>
                 </MudChart>
             </MudPaper>
@@ -111,6 +127,73 @@
     private string? _statusFiltro = "Todos";
     private int _statusFormaPagamento = 0;
     private DateTime? _mesFiltro = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+
+    public class ChartModelo
+    {
+        public string? Nome { get; set; }
+        public double? Valor { get; set; }
+    }
+    private ApexChart<ChartModelo>? _chartFormasPagamentos;
+    private List<ChartModelo>? _dadosFormasPagamentos { get; set; } = new();
+    private ApexChartOptions<ChartModelo> options { get; set; } = new();
+    private ApexChartOptions<ChartModelo> _optionsDonutFormasPagamentos = new();
+
+    protected override void OnInitialized()
+    {
+        _optionsDonutFormasPagamentos.PlotOptions = new PlotOptions
+            {
+                Pie = new PlotOptionsPie
+                {
+                    Donut = new PlotOptionsDonut
+                    {
+                        Labels = new DonutLabels
+                        {
+                            Total = new DonutLabelTotal { 
+                                FontSize = "24px", 
+                                Color = "#D807B8", 
+                                Formatter = @"function (w) {
+                                let total = w.globals.seriesTotals.reduce((a, b) => a + b, 0);
+                                return total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }" 
+                            },
+                            Value = new DonutLabelValue
+                            {
+                                Show = true,
+                                Formatter = @"function (value) {
+                                return Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }"
+                            },
+                        }
+                    }
+                }
+            };
+
+        _optionsDonutFormasPagamentos.Yaxis = new List<YAxis>
+        {
+            new YAxis
+            {
+                Labels = new YAxisLabels
+                {
+                    Formatter = @"function (value) {
+                    return Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }"
+                }
+            }
+        };
+
+        _optionsDonutFormasPagamentos.Xaxis = new XAxis
+        {
+            Labels = new XAxisLabels
+            {
+                Formatter = @"function (value) {
+                if (value === undefined) {return '';}
+                return value.toUpperCase();}"
+            }
+        };
+    }
+
+    private string FormatarMoeda(double value)
+    {
+        return value.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("pt-BR"));
+    }
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -211,6 +294,7 @@
                 }
             }
 
+            _ = PorFormaPagamento();
             _carregando = false;
             StateHasChanged();
         }
@@ -221,12 +305,29 @@
         }
     } 
 
-    private List<(string FormaPagamento, double? Total)> VendasPorFormaPagamento()
+    private List<(string Nome, double? Valor)> VendasPorFormaPagamento()
     {
         return _listarVendas.GroupBy(p => p.forma_pagamento.nome)
-                            .Select(g => (FormaPagamento: g.Key, Total: g.Sum(p => p.preco_total)))
-                            .OrderByDescending(o => o.Total)
+                            .Select(g => (Nome: g.Key, Valor: g.Sum(p => p.preco_total)))
+                            .OrderByDescending(o => o.Valor)
                             .ToList();
+    }
+
+    private async Task PorFormaPagamento()
+    {
+        _dadosFormasPagamentos = new List<ChartModelo>();
+
+        var teste = _listarVendas.GroupBy(p => p.forma_pagamento.nome)
+                                            .Select(g => (Nome: g.Key, Valor: g.Sum(p => p.preco_total)))
+                                            .OrderByDescending(o => o.Valor)
+                                            .ToList();
+
+        foreach (var item in teste)
+        {
+            _dadosFormasPagamentos?.Add(new ChartModelo { Nome = item.Nome, Valor = item.Valor });
+        }
+
+        await _chartFormasPagamentos.UpdateOptionsAsync(true, true, false);
     }
 
     private void Voltar() => _mudDialog!.Close(DialogResult.Ok(true));
