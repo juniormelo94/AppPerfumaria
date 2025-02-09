@@ -409,7 +409,7 @@
                 if (venda.taxa_juros != null && venda.taxa_juros > 0)
                 {
                     // Descontar taxa da maquina do lucro total
-                    double? valorTaxa = valorVenda * (venda.taxa_juros / 100);
+                    valorTaxa = valorVenda * (venda.taxa_juros / 100);
                     valorLucro = valorLucro - valorTaxa;
                 }
                 else if(venda.taxa_juros != null && venda.taxa_juros < 0) {
