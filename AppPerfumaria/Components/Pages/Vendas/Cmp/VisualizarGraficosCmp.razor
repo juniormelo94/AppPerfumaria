@@ -106,6 +106,15 @@
                     YAggregate="@(e => e.Sum(e => Convert.ToDecimal(e.Valor2)))"
                     OrderByDescending="e=>e.Y"
                     ShowDataLabels />
+
+                    <ApexPointSeries TItem="ChartModelo"
+                    Items="_dadosMarcas"
+                    Name="Taxas"
+                    SeriesType="SeriesType.Bar"
+                    XValue="@(e => e.Nome)"
+                    YAggregate="@(e => e.Sum(e => Convert.ToDecimal(e.Valor3)))"
+                    OrderByDescending="e=>e.Y"
+                    ShowDataLabels />
                 </ApexChart>
             </MudPaper>
         }
@@ -130,6 +139,7 @@
         public string? Nome { get; set; }
         public double? Valor1 { get; set; }
         public double? Valor2 { get; set; }
+        public double? Valor3 { get; set; }
     }
 
     private ApexChart<ChartModelo>? _chartFormasPagamentos;
@@ -212,7 +222,7 @@
                         }
                     }
                 },
-                Colors = new List<string> { "#d9534f", "#5cb85c" },
+                Colors = new List<string> { "#003399", "#5cb85c", "#d9534f" },
                 DataLabels = new DataLabels
                 {
                     Enabled = true,
@@ -338,8 +348,8 @@
                 }
             }
 
-            _ = PorFormaPagamento();
-            _ = PorMarcas();
+            _ = VendasPorFormaPagamento();
+            _ = VendasPorMarcas();
             _carregando = false;
             StateHasChanged();
         }
@@ -350,15 +360,7 @@
         }
     } 
 
-    private List<(string Nome, double? Valor)> VendasPorFormaPagamento()
-    {
-        return _listarVendas.GroupBy(p => p.forma_pagamento.nome)
-                            .Select(g => (Nome: g.Key, Valor: g.Sum(p => p.preco_total)))
-                            .OrderByDescending(o => o.Valor)
-                            .ToList();
-    }
-
-    private async Task PorFormaPagamento()
+    private async Task VendasPorFormaPagamento()
     {
         _dadosFormasPagamentos = new List<ChartModelo>();
 
@@ -369,13 +371,13 @@
 
         foreach (var item in listarVendas)
         {
-            _dadosFormasPagamentos?.Add(new ChartModelo { Nome = item.Nome, Valor1 = item.Valor, Valor2 = null });
+            _dadosFormasPagamentos?.Add(new ChartModelo { Nome = item.Nome, Valor1 = item.Valor, Valor2 = null, Valor3 = null });
         }
 
         // await _chartFormasPagamentos.UpdateOptionsAsync(true, true, false);
     }
 
-    private async Task PorMarcas()
+    private async Task VendasPorMarcas()
     {
         _dadosMarcas = new List<ChartModelo>();
 
@@ -384,40 +386,41 @@
             foreach (var vendaEstoque in venda.vendas_estoques)
             {
                 string marca = vendaEstoque.estoque.produto.marca.nome;
-                double? precoCompra = 0;
-                double? precoVenda = 0;
-                double? lucro = 0;
+                double? valorCompra = 0;
+                double? valorVenda = 0;
+                double? valorLucro = 0;
+                double? valorTaxa = 0;
+                double? taxa = 0;
 
-                precoCompra = vendaEstoque.estoque.preco_compra_original;
+                valorCompra = vendaEstoque.estoque.preco_compra_original;
                 if (vendaEstoque.estoque.preco_compra_desconto != null)
                 {
-                    precoCompra = vendaEstoque.estoque.preco_compra_desconto;
+                    valorCompra = vendaEstoque.estoque.preco_compra_desconto;
                 }
 
-                precoVenda = vendaEstoque.estoque.preco_venda_original;
+                valorVenda = vendaEstoque.estoque.preco_venda_original;
                 if (vendaEstoque.estoque.preco_venda_desconto != null)
                 {
-                    precoVenda = vendaEstoque.estoque.preco_venda_desconto;
+                    valorVenda = vendaEstoque.estoque.preco_venda_desconto;
                 }
 
-                lucro = precoVenda - precoCompra;
-                double? lucroDesconto;
+                valorLucro = valorVenda - valorCompra;
 
                 if (venda.taxa_juros != null && venda.taxa_juros > 0)
                 {
                     // Descontar taxa da maquina do lucro total
-                    double? desconto = precoVenda * (venda.taxa_juros / 100);
-                    lucro = lucro - desconto;
+                    double? valorTaxa = valorVenda * (venda.taxa_juros / 100);
+                    valorLucro = valorLucro - valorTaxa;
                 }
                 else if(venda.taxa_juros != null && venda.taxa_juros < 0) {
                     // Desconto no preço total(Pagamento Dinheiro ou Pix)
-                    double? desconto = precoVenda * (Math.Abs(venda.taxa_juros.GetValueOrDefault()) / 100);
-                    precoVenda = precoVenda - desconto;
+                    double? desconto = valorVenda * (Math.Abs(venda.taxa_juros.GetValueOrDefault()) / 100);
+                    valorVenda = valorVenda - desconto;
                     // Descontar taxa da maquina do lucro total
-                    lucro = precoVenda - precoCompra;
+                    valorLucro = valorVenda - valorCompra;
                 }
 
-                _dadosMarcas?.Add(new ChartModelo { Nome = marca, Valor1 = precoCompra, Valor2 = lucro });
+                _dadosMarcas?.Add(new ChartModelo { Nome = marca, Valor1 = valorCompra, Valor2 = valorLucro, Valor3 = valorTaxa });
             }
         }
 
