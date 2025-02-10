@@ -38,8 +38,9 @@
                         <MudText Class="mt-5" Typo="Typo.body1" Align="Align.Left">Olá, digite seus dados:</MudText>
 
                         <MudFocusTrap Disabled="false" DefaultFocus="DefaultFocus.FirstChild">
-                            <MudTextField T="string" @bind-Value="_loginForm.Email" Variant="Variant.Outlined"
-                                          Label="Email" Disabled="_verificando" Margin="Margin.Dense" />
+                            <MudTextField T="string" @bind-Value="_loginForm.Email" Variant="Variant.Outlined" 
+                                          InputType="InputType.Email" Label="Email" Disabled="_verificando" 
+                                          Margin="Margin.Dense"  />
                             <ValidationMessage For="() => _loginForm.Email" />
 
                             <MudTextField @bind-Value="_loginForm.Senha" Label="Senha" Variant="Variant.Outlined" Margin="Margin.Dense"
@@ -64,11 +65,15 @@
 
                     <MudSelect Value="_instalacoes_id" Variant="Variant.Outlined"
                                Label="Instalações" Margin="Margin.Dense" ValueChanged="(async (string id) => {_instalacoes_id = id; await SelecionarInstalacao(id);})">
-                        @foreach (var instalacao in _instalacoes)
+                        @if(_instalacoes != null)
                         {
-                        <MudSelectItem Value="instalacao.id.ToString()">
-                                @($"{instalacao.endereco.ToUpper()} {instalacao.numero.ToUpper()}, {instalacao.bairro.ToUpper()} - {instalacao.cidade.ToUpper()}/{instalacao.uf.ToUpper()}")
-                        </MudSelectItem>
+                            
+                            @foreach (var instalacao in _instalacoes)
+                            {
+                            <MudSelectItem Value="instalacao.id.ToString()">
+                                    @($"{instalacao.endereco.ToUpper()} {instalacao.numero.ToUpper()}, {instalacao.bairro.ToUpper()} - {instalacao.cidade.ToUpper()}/{instalacao.uf.ToUpper()}")
+                            </MudSelectItem>
+                            }
                         }
                     </MudSelect>
 
