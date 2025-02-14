@@ -219,9 +219,12 @@
                                 </MudText>
                             </div>
                         </MudItem>
-                        <MudItem xs="2" Class="d-flex align-items-center justify-content-center">
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Medium"
-                                           OnClick="(() => DeletarVenda(venda, true))" />
+                        <MudItem xs="2" Class="d-flex flex-column align-items-center justify-content-center">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Medium"
+                                               OnClick="(() => AtualizarVenda(venda, true))" />
+
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Medium"
+                                               OnClick="(() => DeletarVenda(venda, true))" />
                         </MudItem>
                     </MudGrid>
                 </MudPaper>
@@ -383,7 +386,10 @@
                                 </MudText>
                             </div>
                         </MudItem>
-                        <MudItem xs="2" Class="d-flex align-items-center justify-content-center">
+                        <MudItem xs="2" Class="d-flex flex-column align-items-center justify-content-center">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Medium"
+                                           OnClick="(() => AtualizarVenda(venda, false))" />
+
                             <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Medium"
                                            OnClick="(() => DeletarVenda(venda, false))" />
                         </MudItem>
@@ -620,37 +626,74 @@
         }
     }
 
-    // public async Task AtualizarProduto(Produtos produto)
-    // {
-    //     try
-    //     {
-    //         var options = new DialogOptions
-    //             {
-    //                 MaxWidth = MaxWidth.ExtraExtraLarge,
-    //                 FullWidth = true,
-    //                 BackdropClick = false,
-    //                 CloseButton = true,
-    //                 Position = DialogPosition.TopCenter
-    //             };
-    //         var param = new DialogParameters { ["_produtoForm"] = produto.Clone() };
-    //         var dialog = Dialog.Show<ProdutosFormCmp>("Atualizar Produto", param, options);
-    //         var result = await dialog.Result;
-    //         if (!result.Canceled && (bool)result.Data == true)
-    //         {
-    //             Snack.Add("Produto atualizado com sucesso!", Severity.Success);
-    //             await LimparEListarVendas();
-    //         }
-    //         else if (!result.Canceled && (bool)result.Data == false)
-    //         {
-    //             Snack.Add("Tivemos um problema ao tentar atualizar o produto!", Severity.Warning);
-    //         }
-    //     }
-    //     catch (Exception e)
-    //     {
-    //         Snack.Add("Tivemos um problema ao tentar atualizar o produto!", Severity.Warning);
-    //         _carregando = false;
-    //     }
-    // }
+    private double? CalcularTotalDesconto(Vendas venda)
+    {
+        double? totalDesconto = 0.0;
+
+        if (venda.vendas_estoques != null && venda.vendas_estoques.Count() > 0)
+        {
+            foreach (var item in venda.vendas_estoques)
+            {
+                if (item!.estoque!.preco_venda_desconto != null)
+                {
+                    totalDesconto += item.estoque.preco_venda_desconto;
+                }
+                else
+                {
+                    totalDesconto += item.estoque.preco_venda_original;
+                }
+            }
+        }
+
+        return totalDesconto!;
+    }
+
+    public async Task AtualizarVenda(Vendas venda, bool vendasInstalacao)
+    {
+        try
+        {
+            double? precoPaga = 0.0;
+            @if (venda.vendas_estoques.Any(a => a!.estoque!.preco_venda_desconto != null))
+            {
+                precoPaga = CalcularTotalDesconto(venda);
+            }
+            else
+            {
+                precoPaga = venda.vendas_estoques?.Sum(w => w.estoque.preco_venda_original);
+            }
+
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullWidth = true,
+                    BackdropClick = false,
+                    CloseButton = true,
+                    Position = DialogPosition.TopCenter
+                };
+            var param = new DialogParameters
+                {
+                    ["_vendaForm"] = venda,
+                    ["_precoPaga"] = precoPaga,
+                    ["_editar"] = true
+                };
+            var dialog = Dialog.Show<VendasFormCmp>("Atualizar Venda", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled && (bool)result.Data == true)
+            {
+                Snack.Add("Venda atualizada com sucesso!", Severity.Success);
+                await LimparEListarVendas(vendasInstalacao);
+            }
+            else if (!result.Canceled && (bool)result.Data == false)
+            {
+                Snack.Add("Tivemos um problema ao tentar atualizar a venda!", Severity.Warning);
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar atualizar a venda!", Severity.Warning);
+            _carregando = false;
+        }
+    }
 
     public async Task DeletarVenda(Vendas venda, bool vendasInstalacao)
     {
