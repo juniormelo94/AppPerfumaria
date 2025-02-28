@@ -163,7 +163,8 @@
                                     </MudText>
                                     <MudSpacer />
                                     <MudText Class="fw-bold" Typo="Typo.body2">
-                                        @venda!.taxa_juros%
+                                        @* @venda!.taxa_juros% *@
+                                        @string.Format(new CultureInfo("pt-BR"), "{0:C}", (venda.lucro_total_original - venda.lucro_total_desconto))
                                     </MudText>
                                 </div>
                             }
@@ -220,8 +221,8 @@
                             </div>
                         </MudItem>
                         <MudItem xs="2" Class="d-flex flex-column align-items-center justify-content-center">
-                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Medium"
-                                               OnClick="(() => AtualizarVenda(venda, true))" />
+@*                                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Medium"
+                                               OnClick="(() => AtualizarVenda(venda, true))" /> *@
 
                                 <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Medium"
                                                OnClick="(() => DeletarVenda(venda, true))" />

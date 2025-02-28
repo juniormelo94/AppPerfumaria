@@ -80,15 +80,7 @@
                             </MudText>
                             <MudSpacer />
                             <MudText Class="fw-bold" Typo="Typo.body1">
-                                <span class="d-flex">
-                                    <div style="@($"background:{Colors.Gray.Lighten1}; font-size:12px; padding: 2px;")"
-                                    class="rounded fw-bold text-white px-2">
-                                        5%
-                                    </div>
-                                    <span class="pa-0 ml-2">
-                                        @string.Format(new CultureInfo("pt-BR"), "{0:C}", CalcularPagamentoDinheiroPix())
-                                    </span>
-                                </span>
+                                @string.Format(new CultureInfo("pt-BR"), "{0:C}", CalcularPagamentoDinheiroPix())
                             </MudText>
                         </div>
                         @if (_produtosCarinho != null && _produtosCarinho?.Count() > 0)
@@ -432,15 +424,6 @@
                         totalSemDesconto += item.preco_venda_original;
                     }
                 }
-
-                // if (item.preco_venda_desconto != null)
-                // {
-                //     totalDesconto += item.preco_venda_desconto;
-                // }
-                // else
-                // {
-                //     totalDesconto += item.preco_venda_original;
-                // }
             }
         }
 
