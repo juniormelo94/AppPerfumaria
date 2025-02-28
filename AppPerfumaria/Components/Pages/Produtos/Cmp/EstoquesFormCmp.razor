@@ -39,6 +39,11 @@
                                  AdornmentText="R$" Adornment="Adornment.Start" />
                 <ValidationMessage For="() => _estoqueForm!.preco_venda_desconto" />
 
+                <MudCheckBox @bind-Value="_estoqueForm!.desconto_pagamento_avista">
+                    Desconto Pagamento à Vista
+                </MudCheckBox>
+                <ValidationMessage For="() => _estoqueForm!.desconto_pagamento_avista" />
+
                 <MudDatePicker Label="Data Vencimento" Margin="Margin.Dense" DateFormat="dd/MM/yyyy"
                                Variant="Variant.Outlined" @bind-Date="_estoqueForm!.vencimento" />
                 <ValidationMessage For="() => _estoqueForm!.vencimento" />

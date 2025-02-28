@@ -21,6 +21,8 @@ namespace AppPerfumaria.Models.Tables
         public double? preco_venda_desconto { get; set; }
         [Required(ErrorMessage = "O vendido é obrigatório.")]
         public bool vendido { get; set; }
+        [Required(ErrorMessage = "O desconto de pagamento à vista é obrigatório.")]
+        public bool desconto_pagamento_avista { get; set; }
         public DateTime? vencimento { get; set; }
         [Required(ErrorMessage = "O produto é obrigatório.")]
         public int produtos_id { get; set; }
