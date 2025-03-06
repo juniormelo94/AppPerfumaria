@@ -94,8 +94,7 @@
                     Name="Investimento"
                     SeriesType="SeriesType.Bar"
                     XValue="@(e => e.Nome)"
-                    YAggregate="@(e => e.Sum(e => Convert.ToDecimal(e.Valor1)))"
-                    OrderByDescending="e=>e.Y"
+                    YValue="e=> Convert.ToDecimal(e.Valor1)" 
                     ShowDataLabels />
 
                     <ApexPointSeries TItem="ChartModelo"
@@ -103,8 +102,7 @@
                     Name="Lucratividade"
                     SeriesType="SeriesType.Bar"
                     XValue="@(e => e.Nome)"
-                    YAggregate="@(e => e.Sum(e => Convert.ToDecimal(e.Valor2)))"
-                    OrderByDescending="e=>e.Y"
+                    YValue="e=> Convert.ToDecimal(e.Valor2)" 
                     ShowDataLabels />
 
                     <ApexPointSeries TItem="ChartModelo"
@@ -112,8 +110,7 @@
                     Name="Taxas"
                     SeriesType="SeriesType.Bar"
                     XValue="@(e => e.Nome)"
-                    YAggregate="@(e => e.Sum(e => Convert.ToDecimal(e.Valor3)))"
-                    OrderByDescending="e=>e.Y"
+                    YValue="e=> Convert.ToDecimal(e.Valor3)" 
                     ShowDataLabels />
                 </ApexChart>
             </MudPaper>
@@ -379,7 +376,7 @@
 
     private async Task VendasPorMarcas()
     {
-        _dadosMarcas = new List<ChartModelo>();
+        List<ChartModelo> dadosMarcas = new List<ChartModelo>();
 
         foreach (var venda in _listarVendas)
         {
@@ -413,18 +410,30 @@
                     valorLucro = valorLucro - valorTaxa;
                 }
                 else if(venda.taxa_juros != null && venda.taxa_juros < 0) {
-                    // Desconto no preço total(Pagamento Dinheiro ou Pix)
-                    double? desconto = valorVenda * (Math.Abs(venda.taxa_juros.GetValueOrDefault()) / 100);
-                    valorVenda = valorVenda - desconto;
+                    if (vendaEstoque.estoque.desconto_pagamento_avista)
+                    {
+                        // Desconto no preço total(Pagamento Dinheiro ou Pix)
+                        double? desconto = valorVenda * (Math.Abs(venda.taxa_juros.GetValueOrDefault()) / 100);
+                        valorVenda = valorVenda - desconto;
+                    }
                     // Descontar taxa da maquina do lucro total
                     valorLucro = valorVenda - valorCompra;
                 }
 
-                _dadosMarcas?.Add(new ChartModelo { Nome = marca, Valor1 = valorCompra, Valor2 = valorLucro, Valor3 = valorTaxa });
+                dadosMarcas?.Add(new ChartModelo { Nome = marca, Valor1 = valorCompra, Valor2 = valorLucro, Valor3 = valorTaxa });
             }
         }
 
-        // await _chartFormasPagamentos.UpdateOptionsAsync(true, true, false);
+        _dadosMarcas = dadosMarcas.GroupBy(x => x.Nome)
+                                  .Select(g => new ChartModelo
+                                    {
+                                        Nome = g.Key,
+                                        Valor1 = g.Sum(x => x.Valor1),
+                                        Valor2 = g.Sum(x => x.Valor2),
+                                        Valor3 = g.Sum(x => x.Valor3)
+                                    })
+                                  .OrderByDescending(x => x.Valor1 + x.Valor2 + x.Valor3)
+                                  .ToList();
     }
 
     private void Voltar() => _mudDialog!.Close(DialogResult.Ok(true));
