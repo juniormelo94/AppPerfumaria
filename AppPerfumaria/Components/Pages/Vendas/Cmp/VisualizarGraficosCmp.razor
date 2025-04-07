@@ -38,7 +38,7 @@
                         </MudSelect>
                     </MudItem>
                     <MudItem xs="6">
-                        <MudSelect T="int" @bind-Value="_statusFormaPagamento" Variant="Variant.Outlined"
+                        <MudSelect T="int" @bind-Value="_formaPagamentoFiltro" Variant="Variant.Outlined"
                         Label="Forma de Pagamento" Margin="Margin.Dense">
                             <MudSelectItem Value="0">Todas</MudSelectItem>
                             @if (_listarFormasPagamentos != null)
@@ -52,23 +52,21 @@
                             }
                         </MudSelect>
                     </MudItem>
-                    <MudItem xs="6">
-                        <MudDatePicker Margin="Margin.Dense" Variant="Variant.Outlined" Label="Mês"
-                        IsDateDisabledFunc="DisabitarDatas" ShowToolbar="false"
-                        @bind-Date="_mesFiltro" FixDay="1" DateFormat="MM/yyyy" />
-                    </MudItem>
-                    <MudItem xs="6">
-                        <MudFab Label="Filtrar" Size="MudBlazor.Size.Small"
-                        OnClick="ListarVendas" Class="mt-2" />
-                    </MudItem>
-                    @*                     <MudItem xs="12">
-                        <MudDateRangePicker Label="Data de Criação" @bind-DateRange="_dataCriacaoFiltro"
+                    <MudItem xs="12">
+                        <MudDateRangePicker Label="Período de Venda" @bind-DateRange="_criacaoFiltro"
                                             Variant="Variant.Outlined"
                                             PlaceholderStart="Data Início"
                                             PlaceholderEnd="Data Fim" Clearable="true"
                                             DateFormat="dd/MM/yyyy"
                                             Margin="Margin.Dense" />
-                    </MudItem> *@
+                    </MudItem>
+                    <MudItem xs="6">
+                        <MudFab Label="Filtrar" Size="MudBlazor.Size.Small"
+                                OnClick="ListarVendas" Class="mt-2 w-100" />
+                    </MudItem>
+                    <MudItem xs="6">
+
+                    </MudItem>
                 </MudGrid>
             </MudPaper>
 
@@ -128,8 +126,11 @@
     private bool _carregando = true;
     private bool _vendasInstalacao = true;
     private string? _statusFiltro = "Todos";
-    private int _statusFormaPagamento = 0;
-    private DateTime? _mesFiltro = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+    private int _formaPagamentoFiltro = 0;
+    public DateRange _criacaoFiltro = new DateRange(
+       new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1),
+       new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.DaysInMonth(DateTime.Now.Year, DateTime.Now.Month))
+    );
 
     public class ChartModelo
     {
@@ -278,16 +279,13 @@
         {
             filtros += $"&status={_statusFiltro}";
         }
-        if (_statusFormaPagamento > 0)
+        if (_formaPagamentoFiltro > 0)
         {
-            filtros += $"&formas_pagamentos_id={_statusFormaPagamento}";
+            filtros += $"&formas_pagamentos_id={_formaPagamentoFiltro}";
         }
-        if (_mesFiltro != null)
+        if (_criacaoFiltro != null)
         {
-            int ultimoDiaMes = DateTime.DaysInMonth(_mesFiltro.Value.Year, _mesFiltro.Value.Month);
-            DateTime? fimMes = new DateTime(_mesFiltro.Value.Year, _mesFiltro.Value.Month, ultimoDiaMes);
-
-            filtros += $"&criado_de={_mesFiltro?.ToString("yyyy-MM-dd")}&criado_ate={fimMes?.ToString("yyyy-MM-dd")}";
+            filtros += $"&criado_de={_criacaoFiltro.Start?.ToString("yyyy-MM-dd")}&criado_ate={_criacaoFiltro.End?.ToString("yyyy-MM-dd")}";
         }
 
         return filtros;
