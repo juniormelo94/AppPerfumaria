@@ -9,6 +9,7 @@
 @using System.Globalization
 
 @inject IDialogService Dialog
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 @inject ISnackbar Snack
 
 <MudOverlay DarkBackground Visible="_carregando" ZIndex="10">
@@ -221,8 +222,8 @@
                             </div>
                         </MudItem>
                         <MudItem xs="2" Class="d-flex flex-column align-items-center justify-content-center">
-@*                                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Medium"
-                                               OnClick="(() => AtualizarVenda(venda, true))" /> *@
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Medium"
+                                               OnClick="(() => AtualizarVenda(venda, true))" />
 
                                 <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Medium"
                                                OnClick="(() => DeletarVenda(venda, true))" />
@@ -428,6 +429,7 @@
     [Parameter] public Auth? Auth { get; set; }
     [Parameter] public Instalacoes? Instalacao { get; set; }
     [Parameter] public EventCallback AtualizarCarinho { get; set; }
+    [Parameter] public EventCallback<Vendas> Carinho { get; set; }
     private List<Vendas>? _listarVendas = new List<Vendas>();
     private List<FormasPagamentos>? _listarFormasPagamentos;
     private MetaPagination? _paginacaoVendas;
@@ -440,6 +442,7 @@
     private DateRange _dataCriacaoFiltro = new DateRange();
     private string _porPagina = "10";
     private int _paginaPaginacao = 1;
+    private List<Estoques>? _produtosCarinho;
 
     protected override async Task OnInitializedAsync()
     {
@@ -653,45 +656,80 @@
     {
         try
         {
-            double? precoPaga = 0.0;
-            @if (venda.vendas_estoques.Any(a => a!.estoque!.preco_venda_desconto != null))
+            // if (venda.vendas_estoques != null && venda.vendas_estoques.Count() > 0)
+            // {
+            //     _produtosCarinho = venda?.vendas_estoques?.Select(s => s.estoque).ToList();
+            //     await LocalStorage.SetItemAsync("carinho", _produtosCarinho);
+            //     await AtualizarCarinho.InvokeAsync();
+            // }
+
+            // await Carinho.InvokeAsync(venda);
+
+            _carregando = true;
+
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.VendasBuscar(Auth!.token!, venda!.id);
+
+            if (response!.status)
             {
-                precoPaga = CalcularTotalDesconto(venda);
+                if (response.data!.vendas_estoques != null && response.data!.vendas_estoques.Count() > 0)
+                {
+                    _produtosCarinho = response.data?.vendas_estoques?.Select(s => s.estoque).ToList();
+                    await LocalStorage.SetItemAsync("carinho", _produtosCarinho);
+                    await AtualizarCarinho.InvokeAsync();
+                }
+
+                await Carinho.InvokeAsync(venda);
             }
             else
             {
-                precoPaga = venda.vendas_estoques?.Sum(w => w.estoque.preco_venda_original);
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
             }
 
-            var options = new DialogOptions
-                {
-                    MaxWidth = MaxWidth.ExtraExtraLarge,
-                    FullWidth = true,
-                    BackdropClick = false,
-                    CloseButton = true,
-                    Position = DialogPosition.TopCenter
-                };
-            var param = new DialogParameters
-                {
-                    ["_vendaForm"] = venda,
-                    ["_precoPaga"] = precoPaga,
-                    ["_editar"] = true
-                };
-            var dialog = Dialog.Show<VendasFormCmp>("Atualizar Venda", param, options);
-            var result = await dialog.Result;
-            if (!result.Canceled && (bool)result.Data == true)
-            {
-                Snack.Add("Venda atualizada com sucesso!", Severity.Success);
-                await LimparEListarVendas(vendasInstalacao);
-            }
-            else if (!result.Canceled && (bool)result.Data == false)
-            {
-                Snack.Add("Tivemos um problema ao tentar atualizar a venda!", Severity.Warning);
-            }
+            _carregando = false;
+
+            // double? precoPaga = 0.0;
+            // @if (venda.vendas_estoques.Any(a => a!.estoque!.preco_venda_desconto != null))
+            // {
+            //     precoPaga = CalcularTotalDesconto(venda);
+            // }
+            // else
+            // {
+            //     precoPaga = venda.vendas_estoques?.Sum(w => w.estoque.preco_venda_original);
+            // }
+
+            // var options = new DialogOptions
+            //     {
+            //         MaxWidth = MaxWidth.ExtraExtraLarge,
+            //         FullWidth = true,
+            //         BackdropClick = false,
+            //         CloseButton = true,
+            //         Position = DialogPosition.TopCenter
+            //     };
+            // var param = new DialogParameters
+            //     {
+            //         ["_vendaForm"] = venda,
+            //         ["_precoPaga"] = precoPaga,
+            //         ["_editar"] = true
+            //     };
+            // var dialog = Dialog.Show<VendasFormCmp>("Atualizar Venda", param, options);
+            // var result = await dialog.Result;
+            // if (!result.Canceled && (bool)result.Data == true)
+            // {
+            //     Snack.Add("Venda atualizada com sucesso!", Severity.Success);
+            //     await LimparEListarVendas(vendasInstalacao);
+            // }
+            // else if (!result.Canceled && (bool)result.Data == false)
+            // {
+            //     Snack.Add("Tivemos um problema ao tentar atualizar a venda!", Severity.Warning);
+            // }
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar atualizar a venda!", Severity.Warning);
+            Snack.Add("Tivemos um problema ao tentar buscar a venda!", Severity.Warning);
             _carregando = false;
         }
     }

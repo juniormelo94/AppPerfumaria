@@ -141,8 +141,6 @@
     public Vendas? _vendaForm { get; set; }
     [Parameter]
     public double? _precoPaga { get; set; }
-    [Parameter]
-    public bool _editar { get; set; } = false;
     private Auth? _auth;
     private Instalacoes? _instalacao { get; set; }
     private List<Estoques>? _produtosCarinho;
@@ -166,14 +164,7 @@
         _instalacao = await LocalStorage.GetItemAsync<Instalacoes>("instalacao");
         _produtosCarinho = await LocalStorage.GetItemAsync<List<Estoques>>("carinho");
 
-        if (_editar)
-        {
-            _vendaForm!.estoques_ids = _vendaForm!.vendas_estoques.Select(w => w.estoques_id).ToList();
-        }
-        else
-        {
-            _vendaForm!.estoques_ids = _produtosCarinho!.Select(w => w.id).ToList();
-        }
+        _vendaForm!.estoques_ids = _produtosCarinho!.Select(w => w.id).ToList();
 
         if (_vendaForm!.id > 0)
         {
@@ -560,7 +551,8 @@
             _vendaForm!.status = "Ativo";
             _vendaForm!.colaboradores_id = _auth!.data!.colaborador_user!.colaboradores_id!;
             VendasResource? responseVenda;
-            if (_editar)
+
+            if (_vendaForm.id > 0)
             {
                 responseVenda = await reinoCompany.VendasAtualizar(_auth!.token!, _vendaForm!);
             }
@@ -569,14 +561,11 @@
                 responseVenda = await reinoCompany.VendasCriar(_auth!.token!, _vendaForm!);
             }
 
-
             if (responseVenda!.status)
             {
-                if (!_editar)
-                {
-                    _produtosCarinho = new List<Estoques>();
-                    await LocalStorage.SetItemAsync("carinho", _produtosCarinho);
-                }
+
+                _produtosCarinho = new List<Estoques>();
+                await LocalStorage.SetItemAsync("carinho", _produtosCarinho);
 
                 _mudDialog!.Close(DialogResult.Ok<bool>(true));
             }

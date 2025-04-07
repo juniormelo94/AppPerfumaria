@@ -94,7 +94,7 @@
                         </MudText>
                         <MudSpacer />
                         <MudText Class="fw-bold" Typo="Typo.body2">
-                            @_venda!.taxa_juros%
+                            @string.Format(new CultureInfo("pt-BR"), "{0:C}", (_venda.lucro_total_original - _venda.lucro_total_desconto))
                         </MudText>
                     </div>
                 }

@@ -34,7 +34,7 @@
                     <MudIcon Icon="@Icons.Material.Filled.LocalGroceryStore" Color="Color.Inherit" />
                 </MudBadge>
             </MudIconButton> *@
-            <MudButton Class="h-100" Color="Color.Inherit" OnClick="Carinho">
+            <MudButton Class="h-100" Color="Color.Inherit" OnClick="(() => Carinho())">
                 <MudBadge Content="_produtosCarinho?.Count()" Overlap="true" Visible="true" Color="Color.Dark" Class="mt-2">
                     <MudIcon Icon="@Icons.Material.Filled.LocalGroceryStore" Color="Color.Inherit" />
                 </MudBadge>
@@ -48,10 +48,18 @@
                     <MudText Typo="Typo.h5" Class="mt-3">CARINHO</MudText>
                     <MudSpacer />
                     <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowRight" Size="Size.Large"
-                    Color="Color.Inherit" OnClick="Carinho" />
+                                   Color="Color.Inherit" OnClick="(() => Carinho())" />
                 </MudDrawerHeader>
                 <MudDivider />
                 <div class="bg-gray" style="height:100vh;">
+                    @if(_venda.id > 1)
+                    {
+                        <MudAlert Class="ma-4" Variant="Variant.Outlined"
+                                  Severity="Severity.Warning" Icon="@Icons.Material.Filled.Edit">
+                            Atualizando a venda Nº @_venda.id
+                        </MudAlert>
+                    }
+
                     <MudPaper Class="pa-4 ma-4" Elevation="0">
                         <div class="d-flex">
                             <MudText Typo="Typo.body1">
@@ -88,6 +96,13 @@
                             <div class="d-flex align-items-center justify-content-center mt-3">
                                 <MudFab Label="Finalizar Compra" Color="Color.Secondary" 
                                 Size="Size.Small" OnClick="CriarVenda" />
+                            </div>
+                        }
+                        @if (_venda.id > 1)
+                        {
+                            <div class="d-flex align-items-center justify-content-center mt-3">
+                                <MudFab Label="Cancelar Atualização"
+                                        Size="Size.Small" OnClick="CancelarAtualizacaoVenda" />
                             </div>
                         }
                     </MudPaper>
@@ -174,27 +189,33 @@
     }
     else if (_nomePagina == "Inicio")
     {
-        <AppPerfumaria.Components.Pages.Inicio.InicioCmp Auth="_auth" Instalacao="_instalacao" AtualizarCarinho="AtualizarCarinho" />
+        <AppPerfumaria.Components.Pages.Inicio.InicioCmp 
+         Auth="_auth" Instalacao="_instalacao" AtualizarCarinho="AtualizarCarinho" />
     }
     else if (_nomePagina == "Marcas")
     {
-        <AppPerfumaria.Components.Pages.Marcas.MarcasCmp Auth="_auth" Instalacao="_instalacao" />
+        <AppPerfumaria.Components.Pages.Marcas.MarcasCmp 
+         Auth="_auth" Instalacao="_instalacao" />
     }
     else if (_nomePagina == "Produtos")
     {
-        <AppPerfumaria.Components.Pages.Produtos.ProdutosCmp Auth="_auth" Instalacao="_instalacao" />
+        <AppPerfumaria.Components.Pages.Produtos.ProdutosCmp 
+         Auth="_auth" Instalacao="_instalacao" />
     }
     else if (_nomePagina == "Colaboradores")
     {
-        <AppPerfumaria.Components.Pages.Colaboradores.ColaboradoresCmp Auth="_auth" Instalacao="_instalacao" />
+        <AppPerfumaria.Components.Pages.Colaboradores.ColaboradoresCmp 
+         Auth="_auth" Instalacao="_instalacao" />
     }
     else if (_nomePagina == "Clientes")
     {
-        <AppPerfumaria.Components.Pages.Clientes.ClientesCmp Auth="_auth" Instalacao="_instalacao" />
+        <AppPerfumaria.Components.Pages.Clientes.ClientesCmp 
+         Auth="_auth" Instalacao="_instalacao" />
     }
     else if (_nomePagina == "Vendas")
     {
-        <AppPerfumaria.Components.Pages.Vendas.VendasCmp Auth="_auth" Instalacao="_instalacao" AtualizarCarinho="AtualizarCarinho" />
+        <AppPerfumaria.Components.Pages.Vendas.VendasCmp 
+         Auth="_auth" Instalacao="_instalacao" AtualizarCarinho="AtualizarCarinho" Carinho="Carinho" />
     }
 
     <MudLayout>
@@ -267,6 +288,12 @@
                             <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Vendas</MudText>
                         </div>
                     </MudNavLink>
+                    <MudNavLink Href="/etiquetas">
+                        <div class="d-flex">
+                            <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.Receipt" Color="Color.Surface" />
+                            <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Etiquetas</MudText>
+                        </div>
+                    </MudNavLink>
                     @*                     <MudNavLink OnClick="@(() => CarregarOpcaoMenu(1))">
                         <div class="d-flex">
                             <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.Storefront" Color="Color.Surface" />
@@ -298,6 +325,7 @@
     private Auth? _auth;
     private Instalacoes? _instalacao;
     private List<Estoques>? _produtosCarinho;
+    private Vendas? _venda = new Vendas();
     private bool _exibirMenu, _exibirCarinho = false;
     private bool _carregando = true;
     private bool _multiplosAcessos = false;
@@ -326,8 +354,13 @@
         _exibirMenu = !_exibirMenu;
     }
 
-    private void Carinho()
+    private void Carinho(Vendas? venda = null)
     {
+        if (venda != null)
+        {
+            _venda = venda;
+        }
+
         _exibirCarinho = !_exibirCarinho;
     }
 
@@ -454,10 +487,10 @@
                 };
             var param = new DialogParameters 
             { 
-                ["_vendaForm"] = new Vendas(),
+                ["_vendaForm"] = _venda,
                 ["_precoPaga"] = precoPaga
             };
-            var dialog = Dialog.Show<VendasFormCmp>("Finalizar Venda", param, options);
+            var dialog = Dialog.Show<Pages.Vendas.Cmp.VendasFormCmp>("Finalizar Venda", param, options);
             var result = await dialog.Result;
             if (!result.Canceled && (bool)result.Data == true)
             {
@@ -476,6 +509,18 @@
             Snack.Add("Tivemos um problema ao tentar finalizar a venda!", Severity.Warning);
             _carregando = false;
         }
+    }
+
+    private async Task CancelarAtualizacaoVenda()
+    {
+        _carregando = true;
+        _produtosCarinho = new List<Estoques>();
+        await LocalStorage.SetItemAsync("carinho", _produtosCarinho);
+        await CarregarOpcaoBarraInferior("Vendas");
+        var venda = new Vendas();
+        Carinho(venda);
+        _carregando = false;
+        StateHasChanged();
     }
 
     public async Task AtualizarCarinho()
