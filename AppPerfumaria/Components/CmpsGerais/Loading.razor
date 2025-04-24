@@ -12,8 +12,6 @@
             <MudProgressCircular Color="@Color" Indeterminate="true" Size="@Size" />
         </div>
     </div>
-
-    <MudOverlay Style="z-index: 9999;" Visible="true" DarkBackground="true" AutoClose="false" />
 }
 else
 {
@@ -21,6 +19,8 @@ else
         <MudProgressCircular Color="@Color" Indeterminate="true" Size="@Size" />
     </div>
 }
+
+<MudOverlay Style="z-index: 9999;" Visible="true" DarkBackground="true" AutoClose="false" />
 
 @code
 {

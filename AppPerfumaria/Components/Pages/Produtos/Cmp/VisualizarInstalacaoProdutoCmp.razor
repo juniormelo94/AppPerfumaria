@@ -1,6 +1,7 @@
 ﻿@using AppPerfumaria.Api.ReinoCompany
 @using AppPerfumaria.Components.CmpsGerais
 @using AppPerfumaria.Models.Auth
+@using AppPerfumaria.Models.Pagination
 @using AppPerfumaria.Models.Tables
 @using System.Globalization
 
@@ -70,8 +71,8 @@
 
         <MudPaper Class="pa-2 mt-3" Elevation="0">
             <div class="fw-bold py-2 text-center rounded" style="background: rgba(66,66,66,0.058823529411764705);">
-                <MudText Class="fw-bold" Typo="Typo.body1">
-                    ESTOQUE
+                <MudText Class="fw-bold" Color="Color.Success" Typo="Typo.body1">
+                    ESTOQUE NÃO VENDIDO
                 </MudText>
             </div>
 
@@ -110,9 +111,18 @@
                                             Status:
                                         </MudText>
                                         <MudSpacer />
-                                        <MudText Class="fw-bold" Typo="Typo.body2">
-                                            @value.status
-                                        </MudText>
+                                        @if (value.status == "Ativo")
+                                        {
+                                            <span class="rounded fw-bold px-1" Style="@($"color:{Colors.Green.Darken4}; background:{Colors.Green.Lighten4}; font-size: 11px; padding: 3px;")">
+                                                @value.status
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="rounded fw-bold px-1" Style="@($"color:{Colors.Red.Darken4}; background:{Colors.Red.Lighten4}; font-size: 11px; padding: 3px;")">
+                                                @value.status
+                                            </span>
+                                        }
                                     </div>
                                     <MudDivider Class="my-1" />
                                     <div class="d-flex">
@@ -183,7 +193,6 @@
                                     }
 
 
-
                                     <div class="d-flex mt-2">
                                         <MudText Typo="Typo.body2">
                                             Valor Lucro:
@@ -216,20 +225,24 @@
                                     </div>
 
 
-
                                     <MudDivider Class="my-1" />
-                                    @if (value.vencimento != null)
-                                    {
-                                        <div class="d-flex">
-                                            <MudText Typo="Typo.body2">
-                                                Data Vencimento:
-                                            </MudText>
-                                            <MudSpacer />
+                                    <div class="d-flex">
+                                        <MudText Typo="Typo.body2">
+                                            Data Vencimento:
+                                        </MudText>
+                                        <MudSpacer />
+                                        @if (value.vencimento != null)
+                                        {
                                             <MudText Class="fw-bold" Typo="Typo.body2">
                                                 @value.vencimento?.ToString("dd/MM/yyyy")
+                                            </MudText>                                    
+                                        }
+                                        else{
+                                            <MudText Class="fw-bold" Color="Color.Warning" Typo="Typo.body2">
+                                                00/00/0000
                                             </MudText>
-                                        </div>
-                                    }
+                                        }
+                                    </div>
                                     <div class="d-flex px-3">
                                         <MudIconButton Size="Size.Medium" OnClick="(() => AtualizarEstoque(value))"
                                                        Icon="@Icons.Material.Filled.Edit" />
@@ -247,6 +260,205 @@
                 </MudGrid>
             }
         </MudPaper>
+
+        <MudPaper Class="pa-2 mt-3" Elevation="0">
+            <div class="fw-bold py-2 text-center rounded" style="background: rgba(66,66,66,0.058823529411764705);">
+                <MudText Class="fw-bold" Color="Color.Error" Typo="Typo.body1">
+                    ESTOQUE VENDIDO
+                </MudText>
+            </div>
+
+             <MudDivider Class="mt-2" />
+             <MudGrid Spacing="2" Justify="Justify.Center" Class="mb-1">
+                @if (_estoques != null && _estoques.Count() > 0)
+                {
+                    @foreach (var (index, value) in _estoques.Select((value, index) => (index, value)))
+                    {
+                        <MudItem xs="12">
+                            <MudExpansionPanels Class="mt-2">
+                                <MudExpansionPanel Text="@($"{index + 1}º ITEM")" Style="@($"background:{Colors.BlueGray.Lighten5};")"
+                                                   HeaderClass="fw-bold py-0" Expanded="true" Dense="true">
+
+                                    <div class="d-flex">
+                                        <MudText Typo="Typo.body2">
+                                            Nº Referência:
+                                        </MudText>
+                                        <MudSpacer />
+                                        <MudText Class="fw-bold" Typo="Typo.body2">
+                                            @value.id
+                                        </MudText>
+                                    </div>
+                                    <div class="d-flex">
+                                        <MudText Typo="Typo.body2">
+                                            Status:
+                                        </MudText>
+                                        <MudSpacer />
+                                        @if (value.status == "Ativo")
+                                        {
+                                            <span class="rounded fw-bold px-1" Style="@($"color:{Colors.Green.Darken4}; background:{Colors.Green.Lighten4}; font-size: 11px; padding: 3px;")">
+                                                @value.status
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="rounded fw-bold px-1" Style="@($"color:{Colors.Red.Darken4}; background:{Colors.Red.Lighten4}; font-size: 11px; padding: 3px;")">
+                                                @value.status
+                                            </span>
+                                        }
+                                    </div>
+                                    <MudDivider Class="my-1" />
+                                    <div class="d-flex">
+                                        <MudText Typo="Typo.body2">
+                                            Preço Compra:
+                                        </MudText>
+                                        <MudSpacer />
+                                        <MudText Class="fw-bold" Typo="Typo.body2">
+                                            @string.Format(new CultureInfo("pt-BR"), "{0:C}", value.preco_compra_original)
+                                        </MudText>
+                                    </div>
+                                    @if (value.preco_compra_desconto != null)
+                                    {
+                                        <div class="d-flex">
+                                            <MudText Typo="Typo.body2">
+                                                Preço Compra Desconto:
+                                            </MudText>
+                                            <MudSpacer />
+                                            <MudText Class="fw-bold" Typo="Typo.body2">
+                                                @string.Format(new CultureInfo("pt-BR"), "{0:C}", value.preco_compra_desconto)
+                                            </MudText>
+                                        </div>
+                                    }
+                                    @if (value.desconto_compra != null)
+                                    {
+                                        <div class="d-flex">
+                                            <MudText Typo="Typo.body2">
+                                                Desconto Compra:
+                                            </MudText>
+                                            <MudSpacer />
+                                            <MudText Class="fw-bold" Typo="Typo.body2">
+                                                @value.desconto_compra%
+                                            </MudText>
+                                        </div>
+                                    }
+                                    <div class="d-flex mt-2">
+                                        <MudText Typo="Typo.body2">
+                                            Preço Venda:
+                                        </MudText>
+                                        <MudSpacer />
+                                        <MudText Class="fw-bold" Typo="Typo.body2">
+                                            @string.Format(new CultureInfo("pt-BR"), "{0:C}", value.preco_venda_original)
+                                        </MudText>
+                                    </div>
+                                    @if (value.preco_venda_desconto != null)
+                                    {
+                                        <div class="d-flex">
+                                            <MudText Typo="Typo.body2">
+                                                Preço Venda Desconto:
+                                            </MudText>
+                                            <MudSpacer />
+                                            <MudText Class="fw-bold" Typo="Typo.body2">
+                                                @string.Format(new CultureInfo("pt-BR"), "{0:C}", value.preco_venda_desconto)
+                                            </MudText>
+                                        </div>
+                                    }
+                                    @if (value.desconto_venda != null)
+                                    {
+                                        <div class="d-flex">
+                                            <MudText Typo="Typo.body2">
+                                                Desconto Venda:
+                                            </MudText>
+                                            <MudSpacer />
+                                            <MudText Class="fw-bold" Typo="Typo.body2">
+                                                @value.desconto_venda%
+                                            </MudText>
+                                        </div>
+                                    }
+
+                                    <div class="d-flex mt-2">
+                                        <MudText Typo="Typo.body2">
+                                            Valor Lucro:
+                                        </MudText>
+                                        <MudSpacer />
+                                        <MudText Class="fw-bold" Typo="Typo.body2">
+                                            @string.Format(new CultureInfo("pt-BR"), "{0:C}", (value.preco_venda_original - value.preco_compra_original))
+                                        </MudText>
+                                    </div>
+                                    @if (value.preco_venda_desconto != null)
+                                    {
+                                        <div class="d-flex">
+                                            <MudText Typo="Typo.body2">
+                                                Valor Lucro Desconto:
+                                            </MudText>
+                                            <MudSpacer />
+                                            <MudText Class="fw-bold" Typo="Typo.body2">
+                                                @string.Format(new CultureInfo("pt-BR"), "{0:C}", CalcularLucro(value))
+                                            </MudText>
+                                        </div>
+                                    }
+                                    <div class="d-flex">
+                                        <MudText Typo="Typo.body2">
+                                            Porcentagem Lucro:
+                                        </MudText>
+                                        <MudSpacer />
+                                        <MudText Class="fw-bold" Typo="Typo.body2">
+                                            @CalcularPorcentagemLucro(value)?.ToString("F1")%
+                                        </MudText>
+                                    </div>
+
+                                    <MudDivider Class="my-1" />
+                                    @if (value.vencimento != null)
+                                    {
+                                        <div class="d-flex">
+                                            <MudText Typo="Typo.body2">
+                                                Data Vencimento:
+                                            </MudText>
+                                            <MudSpacer />
+                                            <MudText Class="fw-bold" Typo="Typo.body2">
+                                                @value.vencimento?.ToString("dd/MM/yyyy")
+                                            </MudText>
+                                        </div>
+                                    }
+                                    <div class="d-flex px-3">
+                                        <MudIconButton Size="Size.Medium" OnClick="(() => CopiarEstoque(value))"
+                                                       Icon="@Icons.Material.Filled.ContentCopy" />
+                                    </div>
+                                </MudExpansionPanel>
+                            </MudExpansionPanels>
+                        </MudItem>
+                    }
+
+                    <MudItem Class="py-5" xs="12">
+                        @if (_paginacaoEstoques!.current_page != _paginacaoEstoques!.last_page)
+                        {
+                            <MudFab Class="w-100" Label="Carregar Mais" OnClick="CarregarMais"
+                                    Disabled="false" Size="Size.Small" />
+                        }
+
+                        <MudText Align="Align.Center" Typo="Typo.body2" Class="mt-2 w-100">
+                            @($"Total: {_paginacaoEstoques!.total} | Exibidos: {_paginacaoEstoques!.to}")
+                        </MudText>
+                    </MudItem>
+                }
+                else if (_estoques != null && _estoques.Count() == 0 && _paginaPaginacao == 0)
+                {
+                    <MudItem Class="py-5" xs="12">
+                        <MudFab Class="w-100" Label="Carregar" OnClick="CarregarMais"
+                                Disabled="false" Size="Size.Small" />
+                    </MudItem>
+                }
+                else
+                {
+                    @if (!_carregando)
+                    {
+                        <MudItem Class="py-5" xs="12">
+                            <Animate class="w-100" Animation="Animations.FadeDown" Duration="TimeSpan.FromSeconds(0.5)" Delay="TimeSpan.FromSeconds(0.4)">
+                                <MudText Class="mt-5" Align="Align.Center" Typo="Typo.body1">Nenhum resultado foi encontrado!</MudText>
+                            </Animate>
+                        </MudItem>
+                    }
+                }
+             </MudGrid>
+        </MudPaper>
     </DialogContent>
 </MudDialog>
 
@@ -255,9 +467,13 @@
     private MudDialogInstance? _mudDialog { get; set; }
     [Parameter]
     public InstalacoesProdutos? _instalacaoProduto { get; set; }
+    public List<Estoques>? _estoques = new List<Estoques>();
+    private MetaPagination? _paginacaoEstoques;
     private Auth? _auth;
     private Instalacoes? _instalacao { get; set; }
     private bool _carregando = false;
+    private string _porPagina = "10";
+    private int _paginaPaginacao = 0;
 
     protected override async Task OnInitializedAsync()
     {
@@ -269,7 +485,7 @@
     {
         try
         {
-            string filtros = $"?instalacoes_id={_instalacao!.id}";
+            string filtros = $"?instalacoes_id={_instalacao!.id}&vendido=0";
 
             var reinoCompany = new ReinoCompany();
             var response = await reinoCompany.InstalacoesProdutosBuscar(_auth!.token!, _instalacaoProduto!.id!, filtros);
@@ -292,6 +508,46 @@
         catch (Exception e)
         {
             Snack.Add("Tivemos um problema ao tentar atualizar o produto!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    public async Task CarregarMais()
+    {
+        _paginaPaginacao++;
+        await ListarEstoquesVendidos();
+    }
+
+    public async Task ListarEstoquesVendidos()
+    {
+        try
+        {
+            _carregando = true;
+            StateHasChanged();
+            string? filtros = $"?instalacoes_id={_instalacao!.id}&produtos_id={_instalacaoProduto!.produtos_id}&vendido=1&page={_paginaPaginacao}&por_pagina={_porPagina}";
+
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.EstoquesListar(_auth!.token!, filtros);
+
+            if (response!.status)
+            {
+                _paginacaoEstoques = response.meta;
+                _estoques!.AddRange(response!.data!);
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+            }
+
+            _carregando = false;
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar listar os produtos!", Severity.Warning);
             _carregando = false;
         }
     }
@@ -385,6 +641,7 @@
         {
             Estoques? estoqueCopia = estoque.Clone();
             estoqueCopia!.id = 0;
+            estoqueCopia!.vendido = false;
 
             var options = new DialogOptions
                 {

@@ -346,7 +346,7 @@
 
     public string? PegarFiltros()
     {
-        string filtros = $"?instalacoes_id={Instalacao!.id}&page={_paginaPaginacao}&por_pagina={_porPagina}";
+        string filtros = $"?instalacoes_id={Instalacao!.id}&vendido=0&page={_paginaPaginacao}&por_pagina={_porPagina}";
 
         if (!string.IsNullOrEmpty(_pesquisarFiltro))
         {

@@ -208,7 +208,7 @@
     {
         try
         {
-            string filtros = $"?instalacoes_id={_instalacao!.id}";
+            string filtros = $"?instalacoes_id={_instalacao!.id}&vendido=0";
 
             var reinoCompany = new ReinoCompany();
             var response = await reinoCompany.InstalacoesProdutosBuscar(_auth!.token!, _instalacaoProduto!.id!, filtros);
