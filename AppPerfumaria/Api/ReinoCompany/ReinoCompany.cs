@@ -143,6 +143,16 @@ namespace AppPerfumaria.Api.ReinoCompany
             return JsonConvert.DeserializeObject<ProdutosResource>(responseString);
         }
 
+        public async Task<ProdutosResource?> ProdutosBuscar(string token, int id)
+        {
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+            var response = await client.GetAsync($"{_baseUrl}/api/produtos/{id}");
+
+            string responseString = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<ProdutosResource>(responseString);
+        }
+
         public async Task<ProdutosResource?> ProdutosAtualizar(string token, Produtos produto)
         {
             using var client = new HttpClient();

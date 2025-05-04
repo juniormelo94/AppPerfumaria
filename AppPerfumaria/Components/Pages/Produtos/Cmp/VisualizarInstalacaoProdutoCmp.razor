@@ -249,6 +249,12 @@
                                         <MudSpacer />
                                         <MudIconButton Size="Size.Medium" OnClick="(() => CopiarEstoque(value))"
                                                        Icon="@Icons.Material.Filled.ContentCopy" />
+                                        @if (_auth?.data?.colaborador_user?.instalacoes_ids?.Count() > 1)
+                                        {
+                                            <MudSpacer />
+                                            <MudIconButton Size="Size.Medium" OnClick="(() => TransferirEstoque(value))"
+                                                           Icon="@Icons.Material.Filled.ImportExport" />
+                                        }
                                         <MudSpacer />
                                         <MudIconButton Size="Size.Medium" OnClick="(() => DeletarEstoque(value))"
                                                        Icon="@Icons.Material.Filled.Delete" />
@@ -671,6 +677,42 @@
         catch (Exception e)
         {
             Snack.Add("Tivemos um problema ao tentar criar item no estoque!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    public async Task TransferirEstoque(Estoques estoque)
+    {
+        try
+        {
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullWidth = true,
+                    BackdropClick = false,
+                    CloseButton = true,
+                    Position = DialogPosition.TopCenter
+                };
+            var param = new DialogParameters
+                {
+                    ["_estoqueForm"] = estoque.Clone(),
+                    ["_instalacaoProduto"] = _instalacaoProduto
+                };
+            var dialog = Dialog.Show<EstoqueTransferirCmp>("Transferir Estoque", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled && (bool)result.Data == true)
+            {
+                Snack.Add("Item transferido de estoque com sucesso!", Severity.Success);
+                await BuscarInstalacoesProdutos();
+            }
+            else if (!result.Canceled && (bool)result.Data == false)
+            {
+                Snack.Add("Tivemos um problema ao tentar transferir item de estoque!", Severity.Warning);
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar transferir item de estoque!", Severity.Warning);
             _carregando = false;
         }
     }

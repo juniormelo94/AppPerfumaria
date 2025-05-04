@@ -90,7 +90,7 @@
         {
             @foreach (var instalacaoProduto in _listarInstalacoesProdutos)
             {
-                <MudItem xs="6">
+                <MudItem xs="6" sm="6" md="4" lg="3" xl="3" xxl="2">
                     <MudCard Style="@(VerificarEstoque(instalacaoProduto!.estoque!) ? "height:350px;" : "height:350px; opacity:0.3;")" @onclick="(() => VisualizarInstalacaoProduto(instalacaoProduto))">
                         @if (instalacaoProduto!.estoque!.Any(p => p.preco_venda_desconto > 0))
                         {
