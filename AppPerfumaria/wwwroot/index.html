@@ -30,6 +30,19 @@
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
     <script src="_content/BlazorAnimate/blazorAnimateInterop.js"></script>
     <script src="_content/CurrieTechnologies.Razor.SweetAlert2/sweetAlert2.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+        window.captureHtmlAsImage = async function (elementId) {
+            const element = document.getElementById(elementId);
+            const canvas = await html2canvas(element, {
+                scale: 4, // Aumente para 2x ou mais (ex: 3 para melhor qualidade)
+                useCORS: true // Ajuda com imagens externas
+            });
+            //const canvas = await html2canvas(element);
+            return canvas.toDataURL("image/png");
+        };
+    </script>
 </body>
 
 </html>

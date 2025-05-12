@@ -1,0 +1,66 @@
+﻿@using AppPerfumaria.Models.Tables
+
+@inject IJSRuntime JS
+@inject IDialogService Dialog
+@inject ISnackbar Snack
+
+<MudDialog Style="max-height: 100%;">
+    <DialogContent>
+        
+    </DialogContent>
+    <DialogActions>
+        <div class="d-block w-100 px-2">
+            @* @if (_carregando) *@
+            @* { *@
+            @*     <MudProgressLinear Color="Color.Secondary" Rounded="true" Striped="true" *@
+            @*                        Size="Size.Medium" Value="100" Class="mb-2" /> *@
+            @* } *@
+            @* <MudFab Class="w-100" Label="Salvar" Size="Size.Medium" *@
+            @*         OnClick="ValidarDadosForm" Disabled="_verificando" /> *@
+            @* <MudFab Class="w-100 mt-2 mb-5" Label="Fechar" OnClick="(() => _mudDialog!.Cancel())" *@
+            @*         Size="Size.Medium" Disabled="_verificando" /> *@
+        </div>
+    </DialogActions>
+</MudDialog>
+
+<button @onclick="CapturarImagem">Capturar Imagem</button>
+
+<div id="htmlToRender" style="padding:10px; background:#efcbcb; height:1920px; width:1080px;">
+    <h3>Olá, mundo!</h3>
+    <p>Este conteúdo será convertido em PNG.</p>
+    <MudImage Src="@($"data:image/png;base64,{_estoque!.produto!.img_1}")"  />
+    <img src="img/plano_fundo_divulgacao.png" alt="Girl in a jacket">
+    @* <img src="img/logo_circulo.png" alt="Girl in a jacket" width="500" height="600"> *@
+</div>
+
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance? _mudDialog { get; set; }
+    [Parameter]
+    public Estoques? _estoque { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await CapturarImagem();
+        }
+    }
+
+    private async Task CapturarImagem()
+    {
+        var base64 = await JS.InvokeAsync<string>("captureHtmlAsImage", "htmlToRender");
+
+        // Salvar localmente
+        var bytes = Convert.FromBase64String(base64.Split(',')[1]);
+        var filePath = Path.Combine(FileSystem.CacheDirectory, "html_output.png");
+        File.WriteAllBytes(filePath, bytes);
+
+        await Share.Default.RequestAsync(new ShareFileRequest
+        {
+            Title = "Compartilhar imagem",
+            File = new ShareFile(filePath)
+        });
+    }
+}
