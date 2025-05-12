@@ -283,7 +283,7 @@
         {
             filtros += $"&formas_pagamentos_id={_formaPagamentoFiltro}";
         }
-        if (_criacaoFiltro != null)
+        if (_criacaoFiltro.Start != null && _criacaoFiltro.End != null)
         {
             filtros += $"&criado_de={_criacaoFiltro.Start?.ToString("yyyy-MM-dd")}&criado_ate={_criacaoFiltro.End?.ToString("yyyy-MM-dd")}";
         }
