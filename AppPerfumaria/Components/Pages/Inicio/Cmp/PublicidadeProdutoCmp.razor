@@ -26,23 +26,26 @@
 <button @onclick="CapturarImagem">Capturar Imagem</button>
 
 @* <div id="htmlToRender" style="padding:100px; background:#efcbcb; height:1920px; width:1080px; background-image: url('img/plano_fundo_divulgacao.png');"> *@
-<div id="htmlToRender" style="background-image: url('img/plano_fundo_divulgacao.png'); background-repeat: no-repeat; background-size: 1080px 1920px; height:1920px; width:1080px;">
+<div id="htmlToRender" style="background-image: url('img/divulgacao/plano_fundo_divulgacao.png'); background-repeat: no-repeat; background-size: 1080px 1920px; height:1920px; width:1080px;">
     <div style="height:1920px; width:1080px;">
-        <MudGrid Spacing="2" Justify="Justify.Center">
+        <MudGrid Spacing="2" Justify="Justify.Center" Style="margin-top: 100px;">
             <MudItem xs="12">
-                <MudText Align="Align.Center" Class="position-relative fw-bold" Style="top: 100px;" Typo="Typo.h3">
-                    <span class="bg-white rounded p-2">
+                <MudText Align="Align.Center" Class="position-relative fw-bold" Style="top: 100px; z-index: 99;" Typo="Typo.h2">
+                    <span class="bg-white rounded p-3">
                         AAA AAA AAA AAA AAA AAA
                     </span>
                 </MudText>      
             </MudItem>
             <MudItem xs="12" Class="d-flex flex-column align-items-center justify-content-center">
-                <MudImage Src="@($"data:image/png;base64,{_estoque!.produto!.img_1}")" Width="800" Style="border: 15px solid #000; margin-top: 100px;" />
+                <MudImage Src="@($"data:image/png;base64,{_estoque!.produto!.img_1}")" Width="800" Style="border: 15px solid #fff; margin-top: 100px; transform: rotate(-5deg);" />
             </MudItem>
             <MudItem xs="12">
-                <MudText Class="fw-bold margin-left: 100px;" Typo="Typo.h4">De: R$ 150,00</MudText>
-                <MudText Class="fw-bold" Typo="Typo.h4">Por: R$ 100,00 (cartão)</MudText>
-                <MudText Class="fw-bold" Typo="Typo.h4">     R$ 80,00 (á vista)</MudText>
+                <div class="position-relative" style="left: 250px; top: 150px; transform: rotate(10deg); z-index: 99;">
+                    <MudText Class="fw-bold margin-left: 100px;" Typo="Typo.h4">De: R$ 150,00</MudText>
+                    <MudText Class="fw-bold" Typo="Typo.h4">Por: R$ 100,00 (cartão)</MudText>
+                    <MudText Class="fw-bold" Typo="Typo.h4">     R$ 80,00 (á vista)</MudText>
+                </div>
+                <MudImage Src="img/divulgacao/etiqueta.png" Width="650" Class="position-relative" Style="bottom: 650px; transform: rotate(-35deg);" />
             </MudItem>
         </MudGrid>
         @* <img src="img/plano_fundo_divulgacao.png" alt="Girl in a jacket"> *@
