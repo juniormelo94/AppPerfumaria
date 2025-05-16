@@ -4,9 +4,54 @@
 @inject IDialogService Dialog
 @inject ISnackbar Snack
 
-<MudDialog Style="max-height: 100%;">
+<MudDialog Style="max-height: 100%;" ContentStyle="max-height: 100px; overflow: hidden;">
     <DialogContent>
-        
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Style="margin-bottom: 500px;" @onclick="CapturarImagem">
+            Compartilhar Imagem
+        </MudButton>
+
+        <div id="htmlToRender" style="position: relative; background-image: url('img/divulgacao/plano_fundo_divulgacao.png'); background-repeat: no-repeat; background-size: contain; background-position: center; min-height:1920px; width:1080px;">
+            <div style="display: flex; justify-content: center;">
+                <div class="titulo" style="
+                z-index: 10;
+                position: absolute;
+                top: 8%;
+                left: 50%;
+                transform: translateX(-50%);
+                background: white;
+                padding: 10px 30px;
+                border-radius: 20px;
+                font-size: 70px;
+                font-weight: bold;
+                text-align: center;
+                box-shadow: 2px 2px 10px rgba(0,0,0,0.2);">
+                    Malbec Bleu 100 ml
+                </div>
+            </div>
+            <div style="display: flex; justify-content: center;">
+                <img src="@($"data:image/png;base64,{_estoque!.produto!.img_1}")" alt="Malbec Bleu" class="imagem-produto"
+                     style=" top: 245px; border: 15px solid #fff; transform: rotate(-4deg); height: 800px; width: 800px; position: absolute; border-radius: 12px; box-shadow: 2px 2px 10px rgba(0,0,0,0.3); ">
+            </div>
+            <div style="position: absolute; top: 30%; left: 7%; width: 650px; transform: rotate(-35deg); z-index: 5;">
+                <img src="img/divulgacao/etiqueta.png" alt="etiqueta" style="width: 100%;">
+
+                <div style="
+            position: absolute;
+            top: 49%;
+            left: 24%;
+            transform: rotate(47deg);
+            font-size: 58px;
+            font-weight: bold;
+            text-align: center;
+            z-index: 10;
+        ">
+                    <span style="font-size: 42px;">De: </span><span style="font-size: 42px; text-decoration: line-through;">219,90</span><br>
+                    <span style="color: #8B4513;">Por: 297,90</span><span style="font-size: 42px;"> (cartão)</span><br>
+                    <span style="color: #8B4513;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;200,00</span><span style="font-size: 42px;"> (à vista)</span>
+                </div>
+            </div>
+        </div>
+
     </DialogContent>
     <DialogActions>
         <div class="d-block w-100 px-2">
@@ -23,35 +68,68 @@
     </DialogActions>
 </MudDialog>
 
-<button @onclick="CapturarImagem">Capturar Imagem</button>
-
 @* <div id="htmlToRender" style="padding:100px; background:#efcbcb; height:1920px; width:1080px; background-image: url('img/plano_fundo_divulgacao.png');"> *@
-<div id="htmlToRender" style="background-image: url('img/divulgacao/plano_fundo_divulgacao.png'); background-repeat: no-repeat; background-size: 1080px 1920px; height:1920px; width:1080px;">
+@* <div id="htmlToRender" style="background-image: url('img/divulgacao/plano_fundo_divulgacao.png'); background-repeat: no-repeat; background-size: 1080px 1920px; height:1920px; width:1080px;">
     <div style="height:1920px; width:1080px;">
-        <MudGrid Spacing="2" Justify="Justify.Center" Style="margin-top: 100px;">
-            <MudItem xs="12">
-                <MudText Align="Align.Center" Class="position-relative fw-bold" Style="top: 100px; z-index: 99;" Typo="Typo.h2">
-                    <span class="bg-white rounded p-3">
-                        AAA AAA AAA AAA AAA AAA
-                    </span>
-                </MudText>      
-            </MudItem>
-            <MudItem xs="12" Class="d-flex flex-column align-items-center justify-content-center">
-                <MudImage Src="@($"data:image/png;base64,{_estoque!.produto!.img_1}")" Width="800" Style="border: 15px solid #fff; margin-top: 100px; transform: rotate(-5deg);" />
-            </MudItem>
-            <MudItem xs="12">
-                <div class="position-relative" style="left: 250px; top: 150px; transform: rotate(10deg); z-index: 99;">
-                    <MudText Class="fw-bold margin-left: 100px;" Typo="Typo.h4">De: R$ 150,00</MudText>
-                    <MudText Class="fw-bold" Typo="Typo.h4">Por: R$ 100,00 (cartão)</MudText>
-                    <MudText Class="fw-bold" Typo="Typo.h4">     R$ 80,00 (á vista)</MudText>
-                </div>
-                <MudImage Src="img/divulgacao/etiqueta.png" Width="650" Class="position-relative" Style="bottom: 650px; transform: rotate(-35deg);" />
-            </MudItem>
-        </MudGrid>
-        @* <img src="img/plano_fundo_divulgacao.png" alt="Girl in a jacket"> *@
-        @* <img src="img/logo_circulo.png" alt="Girl in a jacket" width="500" height="600"> *@
+        <MudText Align="Align.Center" Class="position-relative fw-bold" Style="margin-top: 100px; top: 100px; z-index: 99;" Typo="Typo.h2">
+            <span class="bg-white rounded p-3">
+                AAA AAA AAA AAA AAA AAA
+            </span>
+        </MudText> 
+        <div class="d-flex flex-column align-items-center justify-content-center">
+            <MudImage Src="@($"data:image/png;base64,{_estoque!.produto!.img_1}")" Width="800" Height="1100" Style="border: 15px solid #fff; margin-top: 100px; transform: rotate(-5deg);" />
+        </div>
+        <div class="position-absolute" style="margin-left: 230px;  transform: rotate(10deg); z-index: 99; width: 600px;">
+            <p Class="fw-bold" style="font-size: 45px;">De: <del>150,00</del></p>
+            <p Class="fw-bold" style="font-size: 45px;">Por: 100,00 (cartão)</p>
+            <p Class="fw-bold" style="font-size: 45px;">@($"    80,00 (à vista)")</p>
+        </div>
+        <MudImage Src="img/divulgacao/etiqueta.png" Width="650" Class="position-absolute" Style="top: 900px; transform: rotate(-35deg);" />
     </div>
-</div>
+</div> *@
+
+
+@* <div id="htmlToRender" style="position: relative; background-image: url('img/divulgacao/plano_fundo_divulgacao.png'); background-repeat: no-repeat; background-size: contain; background-position: center; min-height:1920px; width:1080px;">
+    <div style="display: flex; justify-content: center;">
+        <div class="titulo" style="
+                z-index: 10;
+                position: absolute;
+                top: 8%;
+                left: 50%;
+                transform: translateX(-50%);
+                background: white;
+                padding: 10px 30px;
+                border-radius: 20px;
+                font-size: 70px;
+                font-weight: bold;
+                text-align: center;
+                box-shadow: 2px 2px 10px rgba(0,0,0,0.2);">
+            Malbec Bleu 100 ml
+        </div>
+    </div>
+    <div style="display: flex; justify-content: center;">
+        <img src="@($"data:image/png;base64,{_estoque!.produto!.img_1}")" alt="Malbec Bleu" class="imagem-produto"
+             style=" top: 245px; border: 15px solid #fff; transform: rotate(-4deg); height: 800px; width: 800px; position: absolute; border-radius: 12px; box-shadow: 2px 2px 10px rgba(0,0,0,0.3); ">
+    </div>
+    <div style="position: absolute; top: 30%; left: 7%; width: 650px; transform: rotate(-35deg); z-index: 5;">
+        <img src="img/divulgacao/etiqueta.png" alt="etiqueta" style="width: 100%;">
+
+        <div style="
+            position: absolute;
+            top: 49%;
+            left: 24%;
+            transform: rotate(47deg);
+            font-size: 58px;
+            font-weight: bold;
+            text-align: center;
+            z-index: 10;
+        ">
+            <span style="font-size: 42px;">De: </span><span style="font-size: 42px; text-decoration: line-through;">219,90</span><br>
+            <span style="color: #8B4513;">Por: 297,90</span><span style="font-size: 42px;"> (cartão)</span><br>
+            <span style="color: #8B4513;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;200,00</span><span style="font-size: 42px;"> (à vista)</span>
+        </div>
+    </div>
+</div> *@
 
 
 @code {
@@ -59,14 +137,6 @@
     private MudDialogInstance? _mudDialog { get; set; }
     [Parameter]
     public Estoques? _estoque { get; set; }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            await CapturarImagem();
-        }
-    }
 
     private async Task CapturarImagem()
     {
