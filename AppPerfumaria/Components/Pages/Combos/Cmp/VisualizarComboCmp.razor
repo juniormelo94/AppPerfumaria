@@ -1,0 +1,54 @@
+﻿@using AppPerfumaria.Models.Tables
+
+<MudDialog ContentClass="bg-gray py-5" TitleClass="d-flex pb-0 pt-2">
+    <TitleContent>
+        <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft"
+                 OnClick="(() => _mudDialog!.Cancel())" />
+        <MudSpacer />
+        <MudIcon Icon="@Icons.Material.Filled.ShoppingBag" Class="mt-3" />
+    </TitleContent>
+    <DialogContent>
+        @if (!string.IsNullOrEmpty(_combo!.img_1))
+        {
+                <MudCardMedia Class="rounded-lg w-100" Image="@($"data:image/png;base64,{_combo!.img_1}")" Style="height: 350px;" />
+        }
+
+        <MudPaper Class="pa-2 mt-3" Elevation="0">
+            <MudAlert Icon="@(_combo.status == "Ativo" ? Icons.Material.Filled.ThumbUp : Icons.Material.Filled.ThumbDown)"
+                      Severity="Severity.Normal" Dense="true" 
+                      ContentAlignment="HorizontalAlignment.Center" Class="fw-bold">
+                COMBO
+            </MudAlert>
+
+            <MudText Class="fw-bold mt-2" Typo="Typo.body1">
+                @_combo.nome.ToUpper()
+            </MudText>
+
+            <MudText Typo="Typo.body2">
+                @_combo.tipo.ToUpper()
+            </MudText>
+
+            <MudDivider Class="mt-2" />
+
+            <MudExpansionPanels Class="mt-2">
+                <MudExpansionPanel Text="Descrição:" HeaderClass="fw-bold py-0" Expanded="true">
+                    @_combo.descricao
+                </MudExpansionPanel>
+            </MudExpansionPanels>
+
+            <MudText Typo="Typo.body2">
+                @_combo.codigo_barras
+            </MudText>
+
+        </MudPaper>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance? _mudDialog { get; set; }
+    [Parameter]
+    public Combos? _combo { get; set; }
+
+    private void Ok() => _mudDialog!.Close(DialogResult.Ok(true));
+}

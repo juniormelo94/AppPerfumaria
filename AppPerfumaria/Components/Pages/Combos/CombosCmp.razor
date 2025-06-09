@@ -1,0 +1,789 @@
+﻿@using AppPerfumaria.Api.ReinoCompany
+@using AppPerfumaria.Components.CmpsGerais
+@using AppPerfumaria.Components.Pages.Combos.Cmp
+@using AppPerfumaria.Models.Auth
+@using System.Text.Json.Serialization
+@using AppPerfumaria.Models.Collections
+@using AppPerfumaria.Models.Pagination
+@using AppPerfumaria.Models.Tables
+@using ZXing.Net.Maui
+
+@inject IDialogService Dialog
+@inject ISnackbar Snack
+
+<MudOverlay DarkBackground Visible="_carregando" ZIndex="10">
+    <MudProgressCircular Indeterminate="true" Color="Color.Default" />
+</MudOverlay>
+
+<MudPaper Class="px-2 w-100" Elevation="4" Style="position:fixed; z-index: 9;">
+    <!-- Barra de leitor -->
+    <div class="d-flex">
+        <MudTextField Value="_leitorFiltro" Label="Código Barras ou QR Code" Variant="Variant.Outlined"
+        Adornment="Adornment.End" Margin="Margin.Dense" Immediate="true"
+        ValueChanged="(async (string v) => { _leitorFiltro = v; await Leitor(v); })"
+        AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Inherit"
+        ClearIcon="@Icons.Material.Filled.Clear" Clearable="true" />
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.QrCodeScanner" OnClick="AbrirScanner"
+        Color="Color.Inherit" Size="Size.Medium" />
+    </div>
+    <!-- Barra de pesquisa e botão filtro -->
+    <div class="d-flex">
+        <MudTextField Value="_pesquisarFiltro" Label="Pesquisar" Variant="Variant.Outlined"
+        Adornment="Adornment.End" Margin="Margin.Dense" Immediate="true"
+        ValueChanged="(async (string v) => { _pesquisarFiltro = v; await Pesquisar(v); })"
+        AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Inherit" 
+        ClearIcon="@Icons.Material.Filled.Clear" Clearable="true" />
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.FilterList" OnClick="Filtro"
+        Color="Color.Inherit" Size="Size.Medium" />
+    </div>
+    <!-- Barra de filtros -->
+    <MudPopover Open="@_exibirFiltro" Fixed="true" Class="px-4 pt-4 w-100"
+    AnchorOrigin="Origin.TopRight" TransformOrigin="Origin.TopRight">
+        <MudGrid Spacing="2" Justify="Justify.Center" Class="mb-1">
+            <MudItem xs="6">
+                <MudSelect @bind-Value="_porPagina" Variant="Variant.Outlined"
+                Label="Carregar De" Margin="Margin.Dense">
+                    <MudSelectItem Value="@("10")" />
+                    <MudSelectItem Value="@("15")" />
+                    <MudSelectItem Value="@("20")" />
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="6">
+                <MudSelect T="string" @bind-Value="_statusFiltro" Variant="Variant.Outlined"
+                Label="Status" Margin="Margin.Dense">
+                    <MudSelectItem Value="@("Todos")" />
+                    <MudSelectItem Value="@("Ativo")" />
+                    <MudSelectItem Value="@("Inativo")" />
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12">
+                <MudDateRangePicker Label="Data de Criação" @bind-DateRange="_dataCriacaoFiltro"
+                Variant="Variant.Outlined"
+                PlaceholderStart="Data Início"
+                PlaceholderEnd="Data Fim" Clearable="true"
+                DateFormat="dd/MM/yyyy"
+                Margin="Margin.Dense" />
+            </MudItem>
+            @* <MudItem xs="12"> *@
+            @*     <MudAutocomplete T="InstalacoesMarcas" Label="Marca" *@
+            @*                      Value="@(_listarInstalacoesMarcas?.FirstOrDefault(im => im!.marca!.id == _marcaFiltro))" *@
+            @*                      SearchFunc="@PesquisarMarcas" ToStringFunc="@(im => im!.marca!.nome.ToUpper())" *@
+            @*                      ValueChanged="@((InstalacoesMarcas im) => { _marcaFiltro = im!.marca!.id; })" *@
+            @*                      CloseIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Default" Variant="Variant.Outlined" *@
+            @*                      Strict="false" Margin="Margin.Dense" ShowProgressIndicator="true" ClearIcon="@Icons.Material.Filled.Clear" Clearable="true"> *@
+            @*         <NoItemsTemplate> *@
+            @*             <MudText Align="Align.Center" Class="px-4 py-1"> *@
+            @*                 Nenhum resultado encontrado! *@
+            @*             </MudText> *@
+            @*         </NoItemsTemplate> *@
+            @*     </MudAutocomplete> *@
+            @* </MudItem> *@
+        </MudGrid>
+        <MudDivider />
+        <div class="d-flex my-2 float-end">
+            <MudFab Label="Fechar" Size="Size.Small"
+            OnClick="Filtro" Class="mr-2" />
+            <MudFab Label="Filtrar" Size="Size.Small"
+            OnClick="AplicarFiltros" />
+        </div>
+    </MudPopover>
+    <!-- Barra de card e botão criar -->
+    <div class="d-flex">
+        @* <MudTabs Elevation="4" Rounded="true" Centered="true" @ref="tabs"> *@
+        @*     <MudTabPanel Icon="@Icons.Material.Filled.Storefront" Text="Produtos" *@
+        @*     OnClick="LimparEListarInstalacaoProdutos" /> *@
+        @*     <MudTabPanel Text="Produtos" OnClick="LimparEListarProdutos" /> *@
+        @* </MudTabs> *@
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.Add" OnClick="CriarProduto"
+        Color="Color.Inherit" Size="Size.Medium" />
+    </div>
+</MudPaper>
+
+<div class="pa-2" style="margin-top: 158px;">
+    @* @if (_indiceMenuProduto == 0) *@
+    @* { *@
+    @*     <!-- Listar resultados dos produtos associados --> *@
+    @*     <MudGrid Spacing="2" Justify="Justify.Center"> *@
+    @*         @if (_listarInstalacoesProdutos != null && _listarInstalacoesProdutos.Count() > 0) *@
+    @*         { *@
+    @*             @foreach (var instalacaoProduto in _listarInstalacoesProdutos) *@
+    @*             { *@
+    @*                 <MudItem xs="6"> *@
+    @*                     <MudCard Style="height: 350px;" @onclick="(() => VisualizarInstalacaoProduto(instalacaoProduto))"> *@
+    @*                         <MudIcon Style="position:absolute;" Class="mt-2 ml-2" Color="@(instalacaoProduto.status == "Ativo" ? Color.Dark : Color.Default)" *@
+    @*                                  Icon="@(instalacaoProduto.status == "Ativo" ? Icons.Material.Filled.ThumbUp : @Icons.Material.Filled.ThumbDown)" /> *@
+    @*                         <MudCardMedia Image="@($"data:image/png;base64,{instalacaoProduto!.produto.img_1}")" Height="200" /> *@
+    @*                         <MudCardContent Class="py-2"> *@
+    @*                             <MudText Class="fw-bold" Typo="Typo.body1"> *@
+    @*                                 @if (instalacaoProduto!.produto.nome.Length > 35) *@
+    @*                                 { *@
+    @*                                     @($"{instalacaoProduto!.produto.nome.Substring(0, 35).ToUpper()}...") *@
+    @*                                 } *@
+    @*                                 else *@
+    @*                                 { *@
+    @*                                     @instalacaoProduto!.produto.nome.ToUpper() *@
+    @*                                 } *@
+    @*                             </MudText> *@
+    @*                         </MudCardContent> *@
+    @*                         <MudCardActions Class="d-block py-0 pb-1"> *@
+    @*                             <div class="d-flex mt-1 px-3"> *@
+    @*                                 <MudIconButton Size="Size.Medium" OnClick="(() => AtualizarInstalacaoProduto(instalacaoProduto))" *@
+    @*                                                Icon="@Icons.Material.Filled.Edit" /> *@
+    @*                                 <MudIconButton OnClick="(() => VisualizarInstalacaoProduto(instalacaoProduto))"> *@
+    @*                                     <MudBadge Content="instalacaoProduto!.estoque!.Count()" Overlap="true" Visible="true" Color="Color.Dark"> *@
+    @*                                         <MudIcon Icon="@Icons.Material.Filled.Storage" /> *@
+    @*                                     </MudBadge> *@
+    @*                                 </MudIconButton> *@
+    @*                                 <MudIconButton Size="Size.Medium" OnClick="(() => DeletarInstalacaoProduto(instalacaoProduto))" *@
+    @*                                                Icon="@Icons.Material.Filled.Delete" /> *@
+    @*                             </div> *@
+    @*                         </MudCardActions> *@
+    @*                     </MudCard> *@
+    @*                 </MudItem> *@
+    @*             } *@
+
+    @*             <MudItem Class="py-5" xs="12"> *@
+    @*                 @if (_paginacaoInstalacoesProdutos!.current_page != _paginacaoInstalacoesProdutos!.last_page) *@
+    @*                 { *@
+    @*                     <MudFab Class="w-100" Label="Carregar Mais" OnClick="CarregarMais" *@
+    @*                             Disabled="false" Size="Size.Small" /> *@
+    @*                 } *@
+
+    @*                 <MudText Align="Align.Center" Typo="Typo.body2" Class="mt-2 w-100"> *@
+    @*                     @($"Total: {_paginacaoInstalacoesProdutos!.total} | Exibidos: {_paginacaoInstalacoesProdutos!.to}") *@
+    @*                 </MudText> *@
+    @*             </MudItem> *@
+    @*         } *@
+    @*         else *@
+    @*         { *@
+    @*             @if (!_carregando) *@
+    @*             { *@
+    @*                 <MudItem Class="py-5" xs="12"> *@
+    @*                     <Animate class="w-100" Animation="Animations.FadeDown" Duration="TimeSpan.FromSeconds(0.5)" Delay="TimeSpan.FromSeconds(0.4)"> *@
+    @*                         <MudText Class="mt-5" Align="Align.Center" Typo="Typo.body1">Nenhum resultado foi encontrado!</MudText> *@
+    @*                     </Animate> *@
+    @*                 </MudItem> *@
+    @*             } *@
+    @*         } *@
+    @*     </MudGrid> *@
+    @* } *@
+    @* else if (_indiceMenuProduto == 1) *@
+    @* { *@
+    <!-- Listar resultados dos combos -->
+    <MudGrid Spacing="2" Justify="Justify.Center">
+        @if (_listarCombos != null && _listarCombos.Count() > 0)
+        {
+            @foreach (var combo in _listarCombos)
+            {
+                <MudItem xs="6">
+                    <MudCard Style="height: 380px;" @onclick="(() => VisualizarCombo(combo))">
+                        <MudIcon Style="position:absolute;" Class="mt-2 ml-2" Color="@(combo.status == "Ativo" ? Color.Dark : Color.Default)"
+                        Icon="@(combo.status == "Ativo" ? Icons.Material.Filled.ThumbUp : Icons.Material.Filled.ThumbDown)" />
+                        <MudCardMedia Image="@($"data:image/png;base64,{combo.img_1}")" Height="200" />
+                        <MudCardContent Class="py-2">
+                            <MudText Class="fw-bold" Typo="Typo.body1">
+                                @if (combo.nome.Length > 35)
+                                {
+                                    @($"{combo.nome.Substring(0, 35).ToUpper()}...")
+                                }
+                                else
+                                {
+                                    @combo.nome.ToUpper()
+                                }
+                            </MudText>
+                        </MudCardContent>
+                        <MudCardActions Class="d-block py-0 pb-1">
+                            @* @if (produto!.instalacao_produtos!.Count() > 0) *@
+                            @* { *@
+                            @*     <MudFab Class="w-100" Label="Associado" StartIcon="@Icons.Material.Filled.Check" *@
+                            @*             Size="Size.Small" Disabled="true" /> *@
+                            @* } *@
+                            @* else *@
+                            @* { *@
+                            @*     <MudFab Class="w-100" Label="Associar" Size="Size.Small" *@
+                            @*             OnClick="(() => CriarInstalacaoProduto(produto))" /> *@
+                            @* } *@
+                            <div class="d-flex mt-1 px-3">
+                                <MudIconButton Size="Size.Medium" OnClick="(() => AtualizarCombo(combo))"
+                                               Icon="@Icons.Material.Filled.Edit" />
+                                <MudSpacer />
+                                <MudIconButton Size="Size.Medium" OnClick="(() => DeletarCombo(combo))"
+                                               Icon="@Icons.Material.Filled.Delete" />
+                            </div>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            }
+
+            <MudItem Class="py-5" xs="12">
+                @if (_paginacaoCombos!.current_page != _paginacaoCombos!.last_page)
+                {
+                    <MudFab Class="w-100" Label="Carregar Mais" OnClick="CarregarMais"
+                    Disabled="false" Size="Size.Small" />
+                }
+
+                <MudText Align="Align.Center" Typo="Typo.body2" Class="mt-2 w-100">
+                    @($"Total: {_paginacaoCombos!.total} | Exibidos: {_paginacaoCombos!.to}")
+                </MudText>
+            </MudItem>
+        }
+        else
+        {
+            @if (!_carregando)
+            {
+                <MudItem Class="py-5" xs="12">
+                    <Animate class="w-100" Animation="Animations.FadeDown" Duration="TimeSpan.FromSeconds(0.5)" Delay="TimeSpan.FromSeconds(0.4)">
+                        <MudText Class="mt-5" Align="Align.Center" Typo="Typo.body1">Nenhum resultado foi encontrado!</MudText>
+                    </Animate>
+                </MudItem>
+            }
+        }
+    </MudGrid>
+    @* } *@
+</div>
+
+@code {
+    [Parameter] public Auth? Auth { get; set; }
+    [Parameter] public Instalacoes? Instalacao { get; set; }
+    private List<Combos>? _listarCombos = new List<Combos>();
+    // private List<Combos>? _listarInstalacoesCombos = new List<Combos>();
+    // private List<InstalacoesMarcas>? _listarInstalacoesMarcas = new List<InstalacoesMarcas>
+    // {
+    //     new InstalacoesMarcas {
+    //         marca = new Marcas
+    //         {
+    //             id = 0,
+    //             nome = "Todas"
+    //         }
+    //     }
+    // };
+    private MetaPagination? _paginacaoCombos;
+    // private MetaPagination? _paginacaoInstalacoesProdutos;
+    // private MudTabs? tabs;
+    // private int _indiceMenuCombo = 0;
+    private bool _carregando = true;
+    private bool _exibirFiltro = false;
+    private string? _pesquisarFiltro;
+    private string? _leitorFiltro;
+    private string? _statusFiltro = "Todos";
+    private DateRange _dataCriacaoFiltro = new DateRange();
+    private int _marcaFiltro = 0;
+    private string _porPagina = "10";
+    private int _paginaPaginacao = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        do
+        {
+            await Task.Delay(300);
+        }
+        while (Auth == null || Instalacao == null);
+
+        // _ = ListarInstalacaoMarcas();
+        await ListarCombos();
+    }
+
+    private async Task Pesquisar(string pesquisar)
+    {
+        await Task.Delay(1500);
+
+        if (pesquisar == _pesquisarFiltro)
+        {
+            await AplicarFiltros();
+        }
+    }
+
+    private async Task Leitor(string leitor)
+    {
+        await Task.Delay(1500);
+
+        if (leitor == _leitorFiltro)
+        {
+            await AplicarFiltros();
+        }
+    }
+
+    public async Task AbrirScanner()
+    {
+        var resultados = await BuscarResultadoScan();
+        var barcode = resultados.FirstOrDefault();
+        if (barcode != null)
+        {
+            _leitorFiltro = barcode.Value;
+            await AplicarFiltros();
+        }
+    }
+
+    public async Task<BarcodeResult[]> BuscarResultadoScan()
+    {
+        var cameraPage = new CameraPage();
+        await Application.Current!.MainPage!.Navigation.PushModalAsync(cameraPage);
+
+        return await cameraPage.WaitForResultAsync();
+    }
+
+    public async Task CarregarMais()
+    {
+        // if (_indiceMenuProduto == 0)
+        // {
+        //     _paginaPaginacao++;
+        //     await ListarInstalacaoProdutos();
+        // }
+        // else
+        // {
+        _paginaPaginacao++;
+        await ListarCombos();
+        // }
+    }
+
+    private void Filtro()
+    {
+        _exibirFiltro = !_exibirFiltro;
+    }
+
+    public string? PegarFiltros()
+    {
+        string filtros = $"?instalacoes_id={Instalacao!.id}&page={_paginaPaginacao}&por_pagina={_porPagina}";
+
+        if (!string.IsNullOrEmpty(_pesquisarFiltro))
+        {
+            filtros += $"&pesquisar={_pesquisarFiltro}";
+        }
+        if (!string.IsNullOrEmpty(_leitorFiltro))
+        {
+            filtros += $"&leitor={_leitorFiltro}";
+        }
+        if (!string.IsNullOrEmpty(_statusFiltro) && _statusFiltro != "Todos")
+        {
+            filtros += $"&status={_statusFiltro}";
+        }
+        if (_dataCriacaoFiltro.Start != null && _dataCriacaoFiltro.End != null)
+        {
+            filtros += $"&criado_de={_dataCriacaoFiltro.Start?.ToString("yyyy-MM-dd")}&criado_ate={_dataCriacaoFiltro.End?.ToString("yyyy-MM-dd")}";
+        }
+        // if (_marcaFiltro > 0)
+        // {
+        //     filtros += $"&marcas_id={_marcaFiltro}";
+        // }
+
+        return filtros;
+    }
+
+    public async Task AplicarFiltros()
+    {
+        _exibirFiltro = false;
+
+        // if (_indiceMenuProduto == 0)
+        // {
+        //     await LimparEListarInstalacaoProdutos();
+        // }
+        // else
+        // {
+        await LimparEListarCombos();
+        // }
+    }
+
+    // private async Task<IEnumerable<InstalacoesMarcas>?> PesquisarMarcas(string pesquisar, CancellationToken token)
+    // {
+    //     if (string.IsNullOrEmpty(pesquisar))
+    //     {
+    //         return _listarInstalacoesMarcas!.OrderBy(o => o!.marca!.nome == "Todas" ? 0 : 1)
+    //                                         .ThenBy(o => o!.marca!.nome);
+    //     }
+
+    //     return _listarInstalacoesMarcas!.Where(im => im!.marca!.nome.Contains(pesquisar, StringComparison.OrdinalIgnoreCase))
+    //                                     .OrderBy(o => o!.marca!.nome);
+    // }
+
+    // public async Task ListarInstalacaoMarcas()
+    // {
+    //     try
+    //     {
+    //         string filtros = $"?instalacoes_id={Instalacao!.id}";
+
+    //         var reinoCompany = new ReinoCompany();
+    //         var response = await reinoCompany.InstalacoesMarcasListar(Auth!.token!, filtros);
+
+    //         if (response!.status)
+    //         {
+    //             _listarInstalacoesMarcas!.AddRange(response!.data!);
+    //         }
+    //         else
+    //         {
+    //             if (!string.IsNullOrEmpty(response.message))
+    //             {
+    //                 Snack.Add(response.message, Severity.Warning);
+    //             }
+    //         }
+
+    //         StateHasChanged();
+    //     }
+    //     catch (Exception e)
+    //     {
+    //         Snack.Add("Tivemos um problema ao tentar listar as marcas!", Severity.Warning);
+    //     }
+    // }
+
+    // public async Task LimparEListarInstalacaoProdutos()
+    // {
+    //     _paginaPaginacao = 1;
+    //     _listarInstalacoesProdutos = new List<InstalacoesProdutos>();
+    //     await ListarInstalacaoProdutos();
+    // }
+
+    // public async Task ListarInstalacaoProdutos()
+    // {
+    //     try
+    //     {
+    //         _carregando = true;
+    //         StateHasChanged();
+    //         string? filtros = PegarFiltros();
+
+    //         var reinoCompany = new ReinoCompany();
+    //         var response = await reinoCompany.InstalacoesProdutosListar(Auth!.token!, filtros);
+
+    //         if (response!.status)
+    //         {
+    //             _paginacaoInstalacoesProdutos = response.meta;
+    //             _listarInstalacoesProdutos!.AddRange(response!.data!);
+    //         }
+    //         else
+    //         {
+    //             if (!string.IsNullOrEmpty(response.message))
+    //             {
+    //                 Snack.Add(response.message, Severity.Warning);
+    //             }
+    //         }
+
+    //         _indiceMenuProduto = 0;
+    //         _carregando = false;
+    //         StateHasChanged();
+    //     }
+    //     catch (Exception e)
+    //     {
+    //         Snack.Add("Tivemos um problema ao tentar listar os produtos dessa instalação!", Severity.Warning);
+    //         _carregando = false;
+    //     }
+    // }
+
+    public async Task LimparEListarCombos()
+    {
+        _paginaPaginacao = 1;
+        _listarCombos = new List<Combos>();
+        await ListarCombos();
+    }
+
+    public async Task ListarCombos()
+    {
+        try
+        {
+            _carregando = true;
+            StateHasChanged();
+            string? filtros = PegarFiltros();
+
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.CombosListar(Auth!.token!, filtros);
+
+            if (response!.status)
+            {
+                _paginacaoCombos = response.meta;
+                _listarCombos!.AddRange(response!.data!);
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+            }
+
+            // _indiceMenuProduto = 1;
+            _carregando = false;
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar listar os combos!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    // private async Task VisualizarInstalacaoProduto(InstalacoesProdutos instalacaoProduto)
+    // {
+    //     try
+    //     {
+    //         var options = new DialogOptions
+    //             {
+    //                 MaxWidth = MaxWidth.ExtraExtraLarge,
+    //                 FullWidth = true,
+    //                 FullScreen = true,
+    //                 CloseButton = false,
+    //             };
+    //         var param = new DialogParameters { ["_instalacaoProduto"] = instalacaoProduto };
+    //         var dialog = Dialog.Show<VisualizarInstalacaoProdutoCmp>("Visualizar Associação", param, options);
+    //         var result = await dialog.Result;
+    //         if (!result.Canceled)
+    //         {
+    //             instalacaoProduto = (InstalacoesProdutos)result.Data!;
+    //             _listarInstalacoesProdutos!.FirstOrDefault(w => w.id == instalacaoProduto.id)!.estoque = instalacaoProduto.estoque;
+    //             StateHasChanged();
+    //         }
+    //     }
+    //     catch (Exception e)
+    //     {
+    //         Snack.Add("Tivemos um problema ao tentar exibir o produto associado!", Severity.Warning);
+    //     }
+    // }
+
+    private void VisualizarCombo(Combos combo)
+    {
+        try
+        {
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullWidth = true,
+                    FullScreen = true,
+                    CloseButton = false,
+                };
+            var param = new DialogParameters { ["_combo"] = combo };
+            Dialog.Show<VisualizarComboCmp>("Visualizar Combo", param, options);
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar exibir o combo!", Severity.Warning);
+        }
+    }
+
+    // public async Task CriarInstalacaoProduto(Produtos produto)
+    // {
+    //     try
+    //     {
+    //         if (produto.status == "Inativo")
+    //         {
+    //             Snack.Add("Tivemos um problema ao tentar associar, pois o produto está inativo!", Severity.Warning);
+    //             return;
+    //         }
+
+    //         var param = new DialogParameters<AlertaAssociacao>
+    //         {
+    //             { x => x.ContentText, "Deseja associar esse <b>PRODUTO</b> a instalação?" }
+    //         };
+    //         var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+    //         var dialog = Dialog.Show<AlertaAssociacao>("Associar Produto", param, options);
+    //         var result = await dialog.Result;
+    //         if (!result.Canceled)
+    //         {
+    //             _carregando = true;
+
+    //             var instalacaoProduto = new InstalacoesProdutos
+    //                 {
+    //                     instalacoes_id = Instalacao!.id,
+    //                     produtos_id = produto.id,
+    //                     status = "Ativo",
+    //                 };
+    //             var reinoCompany = new ReinoCompany();
+    //             var response = await reinoCompany.InstalacoesProdutosCriar(Auth!.token!, instalacaoProduto);
+
+    //             if (response!.status)
+    //             {
+    //                 Snack.Add("Produto associado com sucesso!", Severity.Success);
+    //                 await LimparEListarProdutos();
+    //             }
+    //             else
+    //             {
+    //                 if (!string.IsNullOrEmpty(response.message))
+    //                 {
+    //                     Snack.Add(response.message, Severity.Warning);
+    //                 }
+    //                 _carregando = false;
+    //             }
+    //         }
+    //     }
+    //     catch (Exception e)
+    //     {
+    //         Snack.Add("Tivemos um problema ao tentar associar o produto!", Severity.Warning);
+    //         _carregando = false;
+    //     }
+    // }
+
+    public async Task CriarProduto()
+    {
+        try
+        {
+            var combo = new Combos() { 
+                instalacoes_id = Instalacao!.id 
+            };
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullWidth = true,
+                    BackdropClick = false,
+                    CloseButton = true,
+                    Position = DialogPosition.TopCenter
+                };
+            var param = new DialogParameters { ["_comboForm"] = combo };
+            var dialog = Dialog.Show<CombosFormCmp>("Adicionar Combo", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled && (bool)result.Data == true)
+            {
+                Snack.Add("Combo criado com sucesso!", Severity.Success);
+                await LimparEListarCombos();
+            }
+            else if (!result.Canceled && (bool)result.Data == false)
+            {
+                Snack.Add("Tivemos um problema ao tentar criar o combo!", Severity.Warning);
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar criar o combo!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    // public async Task AtualizarInstalacaoProduto(InstalacoesProdutos instalacaoProduto)
+    // {
+    //     try
+    //     {
+    //         var options = new DialogOptions
+    //             {
+    //                 MaxWidth = MaxWidth.ExtraExtraLarge,
+    //                 FullWidth = true,
+    //                 BackdropClick = false,
+    //                 CloseButton = true,
+    //                 Position = DialogPosition.TopCenter
+    //             };
+    //         var param = new DialogParameters { ["_instalacaoProdutoForm"] = instalacaoProduto.Clone() };
+    //         var dialog = Dialog.Show<InstalacoesProdutosFormCmp>("Atualizar Associação", param, options);
+    //         var result = await dialog.Result;
+    //         if (!result.Canceled && (bool)result.Data == true)
+    //         {
+    //             Snack.Add("Produto associado atualizado com sucesso!", Severity.Success);
+    //             await LimparEListarInstalacaoProdutos();
+    //         }
+    //         else if (!result.Canceled && (bool)result.Data == false)
+    //         {
+    //             Snack.Add("Tivemos um problema ao tentar atualizar associação do produto!", Severity.Warning);
+    //         }
+    //     }
+    //     catch (Exception e)
+    //     {
+    //         Snack.Add("Tivemos um problema ao tentar atualizar associação do produto!", Severity.Warning);
+    //         _carregando = false;
+    //     }
+    // }
+
+    public async Task AtualizarCombo(Combos combo)
+    {
+        try
+        {
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullScreen = true,
+                    BackdropClick = false,
+                    CloseButton = true,
+                    Position = DialogPosition.TopCenter
+                };
+            var param = new DialogParameters { ["_comboForm"] = combo.Clone() };
+            var dialog = Dialog.Show<CombosFormCmp>("Atualizar Combo", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled && (bool)result.Data == true)
+            {
+                Snack.Add("Combo atualizado com sucesso!", Severity.Success);
+                await LimparEListarCombos();
+            }
+            else if (!result.Canceled && (bool)result.Data == false)
+            {
+                Snack.Add("Tivemos um problema ao tentar atualizar o combo!", Severity.Warning);
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar atualizar o combo!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    // public async Task DeletarInstalacaoProduto(InstalacoesProdutos instalacaoProduto)
+    // {
+    //     try
+    //     {
+    //         var param = new DialogParameters<AlertaDelete>
+    //         {
+    //             { x => x.ContentText, "Tem certeza que deseja deletar essa <b>ASSOCIAÇÃO</b> ao <b>PRODUTO</b> e todos os dados a ele ligados?" }
+    //         };
+    //         var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+    //         var dialog = Dialog.Show<AlertaDelete>("Deletar Associação", param, options);
+    //         var result = await dialog.Result;
+    //         if (!result.Canceled)
+    //         {
+    //             _carregando = true;
+    //             var reinoCompany = new ReinoCompany();
+    //             var response = await reinoCompany.InstalacoesProdutosDeletar(Auth!.token!, instalacaoProduto);
+
+    //             if (response!.status)
+    //             {
+    //                 Snack.Add("Marca associada deletada com sucesso!", Severity.Success);
+    //                 await LimparEListarInstalacaoProdutos();
+    //             }
+    //             else
+    //             {
+    //                 if (!string.IsNullOrEmpty(response.message))
+    //                 {
+    //                     Snack.Add(response.message, Severity.Warning);
+    //                 }
+    //                 _carregando = false;
+    //             }
+    //         }
+    //     }
+    //     catch (Exception e)
+    //     {
+    //         Snack.Add("Tivemos um problema ao tentar deletar associação ao produto!", Severity.Warning);
+    //         _carregando = false;
+    //     }
+    // }
+
+    public async Task DeletarCombo(Combos combo)
+    {
+        try
+        {
+            var param = new DialogParameters<AlertaDelete>
+            {
+                { x => x.ContentText, "Tem certeza que deseja deletar esse <b>COMBO</b> e todos os dados a ele ligados?" }
+            };
+            var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+            var dialog = Dialog.Show<AlertaDelete>("Deletar Combo", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled)
+            {
+                _carregando = true;
+                var reinoCompany = new ReinoCompany();
+                var response = await reinoCompany.CombosDeletar(Auth!.token!, combo);
+
+                if (response!.status)
+                {
+                    Snack.Add("Combo deletado com sucesso!", Severity.Success);
+                    await LimparEListarCombos();
+                }
+                else
+                {
+                    if (!string.IsNullOrEmpty(response.message))
+                    {
+                        Snack.Add(response.message, Severity.Warning);
+                    }
+                    _carregando = false;
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar deletar o combo!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+}

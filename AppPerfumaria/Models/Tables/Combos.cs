@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace AppPerfumaria.Models.Tables
 {
-    public class Produtos
+    public class Combos
     {
         public int id { get; set; }
         [Required(ErrorMessage = "O nome é obrigatório.")]
@@ -22,14 +22,14 @@ namespace AppPerfumaria.Models.Tables
         public string? img_1 { get; set; }
         public string? img_2 { get; set; }
         public string? img_3 { get; set; }
-        [Required(ErrorMessage = "A marca é obrigatória.")]
-        public int marcas_id { get; set; }
+        [Required(ErrorMessage = "A instalação é obrigatória.")]
+        public int instalacoes_id { get; set; }
+        public List<int>? produtos_ids { get; set; }
         [Required(ErrorMessage = "O status é obrigatório.")]
         public string status { get; set; }
         public DateTime created_at { get; set; }
         public DateTime updated_at { get; set; }
         public Marcas? marca { get; set; }
-        public Estoques? estoque { get; set; }
-        public List<InstalacoesProdutos>? instalacao_produtos { get; set; }
+        public List<CombosProdutos>? combo_produtos { get; set; }
     }
 }

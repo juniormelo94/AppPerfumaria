@@ -1,0 +1,315 @@
+﻿@using AppPerfumaria.Api.ReinoCompany
+@using AppPerfumaria.Components.CmpsGerais
+@using AppPerfumaria.Models.Auth
+@using AppPerfumaria.Models.Resources
+@using AppPerfumaria.Models.Tables
+@using ZXing.Net.Maui
+
+@inject IDialogService Dialog
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject ISnackbar Snack
+
+<MudDialog>
+    <DialogContent>
+        <EditForm Model="_comboForm" OnValidSubmit="Salvar" @ref="_comboFormRef">
+            <DataAnnotationsValidator />
+
+            <MudFocusTrap Disabled="false" DefaultFocus="DefaultFocus.FirstChild">
+                <MudTextField T="string" @bind-Value="_comboForm.nome" Variant="Variant.Outlined"
+                              Label="Nome*" Disabled="_verificando" Margin="Margin.Dense" />
+                <ValidationMessage For="() => _comboForm.nome" />
+
+                <MudTextField T="string" @bind-Value="_comboForm.tipo" Variant="Variant.Outlined"
+                              Label="Tipo*" Disabled="_verificando" Margin="Margin.Dense" />
+                <ValidationMessage For="() => _comboForm.tipo" />
+
+                <MudTextField T="string" @bind-Value="_comboForm.descricao" Variant="Variant.Outlined"
+                              Label="Descrição*" Disabled="_verificando" Margin="Margin.Dense" />
+                <ValidationMessage For="() => _comboForm.descricao" />
+
+                <div class="d-flex">
+                    <MudTextField T="string" @bind-Value="_comboForm.codigo_barras" Variant="Variant.Outlined"
+                                  Label="Código de Barras" Disabled="_verificando" Margin="Margin.Dense" />
+                    <div>
+                        <MudIconButton Icon="@Icons.Material.Filled.QrCodeScanner"
+                                       OnClick="AbrirScanner" Size="Size.Medium" Style="margin-top: 3px;" />
+                    </div>
+                </div>
+                <ValidationMessage For="() => _comboForm.codigo_barras" />
+
+                <MudTextField T="string" @bind-Value="_comboForm.qr_code" Variant="Variant.Outlined"
+                              Label="QR Code" Disabled="_verificando" Margin="Margin.Dense" />
+                <ValidationMessage For="() => _comboForm.qr_code" />
+
+                <MudFileUpload T="IBrowserFile" FilesChanged="UploadFiles" Accept="image/*" 
+                               Disabled="_verificando">
+                    <ActivatorContent>
+                        <MudButton Variant="Variant.Outlined" Size="Size.Medium" Class="w-100 mt-1"
+                                   StartIcon="@Icons.Material.Filled.FileUpload">
+                                   Carregar Imagem
+                        </MudButton>
+                        @if (_carregandoImagem)
+                        {
+                            <MudProgressLinear Color="Color.Secondary" Rounded="true" Striped="true"
+                                               Size="Size.Medium" Value="100" />
+                        }
+                    </ActivatorContent>
+                </MudFileUpload>
+                <ValidationMessage For="() => _comboForm.img_1" />
+                @if (_imagem != null)
+                {
+                    <div class="d-flex">
+                        <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                       OnClick="VisualizarImagem" Disabled="_verificando" />
+                        <div>
+                            <MudText Class="d-block">
+                                <p class="my-0">
+                                    @if (_imagem.Name.Length > 24)
+                                    {
+                                        @($"{_imagem.Name.Substring(0, 24)}...")
+                                    }
+                                    else
+                                    {
+                                        @_imagem.Name
+                                    }
+                                </p>
+                                <code class="my-0">@_imagem.Size bytes</code>
+                            </MudText>
+                        </div>
+                    </div>
+                }
+                else if (_comboForm.img_1 != null)
+                {
+                    <div class="d-flex">
+                        <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                       OnClick="VisualizarImagem" Disabled="_verificando" />
+                        <MudText Class="mt-3">logo-marca.png</MudText>
+                    </div>
+                }
+
+                <MudSelect @bind-Value="_comboForm.status" Variant="Variant.Outlined"
+                           Label="Status*" Margin="Margin.Dense" Disabled="_verificando" >
+                    <MudSelectItem Value="@("Ativo")" />
+                    <MudSelectItem Value="@("Inativo")" />
+                </MudSelect>
+                <ValidationMessage For="() => _comboForm.status" />
+            </MudFocusTrap>
+        </EditForm>
+
+        <MudPaper Class="px-4 py-3 d-flex" Elevation="0">
+            <MudText Typo="Typo.body1" Class="fw-bold">
+                Produtos
+                @* @(_produtosCarinho.Count().ToString() + (_produtosCarinho.Count() == 1 ? " Item" : " Itens")) *@
+            </MudText>
+            <MudSpacer />
+            <MudIconButton Icon="@Icons.Material.Filled.Add" 
+                           Color="Color.Inherit" Size="Size.Medium" />
+        </MudPaper>
+
+    </DialogContent>
+    <DialogActions>
+        <div class="d-block w-100 px-2">
+            @if (_carregando)
+            {
+                <MudProgressLinear Color="Color.Secondary" Rounded="true" Striped="true"
+                                   Size="Size.Medium" Value="100" Class="mb-2" />
+            }
+            <MudFab Class="w-100" Label="Salvar" Size="Size.Medium"
+                    OnClick="ValidarDadosForm" Disabled="_verificando" />
+            <MudFab Class="w-100 mt-2 mb-5" Label="Fechar" OnClick="(() => _mudDialog!.Cancel())"
+                    Size="Size.Medium" Disabled="_verificando" />
+        </div>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance? _mudDialog { get; set; }
+    [Parameter]
+    public Combos? _comboForm { get; set; }
+    private Auth? _auth;
+    private Instalacoes? _instalacao { get; set; }
+    private EditForm? _comboFormRef;
+    // private List<InstalacoesMarcas>? _listarInstalacoesMarcas;
+    private IBrowserFile? _imagem;
+    private bool _carregando = true;
+    private bool _carregandoImagem = false;
+    private bool _verificando = true;
+    private string? _pesquisarMarca;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _auth = await LocalStorage.GetItemAsync<Auth>("auth");
+        _instalacao = await LocalStorage.GetItemAsync<Instalacoes>("instalacao");
+
+        _carregando = false;
+        _verificando = false;
+        StateHasChanged();
+    }
+
+    private async Task ValidarDadosForm()
+    {
+        try
+        {
+            _carregando = true;
+            _verificando = true;
+
+            if (_comboFormRef!.EditContext!.Validate())
+            {
+                await Salvar();
+            }
+            else
+            {
+                Snack.Add("Por favor, verifique todos os campos!", Severity.Warning);
+                _verificando = false;
+                _carregando = false;
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar validar dados!", Severity.Warning);
+        }
+    }
+
+    public async Task AbrirScanner()
+    {
+        var resultados = await BuscarResultadoScan();
+        var barcode = resultados.FirstOrDefault();
+        if (barcode != null)
+        {
+            _comboForm!.codigo_barras = barcode.Value;
+        }
+    }
+
+    public async Task<BarcodeResult[]> BuscarResultadoScan()
+    {
+        var cameraPage = new CameraPage();
+        await Application.Current!.MainPage!.Navigation.PushModalAsync(cameraPage);
+
+        return await cameraPage.WaitForResultAsync();
+    }
+
+    private async void UploadFiles(IBrowserFile file)
+    {
+        try
+        {
+            _carregandoImagem = true;
+
+            // Limite de 50 KB
+            var maxSizeInBytes = 50000;
+            var targetWidth = 1024;
+            var targetHeight = int.MaxValue;
+
+            while (file.Size > maxSizeInBytes)
+            {
+                // Reduz a largura e a altura proporcionalmente em 10%
+                targetWidth = (int)(targetWidth * 0.9);
+                targetHeight = (int)(targetHeight * 0.9);
+
+                // Garante que as dimensões não sejam reduzidas abaixo de 100 pixels
+                if (targetWidth < 100 || targetHeight < 100)
+                {
+                    Snack.Add("Não foi possível redimensionar a imagem abaixo de 50 KB!", Severity.Warning);
+                    return;
+                }
+
+                file = await file.RequestImageFileAsync(file.ContentType, targetWidth, targetHeight);
+            }
+
+            if (file.Size > maxSizeInBytes)
+            {
+                Snack.Add("Tivemos um problema pois a imagem é maior do que 50 KB!", Severity.Warning);
+                return;
+            }
+
+            _imagem = file;
+
+            using var stream = file.OpenReadStream(maxAllowedSize: maxSizeInBytes);
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            var base64String = Convert.ToBase64String(memoryStream.ToArray());
+            _comboForm!.img_1 = base64String;
+
+            _carregandoImagem = false;
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar fazer o upload da imagem!", Severity.Warning);
+            _carregandoImagem = false;
+        }
+    }
+
+    private void VisualizarImagem()
+    {
+        try
+        {
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullWidth = true,
+                    CloseButton = true,
+                };
+            var param = new DialogParameters { ["Imagem"] = _comboForm!.img_1 };
+            Dialog.Show<VisualizarImagem>("Visualizar Imagem", param, options);
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar exibir a imagem!", Severity.Warning);
+        }
+    }
+
+    public async Task Salvar()
+    {
+        try
+        {
+            var reinoCompany = new ReinoCompany();
+            CombosResource? response;
+
+            if (_comboForm!.id > 0)
+            {
+                response = await reinoCompany.CombosAtualizar(_auth!.token!, _comboForm!);
+            }
+            else
+            {
+                response = await reinoCompany.CombosCriar(_auth!.token!, _comboForm!);
+            }
+
+            if (response!.status)
+            {
+                _mudDialog!.Close(DialogResult.Ok<bool>(true));
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+
+                if (response.erros != null)
+                {
+                    var erros = response.erros;
+                    foreach (var propriedade in erros.GetType().GetProperties())
+                    {
+                        List<string>? propErros = (List<string>)erros.GetType().GetProperty(propriedade.Name).GetValue(erros, null);
+                        if (propErros != null)
+                        {
+                            foreach (var mensagem in propErros)
+                            {
+                                Snack.Add(mensagem, Severity.Warning);
+                            }
+                        }
+                    }
+                }
+                _verificando = false;
+                _carregando = false;
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar salvar!", Severity.Warning);
+            _verificando = false;
+            _carregando = false;
+        }
+    }
+}

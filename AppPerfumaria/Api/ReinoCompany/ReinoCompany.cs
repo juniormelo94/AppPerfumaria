@@ -715,5 +715,61 @@ namespace AppPerfumaria.Api.ReinoCompany
             return JsonConvert.DeserializeObject<EstoquesResource>(responseString);
         }
         #endregion
+
+        #region Combos
+        public async Task<CombosCollection?> CombosListar(string token, string? filtros = null)
+        {
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+            var response = await client.GetAsync($"{_baseUrl}/api/combos{filtros}");
+
+            string responseString = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<CombosCollection>(responseString);
+        }
+
+        public async Task<CombosResource?> CombosCriar(string token, Combos combo)
+        {
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+            var json = JsonConvert.SerializeObject(combo);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var response = await client.PostAsync($"{_baseUrl}/api/combos", content);
+
+            string responseString = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<CombosResource>(responseString);
+        }
+
+        public async Task<CombosResource?> CombosBuscar(string token, int id)
+        {
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+            var response = await client.GetAsync($"{_baseUrl}/api/combos/{id}");
+
+            string responseString = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<CombosResource>(responseString);
+        }
+
+        public async Task<CombosResource?> CombosAtualizar(string token, Combos combo)
+        {
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+            var json = JsonConvert.SerializeObject(combo);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var response = await client.PutAsync($"{_baseUrl}/api/combos/{combo.id}", content);
+
+            string responseString = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<CombosResource>(responseString);
+        }
+
+        public async Task<CombosResource?> CombosDeletar(string token, Combos combo)
+        {
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+            var response = await client.DeleteAsync($"{_baseUrl}/api/combos/{combo.id}");
+
+            string responseString = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<CombosResource>(responseString);
+        }
+        #endregion
     }
 }

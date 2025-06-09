@@ -30,6 +30,7 @@ namespace AppPerfumaria.Models.Resources
         public List<string>? clientes_id { get; set; }
         public List<string>? colaboradores_id { get; set; }
         public List<string>? instalacoes_id { get; set; }
+        public List<string>? estoques_ids { get; set; }
         public List<string>? status { get; set; }
         public List<string>? created_at { get; set; }
         public List<string>? updated_at { get; set; }

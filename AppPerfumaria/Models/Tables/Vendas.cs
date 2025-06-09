@@ -32,8 +32,8 @@ namespace AppPerfumaria.Models.Tables
         [Range(1, int.MaxValue, ErrorMessage = "A instalação é obrigatória.")]
         [Required(ErrorMessage = "A instalação é obrigatória.")]
         public int instalacoes_id { get; set; }
-        [Required(ErrorMessage = "O status é obrigatório.")]
         public List<int>? estoques_ids { get; set; }
+        [Required(ErrorMessage = "O status é obrigatório.")]
         public string status { get; set; }
         public DateTime created_at { get; set; }
         public DateTime updated_at { get; set; }
