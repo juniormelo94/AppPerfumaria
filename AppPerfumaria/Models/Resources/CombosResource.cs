@@ -13,7 +13,7 @@ namespace AppPerfumaria.Models.Resources
         public bool status { get; set; }
         public string? message { get; set; }
         public CombosErros? erros { get; set; }
-        public Produtos? data { get; set; }
+        public Combos? data { get; set; }
     }
 
     public class CombosErros

@@ -1,4 +1,10 @@
-﻿@using AppPerfumaria.Models.Tables
+﻿@using AppPerfumaria.Api.ReinoCompany
+@using AppPerfumaria.Models.Auth
+@using AppPerfumaria.Models.Tables
+@using System.Globalization
+
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject ISnackbar Snack
 
 <MudDialog ContentClass="bg-gray py-5" TitleClass="d-flex pb-0 pt-2">
     <TitleContent>
@@ -39,8 +45,68 @@
             <MudText Typo="Typo.body2">
                 @_combo.codigo_barras
             </MudText>
-
         </MudPaper>
+
+        @if (_combo.combo_produtos != null)
+        {
+            <MudPaper Class="px-4 py-3 mt-5" Elevation="0">
+                <MudText Typo="Typo.body1" Class="fw-bold">
+                    @(_combo.combo_produtos.Count().ToString() + (_combo.combo_produtos.Count() == 1 ? " Item" : " Itens"))
+                </MudText>
+            </MudPaper>
+
+            @foreach (var item in _combo.combo_produtos)
+            {
+                <MudPaper Class="px-4 py-2 mt-1" Elevation="0">
+                    <MudGrid Spacing="2" Justify="Justify.Center">
+                        <MudItem xs="2" Class="d-flex align-items-center justify-content-center">
+                            @if (!string.IsNullOrEmpty(item!.produto!.img_1))
+                            {
+                                <MudCardMedia Class="rounded-lg" Image="@($"data:image/png;base64,{item!.produto!.img_1}")" Style="height: 40px; width:40px;" />
+                            }
+                        </MudItem>
+                        <MudItem xs="10">
+                            <MudGrid Spacing="2" Justify="Justify.Center">
+                                <MudItem xs="10">
+                                    <MudText Typo="Typo.body2" Class="fw-bold">
+                                        @item!.produto!.nome
+                                    </MudText>
+                                </MudItem>
+                                <MudItem xs="2" Class="d-flex align-items-end justify-content-lg-center">
+                                    <div>
+                                        <MudText Typo="Typo.body2" Class="d-flex text-center">
+                                            @item!.produto!.estoque!.id
+                                        </MudText>
+                                    </div>
+                                </MudItem>
+                            </MudGrid>
+                            <MudDivider Class="my-1" DividerType="DividerType.Middle" />
+                            <div class="d-flex">
+                                <MudText Typo="Typo.body2">
+                                    Preço:
+                                </MudText>
+                                <MudSpacer />
+                                <MudText Typo="Typo.body2" Class="@(item.produto!.estoque!.preco_venda_desconto != null ? "fw-bold text-decoration-line-through" : "fw-bold")">
+                                    @string.Format(new CultureInfo("pt-BR"), "{0:C}", item.produto!.estoque!.preco_venda_original)
+                                </MudText>
+                            </div>
+                            @if (item.produto!.estoque!.preco_venda_desconto != null)
+                            {
+                                <div class="d-flex">
+                                    <MudText Typo="Typo.body2">
+                                        Preço Desconto:
+                                    </MudText>
+                                    <MudSpacer />
+                                    <MudText Class="fw-bold" Typo="Typo.body2">
+                                        @string.Format(new CultureInfo("pt-BR"), "{0:C}", item.produto!.estoque!.preco_venda_desconto)
+                                    </MudText>
+                                </div>
+                            }
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
+            }
+        }
     </DialogContent>
 </MudDialog>
 
@@ -49,6 +115,50 @@
     private MudDialogInstance? _mudDialog { get; set; }
     [Parameter]
     public Combos? _combo { get; set; }
+    private Auth? _auth;
+    private Instalacoes? _instalacao { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _auth = await LocalStorage.GetItemAsync<Auth>("auth");
+        _instalacao = await LocalStorage.GetItemAsync<Instalacoes>("instalacao");
+
+        if (_combo!.id > 0)
+        {
+            await BuscarCombo();
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task BuscarCombo()
+    {
+        try
+        {
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.CombosBuscar(_auth!.token!, _combo!.id!);
+
+            if (response!.status)
+            {
+                _combo = response!.data!;
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+            }
+
+            // _carregando = false;
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar buscar o combo!", Severity.Warning);
+            // _carregando = false;
+        }
+    }
 
     private void Ok() => _mudDialog!.Close(DialogResult.Ok(true));
 }

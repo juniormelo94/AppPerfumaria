@@ -3,109 +3,139 @@
 @using AppPerfumaria.Models.Auth
 @using AppPerfumaria.Models.Resources
 @using AppPerfumaria.Models.Tables
+@using System.Globalization
 @using ZXing.Net.Maui
 
 @inject IDialogService Dialog
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 @inject ISnackbar Snack
 
-<MudDialog>
+<MudDialog ContentClass="bg-gray pb-5">
     <DialogContent>
-        <EditForm Model="_comboForm" OnValidSubmit="Salvar" @ref="_comboFormRef">
-            <DataAnnotationsValidator />
+        <MudPaper Class="pa-2 mt-3" Elevation="0">
+            <EditForm Model="_comboForm" OnValidSubmit="Salvar" @ref="_comboFormRef">
+                <DataAnnotationsValidator />
 
-            <MudFocusTrap Disabled="false" DefaultFocus="DefaultFocus.FirstChild">
-                <MudTextField T="string" @bind-Value="_comboForm.nome" Variant="Variant.Outlined"
-                              Label="Nome*" Disabled="_verificando" Margin="Margin.Dense" />
-                <ValidationMessage For="() => _comboForm.nome" />
+                <MudFocusTrap Disabled="false" DefaultFocus="DefaultFocus.FirstChild">
+                    <MudTextField T="string" @bind-Value="_comboForm.nome" Variant="Variant.Outlined"
+                                  Label="Nome*" Disabled="_verificando" Margin="Margin.Dense" />
+                    <ValidationMessage For="() => _comboForm.nome" />
 
-                <MudTextField T="string" @bind-Value="_comboForm.tipo" Variant="Variant.Outlined"
-                              Label="Tipo*" Disabled="_verificando" Margin="Margin.Dense" />
-                <ValidationMessage For="() => _comboForm.tipo" />
+                    <MudTextField T="string" @bind-Value="_comboForm.tipo" Variant="Variant.Outlined"
+                                  Label="Tipo*" Disabled="_verificando" Margin="Margin.Dense" />
+                    <ValidationMessage For="() => _comboForm.tipo" />
 
-                <MudTextField T="string" @bind-Value="_comboForm.descricao" Variant="Variant.Outlined"
-                              Label="Descrição*" Disabled="_verificando" Margin="Margin.Dense" />
-                <ValidationMessage For="() => _comboForm.descricao" />
+                    <MudTextField T="string" @bind-Value="_comboForm.descricao" Variant="Variant.Outlined"
+                                  Label="Descrição*" Disabled="_verificando" Margin="Margin.Dense" />
+                    <ValidationMessage For="() => _comboForm.descricao" />
 
-                <div class="d-flex">
-                    <MudTextField T="string" @bind-Value="_comboForm.codigo_barras" Variant="Variant.Outlined"
-                                  Label="Código de Barras" Disabled="_verificando" Margin="Margin.Dense" />
-                    <div>
-                        <MudIconButton Icon="@Icons.Material.Filled.QrCodeScanner"
-                                       OnClick="AbrirScanner" Size="Size.Medium" Style="margin-top: 3px;" />
-                    </div>
-                </div>
-                <ValidationMessage For="() => _comboForm.codigo_barras" />
-
-                <MudTextField T="string" @bind-Value="_comboForm.qr_code" Variant="Variant.Outlined"
-                              Label="QR Code" Disabled="_verificando" Margin="Margin.Dense" />
-                <ValidationMessage For="() => _comboForm.qr_code" />
-
-                <MudFileUpload T="IBrowserFile" FilesChanged="UploadFiles" Accept="image/*" 
-                               Disabled="_verificando">
-                    <ActivatorContent>
-                        <MudButton Variant="Variant.Outlined" Size="Size.Medium" Class="w-100 mt-1"
-                                   StartIcon="@Icons.Material.Filled.FileUpload">
-                                   Carregar Imagem
-                        </MudButton>
-                        @if (_carregandoImagem)
-                        {
-                            <MudProgressLinear Color="Color.Secondary" Rounded="true" Striped="true"
-                                               Size="Size.Medium" Value="100" />
-                        }
-                    </ActivatorContent>
-                </MudFileUpload>
-                <ValidationMessage For="() => _comboForm.img_1" />
-                @if (_imagem != null)
-                {
                     <div class="d-flex">
-                        <MudIconButton Icon="@Icons.Material.Filled.Visibility"
-                                       OnClick="VisualizarImagem" Disabled="_verificando" />
+                        <MudTextField T="string" @bind-Value="_comboForm.codigo_barras" Variant="Variant.Outlined"
+                                      Label="Código de Barras" Disabled="_verificando" Margin="Margin.Dense" />
                         <div>
-                            <MudText Class="d-block">
-                                <p class="my-0">
-                                    @if (_imagem.Name.Length > 24)
-                                    {
-                                        @($"{_imagem.Name.Substring(0, 24)}...")
-                                    }
-                                    else
-                                    {
-                                        @_imagem.Name
-                                    }
-                                </p>
-                                <code class="my-0">@_imagem.Size bytes</code>
-                            </MudText>
+                            <MudIconButton Icon="@Icons.Material.Filled.QrCodeScanner"
+                                           OnClick="AbrirScanner" Size="Size.Medium" Style="margin-top: 3px;" />
                         </div>
                     </div>
-                }
-                else if (_comboForm.img_1 != null)
-                {
-                    <div class="d-flex">
-                        <MudIconButton Icon="@Icons.Material.Filled.Visibility"
-                                       OnClick="VisualizarImagem" Disabled="_verificando" />
-                        <MudText Class="mt-3">logo-marca.png</MudText>
-                    </div>
-                }
+                    <ValidationMessage For="() => _comboForm.codigo_barras" />
 
-                <MudSelect @bind-Value="_comboForm.status" Variant="Variant.Outlined"
-                           Label="Status*" Margin="Margin.Dense" Disabled="_verificando" >
-                    <MudSelectItem Value="@("Ativo")" />
-                    <MudSelectItem Value="@("Inativo")" />
-                </MudSelect>
-                <ValidationMessage For="() => _comboForm.status" />
-            </MudFocusTrap>
-        </EditForm>
+                    <MudTextField T="string" @bind-Value="_comboForm.qr_code" Variant="Variant.Outlined"
+                                  Label="QR Code" Disabled="_verificando" Margin="Margin.Dense" />
+                    <ValidationMessage For="() => _comboForm.qr_code" />
 
-        <MudPaper Class="px-4 py-3 d-flex" Elevation="0">
-            <MudText Typo="Typo.body1" Class="fw-bold">
-                Produtos
-                @* @(_produtosCarinho.Count().ToString() + (_produtosCarinho.Count() == 1 ? " Item" : " Itens")) *@
+                    <MudFileUpload T="IBrowserFile" FilesChanged="UploadFiles" Accept="image/*" 
+                                   Disabled="_verificando">
+                        <ActivatorContent>
+                            <MudButton Variant="Variant.Outlined" Size="Size.Medium" Class="w-100 mt-1"
+                                       StartIcon="@Icons.Material.Filled.FileUpload">
+                                       Carregar Imagem
+                            </MudButton>
+                            @if (_carregandoImagem)
+                            {
+                                <MudProgressLinear Color="Color.Secondary" Rounded="true" Striped="true"
+                                                   Size="Size.Medium" Value="100" />
+                            }
+                        </ActivatorContent>
+                    </MudFileUpload>
+                    <ValidationMessage For="() => _comboForm.img_1" />
+                    @if (_imagem != null)
+                    {
+                        <div class="d-flex">
+                            <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                           OnClick="VisualizarImagem" Disabled="_verificando" />
+                            <div>
+                                <MudText Class="d-block">
+                                    <p class="my-0">
+                                        @if (_imagem.Name.Length > 24)
+                                        {
+                                            @($"{_imagem.Name.Substring(0, 24)}...")
+                                        }
+                                        else
+                                        {
+                                            @_imagem.Name
+                                        }
+                                    </p>
+                                    <code class="my-0">@_imagem.Size bytes</code>
+                                </MudText>
+                            </div>
+                        </div>
+                    }
+                    else if (_comboForm.img_1 != null)
+                    {
+                        <div class="d-flex">
+                            <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                           OnClick="VisualizarImagem" Disabled="_verificando" />
+                            <MudText Class="mt-3">logo-marca.png</MudText>
+                        </div>
+                    }
+
+                    <MudSelect @bind-Value="_comboForm.status" Variant="Variant.Outlined"
+                               Label="Status*" Margin="Margin.Dense" Disabled="_verificando" >
+                        <MudSelectItem Value="@("Ativo")" />
+                        <MudSelectItem Value="@("Inativo")" />
+                    </MudSelect>
+                    <ValidationMessage For="() => _comboForm.status" />
+                </MudFocusTrap>
+            </EditForm>
+        </MudPaper>
+
+        <MudPaper Class="px-4 py-1 mt-3 d-flex" Elevation="0">
+            <MudText Typo="Typo.h6" Class="fw-bold mt-2">
+                @(_listarComboProdutos.Count().ToString() + (_listarComboProdutos.Count() == 1 ? " Produto" : " Produtos"))
             </MudText>
             <MudSpacer />
-            <MudIconButton Icon="@Icons.Material.Filled.Add" 
+            <MudIconButton Icon="@Icons.Material.Filled.Add" OnClick="SelecionarProdutos"
                            Color="Color.Inherit" Size="Size.Medium" />
         </MudPaper>
 
+        @if (_listarComboProdutos != null)
+        {
+            @foreach (var item in _listarComboProdutos)
+            {
+                <MudPaper Class="px-4 py-2 mt-1" Elevation="0">
+                    <MudGrid Spacing="2" Justify="Justify.Center">
+                        <MudItem xs="2" Class="d-flex align-items-center justify-content-center">
+                            @if (!string.IsNullOrEmpty(item!.img_1))
+                            {
+                                <MudCardMedia Class="rounded-lg" Image="@($"data:image/png;base64,{item!.img_1}")" Style="height: 50px; width:50px;" />
+                            }
+                        </MudItem>
+                        <MudItem xs="8">
+                            <MudItem xs="10">
+                                <MudText Typo="Typo.body2" Class="fw-bold">
+                                    @item!.nome.ToUpper()
+                                </MudText>
+                            </MudItem>
+                        </MudItem>
+                        <MudItem xs="2" Class="d-flex align-items-center justify-content-center">
+                            <MudIconButton Icon="@Icons.Material.Filled.RemoveCircleOutline"
+                                            Variant="Variant.Filled" Color="Color.Secondary" Size="Size.Small"
+                                            OnClick="(() => AdicionarOuRemoverProduto(item))" />
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
+            }
+        }
     </DialogContent>
     <DialogActions>
         <div class="d-block w-100 px-2">
@@ -130,7 +160,7 @@
     private Auth? _auth;
     private Instalacoes? _instalacao { get; set; }
     private EditForm? _comboFormRef;
-    // private List<InstalacoesMarcas>? _listarInstalacoesMarcas;
+    private List<Produtos>? _listarComboProdutos = new List<Produtos>();
     private IBrowserFile? _imagem;
     private bool _carregando = true;
     private bool _carregandoImagem = false;
@@ -142,9 +172,48 @@
         _auth = await LocalStorage.GetItemAsync<Auth>("auth");
         _instalacao = await LocalStorage.GetItemAsync<Instalacoes>("instalacao");
 
+        if (_comboForm!.id > 0)
+        {
+            await BuscarCombo();
+        }
+
+        if (_comboForm != null && _comboForm?.combo_produtos?.Count() > 0)
+        {
+            _listarComboProdutos = _comboForm.combo_produtos.Select(s => s.produto).ToList();
+        }
+
         _carregando = false;
         _verificando = false;
         StateHasChanged();
+    }
+
+    private async Task BuscarCombo()
+    {
+        try
+        {
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.CombosBuscar(_auth!.token!, _comboForm!.id!);
+
+            if (response!.status)
+            {
+                _comboForm = response!.data!;
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+            }
+
+            _carregando = false;
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar buscar o combo!", Severity.Warning);
+            _carregando = false;
+        }
     }
 
     private async Task ValidarDadosForm()
@@ -259,12 +328,64 @@
         }
     }
 
+    public async Task SelecionarProdutos()
+    {
+        try
+        {
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullScreen = true,
+                    BackdropClick = false,
+                    CloseButton = true,
+                    Position = DialogPosition.TopCenter
+                };
+            var param = new DialogParameters { 
+                    ["Auth"] = _auth,
+                    ["Instalacao"] = _instalacao
+                };
+            var dialog = Dialog.Show<SelecionarProdutoCmp>("Selecionar Produto", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled)
+            {
+                var produto = (Produtos)result.Data;
+                _listarComboProdutos.Add(produto);
+                Snack.Add("Produto adicionado ao combo!", Severity.Success);
+                StateHasChanged();
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar selecionar o produto!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    public void AdicionarOuRemoverProduto(Produtos item)
+    {
+        if (_listarComboProdutos.Remove(item))
+        {
+            Snack.Add("Produto removido do combo!", Severity.Success);
+        }
+        else
+        {
+            Snack.Add("Tivemos um problema ao tentar remover produto do combo!", Severity.Success);
+        }
+        StateHasChanged();
+    }
+
     public async Task Salvar()
     {
         try
         {
             var reinoCompany = new ReinoCompany();
             CombosResource? response;
+
+            if(_listarComboProdutos != null && _listarComboProdutos.Count() > 0)
+            {
+                _listarComboProdutos.Select(s => s.id).ToList();
+                _comboForm!.produtos_ids = _listarComboProdutos.Select(s => s.id).ToList();
+            }
 
             if (_comboForm!.id > 0)
             {
