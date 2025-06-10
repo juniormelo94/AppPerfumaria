@@ -1,4 +1,5 @@
 ﻿@using AppPerfumaria.Api.ReinoCompany
+@using AppPerfumaria.Components.CmpsGerais
 @using AppPerfumaria.Models.Auth
 @using AppPerfumaria.Models.Tables
 @using System.Globalization
@@ -11,100 +12,140 @@
         <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft"
                  OnClick="(() => _mudDialog!.Cancel())" />
         <MudSpacer />
-        <MudIcon Icon="@Icons.Material.Filled.ShoppingBag" Class="mt-3" />
+        <MudIcon Icon="@Icons.Material.Filled.DashboardCustomize" Class="mt-3" />
     </TitleContent>
     <DialogContent>
-        @if (!string.IsNullOrEmpty(_combo!.img_1))
+        @if (_carregando)
         {
-                <MudCardMedia Class="rounded-lg w-100" Image="@($"data:image/png;base64,{_combo!.img_1}")" Style="height: 350px;" />
+            <Loading AlignCenter="true" Color="Color.Default" Size="Size.Medium" />
         }
-
-        <MudPaper Class="pa-2 mt-3" Elevation="0">
-            <MudAlert Icon="@(_combo.status == "Ativo" ? Icons.Material.Filled.ThumbUp : Icons.Material.Filled.ThumbDown)"
-                      Severity="Severity.Normal" Dense="true" 
-                      ContentAlignment="HorizontalAlignment.Center" Class="fw-bold">
-                COMBO
-            </MudAlert>
-
-            <MudText Class="fw-bold mt-2" Typo="Typo.body1">
-                @_combo.nome.ToUpper()
-            </MudText>
-
-            <MudText Typo="Typo.body2">
-                @_combo.tipo.ToUpper()
-            </MudText>
-
-            <MudDivider Class="mt-2" />
-
-            <MudExpansionPanels Class="mt-2">
-                <MudExpansionPanel Text="Descrição:" HeaderClass="fw-bold py-0" Expanded="true">
-                    @_combo.descricao
-                </MudExpansionPanel>
-            </MudExpansionPanels>
-
-            <MudText Typo="Typo.body2">
-                @_combo.codigo_barras
-            </MudText>
-        </MudPaper>
-
-        @if (_combo.combo_produtos != null)
+        else
         {
-            <MudPaper Class="px-4 py-3 mt-5" Elevation="0">
-                <MudText Typo="Typo.body1" Class="fw-bold">
-                    @(_combo.combo_produtos.Count().ToString() + (_combo.combo_produtos.Count() == 1 ? " Item" : " Itens"))
+            @if (!string.IsNullOrEmpty(_combo!.img_1))
+            {
+                <MudCardMedia Class="rounded-lg w-100" Image="@($"data:image/png;base64,{_combo!.img_1}")" Style="height: 350px;" />
+            }
+
+            <MudPaper Class="pa-2 mt-3" Elevation="0">
+                <MudAlert Icon="@(_combo.status == "Ativo" ? Icons.Material.Filled.ThumbUp : Icons.Material.Filled.ThumbDown)"
+                          Severity="Severity.Normal" Dense="true"
+                          ContentAlignment="HorizontalAlignment.Center" Class="fw-bold">
+                    COMBO
+                </MudAlert>
+
+                <MudText Class="fw-bold mt-2" Typo="Typo.body1">
+                    @_combo.nome.ToUpper()
+                </MudText>
+
+                <MudText Typo="Typo.body2">
+                    @_combo.tipo.ToUpper()
+                </MudText>
+
+                <MudDivider Class="mt-2" />
+
+                <MudExpansionPanels Class="mt-2">
+                    <MudExpansionPanel Text="Descrição:" HeaderClass="fw-bold py-0" Expanded="true">
+                        @_combo.descricao
+                    </MudExpansionPanel>
+                </MudExpansionPanels>
+
+                <MudText Typo="Typo.body2">
+                    @_combo.codigo_barras
                 </MudText>
             </MudPaper>
 
-            @foreach (var item in _combo.combo_produtos)
+            <MudPaper Class="pa-4 py-3 my-4" Elevation="0">
+                <div class="d-flex">
+                    <MudText Typo="Typo.body1">
+                        Total:
+                    </MudText>
+                    <MudSpacer />
+                    <MudText Class="@(_combo.combo_produtos?.FirstOrDefault(w => w.produto?.estoque?.preco_venda_desconto != null) != null ? "fw-bold text-decoration-line-through" : "fw-bold")" Typo="Typo.body1">
+                        @string.Format(new CultureInfo("pt-BR"), "{0:C}", _combo.combo_produtos?.Sum(w => w.produto?.estoque?.preco_venda_original))
+                    </MudText>
+                </div>
+                @if (_combo.combo_produtos?.FirstOrDefault(w => w.produto?.estoque?.preco_venda_desconto != null) != null)
+                {
+                    <div class="d-flex">
+                        <MudText Typo="Typo.body1">
+                            Total Desconto:
+                        </MudText>
+                        <MudSpacer />
+                        <MudText Class="fw-bold" Typo="Typo.body1">
+                            @string.Format(new CultureInfo("pt-BR"), "{0:C}", CalcularTotalDesconto())
+                        </MudText>
+                    </div>
+                }
+                <div class="d-flex">
+                    <MudText Typo="Typo.body1">
+                        Pagamento (Dinheiro ou Pix):
+                    </MudText>
+                    <MudSpacer />
+                    <MudText Class="fw-bold" Typo="Typo.body1">
+                        @string.Format(new CultureInfo("pt-BR"), "{0:C}", CalcularPagamentoDinheiroPix())
+                    </MudText>
+                </div>
+            </MudPaper>
+
+            @if (_combo.combo_produtos != null)
             {
-                <MudPaper Class="px-4 py-2 mt-1" Elevation="0">
-                    <MudGrid Spacing="2" Justify="Justify.Center">
-                        <MudItem xs="2" Class="d-flex align-items-center justify-content-center">
-                            @if (!string.IsNullOrEmpty(item!.produto!.img_1))
-                            {
-                                <MudCardMedia Class="rounded-lg" Image="@($"data:image/png;base64,{item!.produto!.img_1}")" Style="height: 40px; width:40px;" />
-                            }
-                        </MudItem>
-                        <MudItem xs="10">
-                            <MudGrid Spacing="2" Justify="Justify.Center">
-                                <MudItem xs="10">
-                                    <MudText Typo="Typo.body2" Class="fw-bold">
-                                        @item!.produto!.nome
-                                    </MudText>
-                                </MudItem>
-                                <MudItem xs="2" Class="d-flex align-items-end justify-content-lg-center">
-                                    <div>
-                                        <MudText Typo="Typo.body2" Class="d-flex text-center">
-                                            @item!.produto!.estoque!.id
+                <MudPaper Class="px-4 py-3 mt-5" Elevation="0">
+                    <MudText Typo="Typo.body1" Class="fw-bold">
+                        @(_combo.combo_produtos.Count().ToString() + (_combo.combo_produtos.Count() == 1 ? " Item" : " Itens"))
+                    </MudText>
+                </MudPaper>
+
+                @foreach (var item in _combo.combo_produtos)
+                {
+                    <MudPaper Class="px-4 py-2 mt-1" Elevation="0">
+                        <MudGrid Spacing="2" Justify="Justify.Center">
+                            <MudItem xs="2" Class="d-flex align-items-center justify-content-center">
+                                @if (!string.IsNullOrEmpty(item!.produto!.img_1))
+                                {
+                                    <MudCardMedia Class="rounded-lg" Image="@($"data:image/png;base64,{item!.produto!.img_1}")" Style="height: 40px; width:40px;" />
+                                }
+                            </MudItem>
+                            <MudItem xs="10">
+                                <MudGrid Spacing="2" Justify="Justify.Center">
+                                    <MudItem xs="10">
+                                        <MudText Typo="Typo.body2" Class="fw-bold">
+                                            @item!.produto!.nome.ToUpper()
                                         </MudText>
-                                    </div>
-                                </MudItem>
-                            </MudGrid>
-                            <MudDivider Class="my-1" DividerType="DividerType.Middle" />
-                            <div class="d-flex">
-                                <MudText Typo="Typo.body2">
-                                    Preço:
-                                </MudText>
-                                <MudSpacer />
-                                <MudText Typo="Typo.body2" Class="@(item.produto!.estoque!.preco_venda_desconto != null ? "fw-bold text-decoration-line-through" : "fw-bold")">
-                                    @string.Format(new CultureInfo("pt-BR"), "{0:C}", item.produto!.estoque!.preco_venda_original)
-                                </MudText>
-                            </div>
-                            @if (item.produto!.estoque!.preco_venda_desconto != null)
-                            {
+                                    </MudItem>
+                                    <MudItem xs="2" Class="d-flex align-items-end justify-content-lg-center">
+                                        <div>
+                                            <MudText Typo="Typo.body2" Class="d-flex text-center">
+                                                @item!.produto!.estoque!.id
+                                            </MudText>
+                                        </div>
+                                    </MudItem>
+                                </MudGrid>
+                                <MudDivider Class="my-1" DividerType="DividerType.Middle" />
                                 <div class="d-flex">
                                     <MudText Typo="Typo.body2">
-                                        Preço Desconto:
+                                        Preço:
                                     </MudText>
                                     <MudSpacer />
-                                    <MudText Class="fw-bold" Typo="Typo.body2">
-                                        @string.Format(new CultureInfo("pt-BR"), "{0:C}", item.produto!.estoque!.preco_venda_desconto)
+                                    <MudText Typo="Typo.body2" Class="@(item.produto!.estoque!.preco_venda_desconto != null ? "fw-bold text-decoration-line-through" : "fw-bold")">
+                                        @string.Format(new CultureInfo("pt-BR"), "{0:C}", item.produto!.estoque!.preco_venda_original)
                                     </MudText>
                                 </div>
-                            }
-                        </MudItem>
-                    </MudGrid>
-                </MudPaper>
+                                @if (item.produto!.estoque!.preco_venda_desconto != null)
+                                {
+                                    <div class="d-flex">
+                                        <MudText Typo="Typo.body2">
+                                            Preço Desconto:
+                                        </MudText>
+                                        <MudSpacer />
+                                        <MudText Class="fw-bold" Typo="Typo.body2">
+                                            @string.Format(new CultureInfo("pt-BR"), "{0:C}", item.produto!.estoque!.preco_venda_desconto)
+                                        </MudText>
+                                    </div>
+                                }
+                            </MudItem>
+                        </MudGrid>
+                    </MudPaper>
+                }
             }
         }
     </DialogContent>
@@ -117,6 +158,7 @@
     public Combos? _combo { get; set; }
     private Auth? _auth;
     private Instalacoes? _instalacao { get; set; }
+    private bool _carregando = true;
 
     protected override async Task OnInitializedAsync()
     {
@@ -150,14 +192,73 @@
                 }
             }
 
-            // _carregando = false;
+            _carregando = false;
             StateHasChanged();
         }
         catch (Exception e)
         {
             Snack.Add("Tivemos um problema ao tentar buscar o combo!", Severity.Warning);
-            // _carregando = false;
+            _carregando = false;
         }
+    }
+
+    private double? CalcularTotalDesconto()
+    {
+        double? totalDesconto = 0.0;
+
+        if (_combo != null)
+        {
+            foreach (var item in _combo.combo_produtos)
+            {
+                if (item.produto?.estoque?.preco_venda_desconto != null)
+                {
+                    totalDesconto += item.produto?.estoque?.preco_venda_desconto;
+                }
+                else
+                {
+                    totalDesconto += item.produto?.estoque?.preco_venda_original;
+                }
+            }
+        }
+
+        return totalDesconto!;
+    }
+
+    private double? CalcularPagamentoDinheiroPix()
+    {
+        double? totalDesconto = 0.0;
+        double? totalSemDesconto = 0.0;
+
+        if (_combo != null)
+        {
+            foreach (var item in _combo.combo_produtos)
+            {
+                if (item.produto.estoque.desconto_pagamento_avista)
+                {
+                    if (item.produto.estoque.preco_venda_desconto != null)
+                    {
+                        totalDesconto += item.produto.estoque.preco_venda_desconto;
+                    }
+                    else
+                    {
+                        totalDesconto += item.produto.estoque.preco_venda_original;
+                    }
+                }
+                else
+                {
+                    if (item.produto.estoque.preco_venda_desconto != null)
+                    {
+                        totalSemDesconto += item.produto.estoque.preco_venda_desconto;
+                    }
+                    else
+                    {
+                        totalSemDesconto += item.produto.estoque.preco_venda_original;
+                    }
+                }
+            }
+        }
+
+        return totalSemDesconto + (totalDesconto * (1 - 0.05));
     }
 
     private void Ok() => _mudDialog!.Close(DialogResult.Ok(true));
