@@ -97,7 +97,7 @@
 
                 @foreach (var item in _combo.combo_produtos)
                 {
-                    <MudPaper Class="px-4 py-2 mt-1" Elevation="0">
+                    <MudPaper Class="@("px-4 py-2 mt-1 " + (item!.produto!.estoque == null ? "border border-2 border-danger" : ""))" Elevation="0">
                         <MudGrid Spacing="2" Justify="Justify.Center">
                             <MudItem xs="2" Class="d-flex align-items-center justify-content-center">
                                 @if (!string.IsNullOrEmpty(item!.produto!.img_1))
@@ -115,7 +115,7 @@
                                     <MudItem xs="2" Class="d-flex align-items-end justify-content-lg-center">
                                         <div>
                                             <MudText Typo="Typo.body2" Class="d-flex text-center">
-                                                @item!.produto!.estoque!.id
+                                                @item!.produto!.estoque?.id
                                             </MudText>
                                         </div>
                                     </MudItem>
@@ -126,11 +126,11 @@
                                         Preço:
                                     </MudText>
                                     <MudSpacer />
-                                    <MudText Typo="Typo.body2" Class="@(item.produto!.estoque!.preco_venda_desconto != null ? "fw-bold text-decoration-line-through" : "fw-bold")">
-                                        @string.Format(new CultureInfo("pt-BR"), "{0:C}", item.produto!.estoque!.preco_venda_original)
+                                    <MudText Typo="Typo.body2" Class="@(item.produto!.estoque?.preco_venda_desconto != null ? "fw-bold text-decoration-line-through" : "fw-bold")">
+                                        @string.Format(new CultureInfo("pt-BR"), "{0:C}", item.produto!.estoque?.preco_venda_original)
                                     </MudText>
                                 </div>
-                                @if (item.produto!.estoque!.preco_venda_desconto != null)
+                                @if (item!.produto!.estoque?.preco_venda_desconto != null)
                                 {
                                     <div class="d-flex">
                                         <MudText Typo="Typo.body2">
@@ -138,7 +138,7 @@
                                         </MudText>
                                         <MudSpacer />
                                         <MudText Class="fw-bold" Typo="Typo.body2">
-                                            @string.Format(new CultureInfo("pt-BR"), "{0:C}", item.produto!.estoque!.preco_venda_desconto)
+                                            @string.Format(new CultureInfo("pt-BR"), "{0:C}", item!.produto!.estoque?.preco_venda_desconto)
                                         </MudText>
                                     </div>
                                 }
@@ -210,13 +210,16 @@
         {
             foreach (var item in _combo.combo_produtos)
             {
-                if (item.produto?.estoque?.preco_venda_desconto != null)
+                if (item.produto?.estoque != null)
                 {
-                    totalDesconto += item.produto?.estoque?.preco_venda_desconto;
-                }
-                else
-                {
-                    totalDesconto += item.produto?.estoque?.preco_venda_original;
+                    if (item.produto?.estoque?.preco_venda_desconto != null)
+                    {
+                        totalDesconto += item.produto?.estoque?.preco_venda_desconto;
+                    }
+                    else
+                    {
+                        totalDesconto += item.produto?.estoque?.preco_venda_original;
+                    }
                 }
             }
         }
@@ -233,26 +236,29 @@
         {
             foreach (var item in _combo.combo_produtos)
             {
-                if (item.produto.estoque.desconto_pagamento_avista)
-                {
-                    if (item.produto.estoque.preco_venda_desconto != null)
+                if (item.produto?.estoque != null)
+                {                   
+                    if (item.produto.estoque.desconto_pagamento_avista)
                     {
-                        totalDesconto += item.produto.estoque.preco_venda_desconto;
+                        if (item.produto.estoque.preco_venda_desconto != null)
+                        {
+                            totalDesconto += item.produto.estoque.preco_venda_desconto;
+                        }
+                        else
+                        {
+                            totalDesconto += item.produto.estoque.preco_venda_original;
+                        }
                     }
                     else
                     {
-                        totalDesconto += item.produto.estoque.preco_venda_original;
-                    }
-                }
-                else
-                {
-                    if (item.produto.estoque.preco_venda_desconto != null)
-                    {
-                        totalSemDesconto += item.produto.estoque.preco_venda_desconto;
-                    }
-                    else
-                    {
-                        totalSemDesconto += item.produto.estoque.preco_venda_original;
+                        if (item.produto.estoque.preco_venda_desconto != null)
+                        {
+                            totalSemDesconto += item.produto.estoque.preco_venda_desconto;
+                        }
+                        else
+                        {
+                            totalSemDesconto += item.produto.estoque.preco_venda_original;
+                        }
                     }
                 }
             }

@@ -24,7 +24,7 @@
         @* Barra de menu superior *@
         <MudAppBar Bottom="false" Fixed="true" Color="Color.Inherit" Elevation="4" Style="@($"background:{Colors.Pink.Darken3};")">
             @*             <MudIconButton Icon="@Icons.Material.Filled.QrCodeScanner"
-                           Color="Color.Inherit" Class="ml-2" OnClick="@(() => CarregarOpcaoBarraSuperior("Inicio"))" /> *@
+            Color="Color.Inherit" Class="ml-2" OnClick="@(() => CarregarOpcaoBarraSuperior("ProdutosInicio"))" /> *@
             @*             <MudButton Class="h-100" Color="Color.Inherit">
                     <MudIcon Icon="@Icons.Material.Filled.QrCodeScanner" Color="Color.Inherit" />
             </MudButton> *@
@@ -187,9 +187,9 @@
             <MudProgressCircular Indeterminate="true" Color="Color.Default" />
         </MudOverlay>
     }
-    else if (_nomePagina == "Inicio")
+    else if (_nomePagina == "ProdutosInicio")
     {
-        <AppPerfumaria.Components.Pages.Inicio.InicioCmp 
+        <AppPerfumaria.Components.Pages.Inicio.ProdutosInicioCmp 
          Auth="_auth" Instalacao="_instalacao" AtualizarCarinho="AtualizarCarinho" />
     }
     else if (_nomePagina == "Marcas")
@@ -230,7 +230,7 @@
     <MudLayout>
         @* Barra de menu inferior *@
         <MudAppBar Bottom="true" Fixed="true" Color="Color.Inherit" Elevation="4" Style="@($"background:{Colors.Pink.Darken3};")">
-            <MudButton Class="d-block" Color="Color.Inherit" OnClick="@(() => CarregarOpcaoBarraInferior("Inicio"))">
+            <MudButton Class="d-block" Color="Color.Inherit" OnClick="@(() => CarregarOpcaoBarraInferior("ProdutosInicio"))">
                 <MudIcon Icon="@Icons.Material.Filled.Home" Size="Size.Small" />
                 <MudText Typo="Typo.body1">Início</MudText>
             </MudButton>
@@ -339,7 +339,7 @@
     private bool _exibirMenu, _exibirCarinho = false;
     private bool _carregando = true;
     private bool _multiplosAcessos = false;
-    private string _nomePagina = "Inicio";
+    private string _nomePagina = "ProdutosInicio";
 
     protected override async Task OnInitializedAsync()
     {

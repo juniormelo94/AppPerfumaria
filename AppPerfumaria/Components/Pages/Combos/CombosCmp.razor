@@ -91,7 +91,7 @@
             @foreach (var combo in _listarCombos)
             {
                 <MudItem xs="6">
-                    <MudCard Style="height: 350px;" @onclick="(() => VisualizarCombo(combo))">
+                    <MudCard Style="@(combo!.combo_produtos!.Any(a => a.produto?.estoque == null) ? "height:350px; opacity:0.3;" : "height:350px;")" @onclick="(() => VisualizarCombo(combo))">
                         <MudCardMedia Image="@($"data:image/png;base64,{combo.img_1}")" Height="200" />
                         <MudCardContent Class="py-2">
                             <MudText Class="fw-bold" Typo="Typo.body1">
