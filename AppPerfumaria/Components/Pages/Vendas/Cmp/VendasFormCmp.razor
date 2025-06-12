@@ -78,7 +78,7 @@
 
                 <MudAutocomplete T="Clientes" Label="Cliente*" Disabled="_verificando" @ref="_autoCompleteClienteRef"
                                  Value="@(_listarClientes?.FirstOrDefault(c => c!.id == _vendaForm!.clientes_id))"
-                                 SearchFunc="@PesquisarClientes" ToStringFunc="@(c => c!.nome_completo.ToUpper())"
+                                 SearchFunc="@PesquisarClientes" ToStringFunc="@(c => c?.nome_completo?.ToUpper())"
                                  ValueChanged="@((Clientes c) => { _vendaForm!.clientes_id = c!.id; })"
                                  CloseIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Default" Variant="Variant.Outlined"
                                  Strict="false" Margin="Margin.Dense" ShowProgressIndicator="true" ClearIcon="@Icons.Material.Filled.Clear" Clearable="true">
@@ -173,6 +173,7 @@
         }
         else
         {
+            _vendaForm!.status = "Ativo";
             _vendaForm!.instalacoes_id = _instalacao!.id;
         }
 
