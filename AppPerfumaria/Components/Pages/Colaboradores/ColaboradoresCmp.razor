@@ -440,12 +440,12 @@
                 return;
             }
 
-            var param = new DialogParameters<AlertaAssociacao>
+            var param = new DialogParameters<AlertaComPergunta>
             {
                 { x => x.ContentText, "Deseja associar esse <b>COLABORADOR</b> a instalação?" }
             };
             var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
-            var dialog = Dialog.Show<AlertaAssociacao>("Associar Colaborador", param, options);
+            var dialog = Dialog.Show<AlertaComPergunta>("Associar Colaborador", param, options);
             var result = await dialog.Result;
             if (!result.Canceled)
             {

@@ -192,6 +192,11 @@
         <AppPerfumaria.Components.Pages.Inicio.ProdutosInicioCmp 
          Auth="_auth" Instalacao="_instalacao" AtualizarCarinho="AtualizarCarinho" />
     }
+    else if (_nomePagina == "ComobosInicio")
+    {
+        <AppPerfumaria.Components.Pages.Inicio.CombosInicioCmp 
+         Auth="_auth" Instalacao="_instalacao" AtualizarCarinho="AtualizarCarinho" />
+    }
     else if (_nomePagina == "Marcas")
     {
         <AppPerfumaria.Components.Pages.Marcas.MarcasCmp 
@@ -235,7 +240,7 @@
                 <MudText Typo="Typo.body1">Início</MudText>
             </MudButton>
             <MudSpacer />
-            <MudButton Class="d-block" Color="Color.Inherit" OnClick="@(() => CarregarOpcaoBarraInferior("Combos"))">
+            <MudButton Class="d-block" Color="Color.Inherit" OnClick="@(() => CarregarOpcaoBarraInferior("ComobosInicio"))">
                 <MudIcon Icon="@Icons.Material.Filled.DashboardCustomize" Size="Size.Small" />
                 <MudText Typo="Typo.body1">Combos</MudText>
             </MudButton>

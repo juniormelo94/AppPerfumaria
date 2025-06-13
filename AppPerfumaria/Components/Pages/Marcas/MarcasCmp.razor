@@ -440,12 +440,12 @@
                 return;
             }
 
-            var param = new DialogParameters<AlertaAssociacao>
+            var param = new DialogParameters<AlertaComPergunta>
             {
                 { x => x.ContentText, "Deseja associar essa <b>MARCA</b> a instalação?" }
             };
             var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
-            var dialog = Dialog.Show<AlertaAssociacao>("Associar Marca", param, options);
+            var dialog = Dialog.Show<AlertaComPergunta>("Associar Marca", param, options);
             var result = await dialog.Result;
             if (!result.Canceled)
             {

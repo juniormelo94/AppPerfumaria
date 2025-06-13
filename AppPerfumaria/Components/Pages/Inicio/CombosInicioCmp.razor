@@ -1,6 +1,6 @@
 ﻿@using AppPerfumaria.Api.ReinoCompany
 @using AppPerfumaria.Components.CmpsGerais
-@using AppPerfumaria.Components.Pages.Combos.Cmp
+@using AppPerfumaria.Components.Pages.Inicio.Cmp
 @using AppPerfumaria.Models.Auth
 @using System.Text.Json.Serialization
 @using AppPerfumaria.Models.Collections
@@ -19,24 +19,24 @@
     <!-- Barra de leitor -->
     <div class="d-flex">
         <MudTextField Value="_leitorFiltro" Label="Código Barras ou QR Code" Variant="Variant.Outlined"
-        Adornment="Adornment.End" Margin="Margin.Dense" Immediate="true"
-        ValueChanged="(async (string v) => { _leitorFiltro = v; await Leitor(v); })"
-        AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Inherit"
-        ClearIcon="@Icons.Material.Filled.Clear" Clearable="true" />
+                      Adornment="Adornment.End" Margin="Margin.Dense" Immediate="true"
+                      ValueChanged="(async (string v) => { _leitorFiltro = v; await Leitor(v); })"
+                      AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Inherit"
+                      ClearIcon="@Icons.Material.Filled.Clear" Clearable="true" />
         <MudSpacer />
         <MudIconButton Icon="@Icons.Material.Filled.QrCodeScanner" OnClick="AbrirScanner"
-        Color="Color.Inherit" Size="Size.Medium" />
+                       Color="Color.Inherit" Size="Size.Medium" />
     </div>
     <!-- Barra de pesquisa e botão filtro -->
     <div class="d-flex">
         <MudTextField Value="_pesquisarFiltro" Label="Pesquisar" Variant="Variant.Outlined"
-        Adornment="Adornment.End" Margin="Margin.Dense" Immediate="true"
-        ValueChanged="(async (string v) => { _pesquisarFiltro = v; await Pesquisar(v); })"
-        AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Inherit" 
-        ClearIcon="@Icons.Material.Filled.Clear" Clearable="true" />
+                      Adornment="Adornment.End" Margin="Margin.Dense" Immediate="true"
+                      ValueChanged="(async (string v) => { _pesquisarFiltro = v; await Pesquisar(v); })"
+                      AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Inherit" 
+                      ClearIcon="@Icons.Material.Filled.Clear" Clearable="true" />
         <MudSpacer />
         <MudIconButton Icon="@Icons.Material.Filled.FilterList" OnClick="Filtro"
-        Color="Color.Inherit" Size="Size.Medium" />
+                       Color="Color.Inherit" Size="Size.Medium" />
     </div>
     <!-- Barra de filtros -->
     <MudPopover Open="@_exibirFiltro" Fixed="true" Class="px-4 pt-4 w-100"
@@ -44,7 +44,7 @@
         <MudGrid Spacing="2" Justify="Justify.Center" Class="mb-1">
             <MudItem xs="6">
                 <MudSelect @bind-Value="_porPagina" Variant="Variant.Outlined"
-                Label="Carregar De" Margin="Margin.Dense">
+                           Label="Carregar De" Margin="Margin.Dense">
                     <MudSelectItem Value="@("10")" />
                     <MudSelectItem Value="@("15")" />
                     <MudSelectItem Value="@("20")" />
@@ -52,68 +52,45 @@
             </MudItem>
             <MudItem xs="6">
                 <MudSelect T="string" @bind-Value="_statusFiltro" Variant="Variant.Outlined"
-                Label="Status" Margin="Margin.Dense">
+                           Label="Status" Margin="Margin.Dense">
                     <MudSelectItem Value="@("Todos")" />
                     <MudSelectItem Value="@("Ativo")" />
                     <MudSelectItem Value="@("Inativo")" />
                 </MudSelect>
             </MudItem>
-            <MudItem xs="12">
-                <MudDateRangePicker Label="Data de Criação" @bind-DateRange="_dataCriacaoFiltro"
-                Variant="Variant.Outlined"
-                PlaceholderStart="Data Início"
-                PlaceholderEnd="Data Fim" Clearable="true"
-                DateFormat="dd/MM/yyyy"
-                Margin="Margin.Dense" />
-            </MudItem>
         </MudGrid>
         <MudDivider />
         <div class="d-flex my-2 float-end">
             <MudFab Label="Fechar" Size="Size.Small"
-            OnClick="Filtro" Class="mr-2" />
+                    OnClick="Filtro" Class="mr-2" />
             <MudFab Label="Filtrar" Size="Size.Small"
-            OnClick="AplicarFiltros" />
+                    OnClick="AplicarFiltros" />
         </div>
     </MudPopover>
-    <!-- Barra de card e botão criar -->
-    <div class="d-flex">
-        <MudSpacer />
-        <MudIconButton Icon="@Icons.Material.Filled.Add" OnClick="CriarProduto"
-        Color="Color.Inherit" Size="Size.Medium" />
-    </div>
 </MudPaper>
 
-<div class="pa-2" style="margin-top: 158px;">
-    <!-- Listar resultados dos combos -->
+<div class="pa-2" style="margin-top: 110px;">
+    <!-- Listar resultados dos produtos associados -->
     <MudGrid Spacing="2" Justify="Justify.Center">
         @if (_listarCombos != null && _listarCombos.Count() > 0)
         {
             @foreach (var combo in _listarCombos)
             {
-                <MudItem xs="6">
-                    <MudCard Style="height:350px;" @onclick="(() => VisualizarCombo(combo))">
-                        <MudCardMedia Image="@($"data:image/png;base64,{combo.img_1}")" Height="200" />
+                <MudItem xs="6" sm="6" md="4" lg="3" xl="3" xxl="2">
+                    <MudCard Style="@(combo!.combo_produtos!.Any(a => a.produto?.estoque == null) ? "height:350px; opacity:0.3;" : "height:350px;")" @onclick="(() => VisualizarCombo(combo))">
+                        @if (combo!.combo_produtos!.Any(a => a.produto?.estoque != null && a.produto?.estoque?.preco_venda_desconto > 0))
+                        {
+                            <div style="@($"background:{Colors.Pink.Darken3}; position:absolute; font-size:12px;")" 
+                                 class="rounded mt-2 ml-2 pa-1 fw-bold text-white">
+                                -@PorcentagemDesconto(combo!)?.ToString("F1")%
+                            </div>
+                        }
+                        <MudCardMedia Image="@($"data:image/png;base64,{combo!.img_1}")" Style="width:100%; height:100%;" />
                         <MudCardContent Class="py-2">
                             <MudText Class="fw-bold" Typo="Typo.body1">
-                                @if (combo.nome.Length > 35)
-                                {
-                                    @($"{combo.nome.Substring(0, 35).ToUpper()}...")
-                                }
-                                else
-                                {
-                                    @combo.nome.ToUpper()
-                                }
+                                @combo.nome.ToUpper()
                             </MudText>
                         </MudCardContent>
-                        <MudCardActions Class="d-block py-0 pb-1">
-                            <div class="d-flex mt-1 px-3">
-                                <MudIconButton Size="Size.Medium" OnClick="(() => AtualizarCombo(combo))"
-                                               Icon="@Icons.Material.Filled.Edit" />
-                                <MudSpacer />
-                                <MudIconButton Size="Size.Medium" OnClick="(() => DeletarCombo(combo))"
-                                               Icon="@Icons.Material.Filled.Delete" />
-                            </div>
-                        </MudCardActions>
                     </MudCard>
                 </MudItem>
             }
@@ -122,7 +99,7 @@
                 @if (_paginacaoCombos!.current_page != _paginacaoCombos!.last_page)
                 {
                     <MudFab Class="w-100" Label="Carregar Mais" OnClick="CarregarMais"
-                    Disabled="false" Size="Size.Small" />
+                            Disabled="false" Size="Size.Small" />
                 }
 
                 <MudText Align="Align.Center" Typo="Typo.body2" Class="mt-2 w-100">
@@ -132,7 +109,7 @@
         }
         else
         {
-            @if (!_carregando)
+            @if(!_carregando)
             {
                 <MudItem Class="py-5" xs="12">
                     <Animate class="w-100" Animation="Animations.FadeDown" Duration="TimeSpan.FromSeconds(0.5)" Delay="TimeSpan.FromSeconds(0.4)">
@@ -147,6 +124,7 @@
 @code {
     [Parameter] public Auth? Auth { get; set; }
     [Parameter] public Instalacoes? Instalacao { get; set; }
+    [Parameter] public EventCallback AtualizarCarinho { get; set; }
     private List<Combos>? _listarCombos = new List<Combos>();
     private MetaPagination? _paginacaoCombos;
     private bool _carregando = true;
@@ -155,7 +133,6 @@
     private string? _leitorFiltro;
     private string? _statusFiltro = "Todos";
     private DateRange _dataCriacaoFiltro = new DateRange();
-    private int _marcaFiltro = 0;
     private string _porPagina = "10";
     private int _paginaPaginacao = 1;
 
@@ -168,6 +145,23 @@
         while (Auth == null || Instalacao == null);
 
         await ListarCombos();
+    }
+
+    private double? PorcentagemDesconto(Combos combo)
+    {
+        double? porcentagem_desconto = 0.0;
+        double? preco_venda = combo!.combo_produtos!.Sum(s => s.produto?.estoque?.preco_venda_original);
+
+        double? preco_venda_desconto = 0.0;
+        if (combo!.combo_produtos!.Any(a => a.produto?.estoque != null && a.produto?.estoque?.preco_venda_desconto > 0))
+        {
+            preco_venda_desconto = combo!.combo_produtos!.Where(s => s.produto?.estoque?.preco_venda_desconto > 0)
+                                                         .Sum(s => s.produto?.estoque?.preco_venda_desconto);
+
+            porcentagem_desconto = (((preco_venda / preco_venda_desconto) - 1) * 100);
+        }
+
+        return porcentagem_desconto;
     }
 
     private async Task Pesquisar(string pesquisar)
@@ -195,7 +189,7 @@
         var resultados = await BuscarResultadoScan();
         var barcode = resultados.FirstOrDefault();
         if (barcode != null)
-        {
+        {  
             _leitorFiltro = barcode.Value;
             await AplicarFiltros();
         }
@@ -222,7 +216,7 @@
 
     public string? PegarFiltros()
     {
-        string filtros = $"?instalacoes_id={Instalacao!.id}&page={_paginaPaginacao}&por_pagina={_porPagina}";
+        string filtros = $"?instalacoes_id={Instalacao!.id}&vendido=0&page={_paginaPaginacao}&por_pagina={_porPagina}";
 
         if (!string.IsNullOrEmpty(_pesquisarFiltro))
         {
@@ -291,7 +285,7 @@
         }
     }
 
-    private void VisualizarCombo(Combos combo)
+    private async Task VisualizarCombo(Combos combo)
     {
         try
         {
@@ -302,118 +296,15 @@
                     FullScreen = true,
                     CloseButton = false,
                 };
-            var param = new DialogParameters { ["_combo"] = combo };
+            var param = new DialogParameters { 
+                ["_combo"] = combo,
+                ["AtualizarCarinho"] = AtualizarCarinho
+            };
             Dialog.Show<VisualizarComboCmp>("Visualizar Combo", param, options);
         }
         catch (Exception e)
         {
             Snack.Add("Tivemos um problema ao tentar exibir o combo!", Severity.Warning);
-        }
-    }
-
-    public async Task CriarProduto()
-    {
-        try
-        {
-            var combo = new Combos() { 
-                instalacoes_id = Instalacao!.id 
-            };
-            var options = new DialogOptions
-                {
-                    MaxWidth = MaxWidth.ExtraExtraLarge,
-                    FullScreen = true,
-                    BackdropClick = false,
-                    CloseButton = true,
-                    Position = DialogPosition.TopCenter
-                };
-            var param = new DialogParameters { ["_comboForm"] = combo };
-            var dialog = Dialog.Show<CombosFormCmp>("Adicionar Combo", param, options);
-            var result = await dialog.Result;
-            if (!result.Canceled && (bool)result.Data == true)
-            {
-                Snack.Add("Combo criado com sucesso!", Severity.Success);
-                await LimparEListarCombos();
-            }
-            else if (!result.Canceled && (bool)result.Data == false)
-            {
-                Snack.Add("Tivemos um problema ao tentar criar o combo!", Severity.Warning);
-            }
-        }
-        catch (Exception e)
-        {
-            Snack.Add("Tivemos um problema ao tentar criar o combo!", Severity.Warning);
-            _carregando = false;
-        }
-    }
-
-    public async Task AtualizarCombo(Combos combo)
-    {
-        try
-        {
-            var options = new DialogOptions
-                {
-                    MaxWidth = MaxWidth.ExtraExtraLarge,
-                    FullScreen = true,
-                    BackdropClick = false,
-                    CloseButton = true,
-                    Position = DialogPosition.TopCenter
-                };
-            var param = new DialogParameters { ["_comboForm"] = combo.Clone() };
-            var dialog = Dialog.Show<CombosFormCmp>("Atualizar Combo", param, options);
-            var result = await dialog.Result;
-            if (!result.Canceled && (bool)result.Data == true)
-            {
-                Snack.Add("Combo atualizado com sucesso!", Severity.Success);
-                await LimparEListarCombos();
-            }
-            else if (!result.Canceled && (bool)result.Data == false)
-            {
-                Snack.Add("Tivemos um problema ao tentar atualizar o combo!", Severity.Warning);
-            }
-        }
-        catch (Exception e)
-        {
-            Snack.Add("Tivemos um problema ao tentar atualizar o combo!", Severity.Warning);
-            _carregando = false;
-        }
-    }
-
-    public async Task DeletarCombo(Combos combo)
-    {
-        try
-        {
-            var param = new DialogParameters<AlertaDelete>
-            {
-                { x => x.ContentText, "Tem certeza que deseja deletar esse <b>COMBO</b> e todos os dados a ele ligados?" }
-            };
-            var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
-            var dialog = Dialog.Show<AlertaDelete>("Deletar Combo", param, options);
-            var result = await dialog.Result;
-            if (!result.Canceled)
-            {
-                _carregando = true;
-                var reinoCompany = new ReinoCompany();
-                var response = await reinoCompany.CombosDeletar(Auth!.token!, combo);
-
-                if (response!.status)
-                {
-                    Snack.Add("Combo deletado com sucesso!", Severity.Success);
-                    await LimparEListarCombos();
-                }
-                else
-                {
-                    if (!string.IsNullOrEmpty(response.message))
-                    {
-                        Snack.Add(response.message, Severity.Warning);
-                    }
-                    _carregando = false;
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            Snack.Add("Tivemos um problema ao tentar deletar o combo!", Severity.Warning);
-            _carregando = false;
         }
     }
 }

@@ -1,0 +1,373 @@
+﻿@using AppPerfumaria.Api.ReinoCompany
+@using AppPerfumaria.Components.CmpsGerais
+@using AppPerfumaria.Models.Auth
+@using AppPerfumaria.Models.Tables
+@using System.Globalization
+
+@inject IDialogService Dialog
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject ISnackbar Snack
+
+<MudDialog ContentClass="bg-gray py-5" TitleClass="d-flex pb-0 pt-2">
+    <TitleContent>
+        <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft"
+                 OnClick="(() => _mudDialog!.Cancel())" />
+        <MudSpacer />
+        <MudIcon Icon="@Icons.Material.Filled.DashboardCustomize" Class="mt-3" />
+    </TitleContent>
+    <DialogContent>
+        @if (_carregando)
+        {
+            <Loading AlignCenter="true" Color="Color.Default" Size="Size.Medium" />
+        }
+        else
+        {
+            @if (!string.IsNullOrEmpty(_combo!.img_1))
+            {
+                <MudCardMedia Class="rounded-lg w-100" Image="@($"data:image/png;base64,{_combo!.img_1}")" Style="height: 350px;" />
+            }
+
+            <MudPaper Class="pa-2 mt-3" Elevation="0">
+                <MudAlert Icon="@(_combo.status == "Ativo" ? Icons.Material.Filled.ThumbUp : Icons.Material.Filled.ThumbDown)"
+                          Severity="Severity.Normal" Dense="true"
+                          ContentAlignment="HorizontalAlignment.Center" Class="fw-bold">
+                    COMBO
+                </MudAlert>
+
+                <MudText Class="fw-bold mt-2" Typo="Typo.body1">
+                    @_combo.nome.ToUpper()
+                </MudText>
+
+                <MudText Typo="Typo.body2">
+                    @_combo.tipo.ToUpper()
+                </MudText>
+
+                <MudDivider Class="mt-2" />
+
+                <MudExpansionPanels Class="mt-2">
+                    <MudExpansionPanel Text="Descrição:" HeaderClass="fw-bold py-0" Expanded="true">
+                        @_combo.descricao
+                    </MudExpansionPanel>
+                </MudExpansionPanels>
+
+                <MudText Typo="Typo.body2">
+                    @_combo.codigo_barras
+                </MudText>
+            </MudPaper>
+
+            <MudPaper Class="pa-4 py-3 mt-3" Elevation="0">
+                <div class="d-flex">
+                    <MudText Typo="Typo.body1">
+                        Total:
+                    </MudText>
+                    <MudSpacer />
+                    <MudText Class="@(_combo.combo_produtos?.FirstOrDefault(w => w.produto?.estoque?.preco_venda_desconto != null) != null ? "fw-bold text-decoration-line-through" : "fw-bold")" Typo="Typo.body1">
+                        @string.Format(new CultureInfo("pt-BR"), "{0:C}", _combo.combo_produtos?.Sum(w => w.produto?.estoque?.preco_venda_original))
+                    </MudText>
+                </div>
+                @if (_combo.combo_produtos?.FirstOrDefault(w => w.produto?.estoque?.preco_venda_desconto != null) != null)
+                {
+                    <div class="d-flex">
+                        <MudText Typo="Typo.body1">
+                            Total Desconto:
+                        </MudText>
+                        <MudSpacer />
+                        <MudText Class="fw-bold" Typo="Typo.body1">
+                            @string.Format(new CultureInfo("pt-BR"), "{0:C}", CalcularTotalDesconto())
+                        </MudText>
+                    </div>
+                }
+                <div class="d-flex">
+                    <MudText Typo="Typo.body1">
+                        Pagamento (Dinheiro ou Pix):
+                    </MudText>
+                    <MudSpacer />
+                    <MudText Class="fw-bold" Typo="Typo.body1">
+                        @string.Format(new CultureInfo("pt-BR"), "{0:C}", CalcularPagamentoDinheiroPix())
+                    </MudText>
+                </div>
+            </MudPaper>
+
+            @if (_combo.combo_produtos != null)
+            {
+                <MudPaper Class="px-4 py-3 mt-3 d-flex" Elevation="0">
+                    <MudText Typo="Typo.body1" Class="fw-bold">
+                        @(_combo.combo_produtos.Count().ToString() + (_combo.combo_produtos.Count() == 1 ? " Item" : " Itens"))
+                    </MudText>
+                    <MudSpacer />
+                    <MudIconButton Icon="@(_produtosCarinho.Where(w => _combo.combo_produtos.Any(a => a.produto?.estoque?.id == w.id)).Count() > 0 ? Icons.Material.Filled.RemoveShoppingCart : Icons.Material.Filled.AddShoppingCart)"
+                                   Variant="Variant.Filled" Color="Color.Secondary" Size="Size.Small"
+                                   OnClick="(() => AdicionarOuRemoverCarinho(_combo))" />
+                </MudPaper>
+
+                @foreach (var item in _combo.combo_produtos)
+                {
+                    <MudPaper Class="@("px-4 py-2 mt-1 " + (item!.produto!.estoque == null ? "border border-2 border-danger" : ""))" Elevation="0">
+                        <MudGrid Spacing="2" Justify="Justify.Center">
+                            <MudItem xs="2" Class="d-flex align-items-center justify-content-center">
+                                @if (!string.IsNullOrEmpty(item!.produto!.img_1))
+                                {
+                                    <MudCardMedia Class="rounded-lg" Image="@($"data:image/png;base64,{item!.produto!.img_1}")" Style="height: 40px; width:40px;" />
+                                }
+                            </MudItem>
+                            <MudItem xs="10">
+                                <MudGrid Spacing="2" Justify="Justify.Center">
+                                    <MudItem xs="10">
+                                        <MudText Typo="Typo.body2" Class="fw-bold">
+                                            @item!.produto!.nome.ToUpper()
+                                        </MudText>
+                                    </MudItem>
+                                    <MudItem xs="2" Class="d-flex align-items-end justify-content-lg-center">
+                                        <div>
+                                            <MudText Typo="Typo.body2" Class="d-flex text-center">
+                                                @item!.produto!.estoque?.id
+                                            </MudText>
+                                        </div>
+                                    </MudItem>
+                                </MudGrid>
+                                <MudDivider Class="my-1" DividerType="DividerType.Middle" />
+                                <div class="d-flex">
+                                    <MudText Typo="Typo.body2">
+                                        Preço:
+                                    </MudText>
+                                    <MudSpacer />
+                                    <MudText Typo="Typo.body2" Class="@(item.produto!.estoque?.preco_venda_desconto != null ? "fw-bold text-decoration-line-through" : "fw-bold")">
+                                        @string.Format(new CultureInfo("pt-BR"), "{0:C}", item.produto!.estoque?.preco_venda_original)
+                                    </MudText>
+                                </div>
+                                @if (item!.produto!.estoque?.preco_venda_desconto != null)
+                                {
+                                    <div class="d-flex">
+                                        <MudText Typo="Typo.body2">
+                                            Preço Desconto:
+                                        </MudText>
+                                        <MudSpacer />
+                                        <MudText Class="fw-bold" Typo="Typo.body2">
+                                            @string.Format(new CultureInfo("pt-BR"), "{0:C}", item!.produto!.estoque?.preco_venda_desconto)
+                                        </MudText>
+                                    </div>
+                                }
+                            </MudItem>
+                        </MudGrid>
+                    </MudPaper>
+                }
+            }
+        }
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance? _mudDialog { get; set; }
+    [Parameter]
+    public Combos? _combo { get; set; }
+    [Parameter]
+    public EventCallback AtualizarCarinho { get; set; }
+    private Auth? _auth;
+    private Instalacoes? _instalacao { get; set; }
+    private List<Estoques>? _produtosCarinho;
+    private bool _carregando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _auth = await LocalStorage.GetItemAsync<Auth>("auth");
+        _instalacao = await LocalStorage.GetItemAsync<Instalacoes>("instalacao");
+        _produtosCarinho = await LocalStorage.GetItemAsync<List<Estoques>>("carinho");
+
+        if (_combo!.id > 0)
+        {
+            await BuscarCombo();
+        }
+
+        // _produtosCarinho = Carrinho.estoques;
+        // if (_produtosCarinho == null)
+        // {
+        //     _produtosCarinho = new List<Estoques>();
+        // }
+
+        do
+        {
+            await Task.Delay(300);
+        }
+        while (_auth == null || _instalacao == null || _produtosCarinho == null);
+
+        StateHasChanged();
+    }
+
+    private async Task BuscarCombo()
+    {
+        try
+        {
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.CombosBuscar(_auth!.token!, _combo!.id!);
+
+            if (response!.status)
+            {
+                _combo = response!.data!;
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+            }
+
+            _carregando = false;
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar buscar o combo!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    private double? CalcularTotalDesconto()
+    {
+        double? totalDesconto = 0.0;
+
+        if (_combo != null)
+        {
+            foreach (var item in _combo.combo_produtos)
+            {
+                if (item.produto?.estoque != null)
+                {
+                    if (item.produto?.estoque?.preco_venda_desconto != null)
+                    {
+                        totalDesconto += item.produto?.estoque?.preco_venda_desconto;
+                    }
+                    else
+                    {
+                        totalDesconto += item.produto?.estoque?.preco_venda_original;
+                    }
+                }
+            }
+        }
+
+        return totalDesconto!;
+    }
+
+    private double? CalcularPagamentoDinheiroPix()
+    {
+        double? totalDesconto = 0.0;
+        double? totalSemDesconto = 0.0;
+
+        if (_combo != null)
+        {
+            foreach (var item in _combo.combo_produtos)
+            {
+                if (item.produto?.estoque != null)
+                {                   
+                    if (item.produto.estoque.desconto_pagamento_avista)
+                    {
+                        if (item.produto.estoque.preco_venda_desconto != null)
+                        {
+                            totalDesconto += item.produto.estoque.preco_venda_desconto;
+                        }
+                        else
+                        {
+                            totalDesconto += item.produto.estoque.preco_venda_original;
+                        }
+                    }
+                    else
+                    {
+                        if (item.produto.estoque.preco_venda_desconto != null)
+                        {
+                            totalSemDesconto += item.produto.estoque.preco_venda_desconto;
+                        }
+                        else
+                        {
+                            totalSemDesconto += item.produto.estoque.preco_venda_original;
+                        }
+                    }
+                }
+            }
+        }
+
+        return totalSemDesconto + (totalDesconto * (1 - 0.05));
+    }
+
+    public async Task AdicionarOuRemoverCarinho(Combos combos)
+    {
+        bool produtosEstaoCarrinho = _produtosCarinho.Where(w => combos.combo_produtos.Any(a => a.produto?.estoque?.id == w.id)).Count() > 0;
+
+        if (!produtosEstaoCarrinho && combos.combo_produtos.Any(a => a.produto?.estoque == null))
+        {
+            var param = new DialogParameters<AlertaComPergunta>
+            {
+                { x => x.ContentText, "Deseja adicionar ao carinho somente os produtos que possuem estoque?" }
+            };
+            var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+            var dialog = Dialog.Show<AlertaComPergunta>("Aviso", param, options);
+            var result = await dialog.Result;
+            if (result.Canceled)
+            {
+                return;
+            }
+        }
+
+        if (combos.combo_produtos != null && combos.combo_produtos.Count() > 0)
+        {
+            foreach (var combo in combos.combo_produtos)
+            {
+                if (combo.produto.estoque != null)
+                {
+                    var estoque = combo.produto.estoque.Clone();
+                    var produto = combo.produto.Clone();
+                    produto.estoque = null;
+                    estoque.produto = combo.produto;
+
+                    if (!produtosEstaoCarrinho)
+                    {
+                        _produtosCarinho!.Add(estoque);
+                    }
+                    else
+                    {
+                        var item = _produtosCarinho!.FirstOrDefault(f => f.id == estoque.id);
+                        _produtosCarinho!.Remove(item);
+                    }
+                }
+                else
+                {
+                    
+                }
+            }
+
+            if (!produtosEstaoCarrinho)
+            {
+                Snack.Add("Item(s) adicionado(s) no carinho!", Severity.Success);
+            }
+            else
+            {
+                Snack.Add("Item(s) removido(s) do carinho!", Severity.Success);
+            }
+
+            await LocalStorage.SetItemAsync("carinho", _produtosCarinho);
+            await AtualizarCarinho.InvokeAsync();
+        }
+    }
+
+    // public async Task AdicionarOuRemoverCarinho(Estoques item)
+    // {
+    //     var itemProduto = _produtosCarinho!.FirstOrDefault(w => w.id == item.id);
+
+    //     if (itemProduto == null)
+    //     {
+    //         item.produto = _instalacaoProduto!.produto;
+    //         _produtosCarinho!.Add(item);
+    //         Carrinho.estoques = _produtosCarinho;
+    //         Snack.Add("Item adicionado no carinho!", Severity.Success);
+    //     }
+    //     else
+    //     {
+    //         _produtosCarinho!.Remove(itemProduto);
+    //         Carrinho.estoques = _produtosCarinho;
+    //         Snack.Add("Item removido do carinho!", Severity.Success);
+    //     }
+    //     await AtualizarCarinho.InvokeAsync();
+    //     StateHasChanged();
+    // }
+
+    private void Ok() => _mudDialog!.Close(DialogResult.Ok(true));
+}
