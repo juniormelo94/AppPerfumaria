@@ -1,9 +1,14 @@
-﻿@using AppPerfumaria.Models.Tables
+﻿@using AppPerfumaria.Api.ReinoCompany
+@using AppPerfumaria.Models.Auth
+@using AppPerfumaria.Models.Tables
+
+@inject IDialogService Dialog
+@inject ISnackbar Snack
 
 <MudDialog ContentClass="bg-gray py-5" TitleClass="d-flex pb-0 pt-2">
     <TitleContent>
         <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft"
-                 OnClick="(() => _mudDialog!.Cancel())" />
+        OnClick="(() => _mudDialog!.Cancel())" />
         <MudSpacer />
         <MudIcon Icon="@Icons.Material.Filled.ShoppingBag" Class="mt-3" />
     </TitleContent>
@@ -15,8 +20,8 @@
 
         <MudPaper Class="pa-2 mt-3" Elevation="0">
             <MudAlert Icon="@(_produto.status == "Ativo" ? Icons.Material.Filled.ThumbUp : Icons.Material.Filled.ThumbDown)"
-                      Severity="Severity.Normal" Dense="true" 
-                      ContentAlignment="HorizontalAlignment.Center" Class="fw-bold">
+            Severity="Severity.Normal" Dense="true" 
+            ContentAlignment="HorizontalAlignment.Center" Class="fw-bold">
                 PRODUTO
             </MudAlert>
 
@@ -39,13 +44,51 @@
             <MudText Typo="Typo.body2">
                 @_produto.codigo_barras
             </MudText>
+        </MudPaper>
 
-@*             <MudText Typo="Typo.body2">
-                @if (!string.IsNullOrEmpty(_produto!.cnpj))
+        <MudPaper Class="pa-2 mt-3" Elevation="0">
+            <MudAlert NoIcon="true" Severity="Severity.Normal" Dense="true" 
+            ContentAlignment="HorizontalAlignment.Center" Class="fw-bold">
+                DIVULGAÇÃO
+            </MudAlert>
+
+            @if (_carregando)
+            {
+                <div class="d-flex flex-column align-items-center justify-content-center py-2">
+                    <MudProgressCircular Indeterminate="true" Color="Color.Default" />
+                </div>
+            }
+            else
+            {
+                @if (_produtoDivulgacao != null)
                 {
-                    @($"CNPJ: {_produto!.cnpj}")
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="AtualizarProduto"
+                                   Color="Color.Inherit" Size="Size.Medium" />
+
+                    @if (!string.IsNullOrEmpty(_produtoDivulgacao!.img_padrao_1))
+                    {
+                        <MudExpansionPanels Class="mt-2">
+                            <MudExpansionPanel Text="Imagem Padrão:" HeaderClass="fw-bold py-0" Expanded="true">
+                                <MudImage Class="rounded-lg w-100" Src="@($"data:image/png;base64,{_produtoDivulgacao!.img_padrao_1}")" />
+                            </MudExpansionPanel>
+                        </MudExpansionPanels>
+                    }
+
+                    @if (!string.IsNullOrEmpty(_produtoDivulgacao!.img_promocao_1))
+                    {
+                        <MudExpansionPanels Class="mt-2">
+                            <MudExpansionPanel Text="Imagem Promoção:" HeaderClass="fw-bold py-0" Expanded="true">
+                                <MudImage Class="rounded-lg w-100" Src="@($"data:image/png;base64,{_produtoDivulgacao!.img_promocao_1}")" />
+                            </MudExpansionPanel>
+                        </MudExpansionPanels>
+                    }
                 }
-            </MudText> *@
+                else
+                {
+                    <MudIconButton Icon="@Icons.Material.Filled.Add" OnClick="CriarProdutoDivulgacao"
+                                   Color="Color.Inherit" Size="Size.Medium" />
+                }
+            }
         </MudPaper>
     </DialogContent>
 </MudDialog>
@@ -53,8 +96,110 @@
 @code {
     [CascadingParameter]
     private MudDialogInstance? _mudDialog { get; set; }
+    [Parameter] 
+    public Auth? Auth { get; set; }
     [Parameter]
     public Produtos? _produto { get; set; }
+    public ProdutosDivulgacoes? _produtoDivulgacao;
+    public bool _carregando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await BuscarProdutoPublicidade();
+
+        _carregando = false;
+
+        StateHasChanged();
+    }
 
     private void Ok() => _mudDialog!.Close(DialogResult.Ok(true));
+
+    private async Task BuscarProdutoPublicidade()
+    {
+        try
+        {
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.ProdutosDivulagacoesBuscar(Auth!.token!, _produto!.id);
+
+            if (response!.status)
+            {
+                _produtoDivulgacao = response!.data!;
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+            }
+
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar buscar a divulgação do produto!", Severity.Warning);
+        }
+    }
+
+    public async Task CriarProdutoDivulgacao()
+    {
+        try
+        {
+            var produtoDivulgacao = new ProdutosDivulgacoes()
+            {
+                produtos_id = _produto!.id
+            };
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullWidth = true,
+                    BackdropClick = false,
+                    CloseButton = true,
+                    Position = DialogPosition.TopCenter
+                };
+            var param = new DialogParameters { ["_produtoDivulgacaoForm"] = produtoDivulgacao };
+            var dialog = Dialog.Show<ProdutosDivulgacoesFormCmp>("Adicionar Divulgações", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled)
+            {
+                _produtoDivulgacao = (ProdutosDivulgacoes)result.Data;
+                Snack.Add("Divulgações do produto criadas com sucesso!", Severity.Success);
+                StateHasChanged();
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar criar as divulgações do produto!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    public async Task AtualizarProduto()
+    {
+        try
+        {
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullWidth = true,
+                    BackdropClick = false,
+                    CloseButton = true,
+                    Position = DialogPosition.TopCenter
+                };
+            var param = new DialogParameters { ["_produtoDivulgacaoForm"] = _produtoDivulgacao.Clone() };
+            var dialog = Dialog.Show<ProdutosDivulgacoesFormCmp>("Atualizar Divulgações", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled)
+            {
+                _produtoDivulgacao = (ProdutosDivulgacoes)result.Data;
+                Snack.Add("Divulgações do produto atualizadas com sucesso!", Severity.Success);
+                StateHasChanged();
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar atualizar as divulgações do produto!", Severity.Warning);
+            _carregando = false;
+        }
+    }
 }

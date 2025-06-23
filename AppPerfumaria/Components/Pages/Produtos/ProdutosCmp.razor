@@ -19,32 +19,32 @@
     <!-- Barra de leitor -->
     <div class="d-flex">
         <MudTextField Value="_leitorFiltro" Label="Código Barras ou QR Code" Variant="Variant.Outlined"
-                      Adornment="Adornment.End" Margin="Margin.Dense" Immediate="true"
-                      ValueChanged="(async (string v) => { _leitorFiltro = v; await Leitor(v); })"
-                      AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Inherit"
-                      ClearIcon="@Icons.Material.Filled.Clear" Clearable="true" />
+        Adornment="Adornment.End" Margin="Margin.Dense" Immediate="true"
+        ValueChanged="(async (string v) => { _leitorFiltro = v; await Leitor(v); })"
+        AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Inherit"
+        ClearIcon="@Icons.Material.Filled.Clear" Clearable="true" />
         <MudSpacer />
         <MudIconButton Icon="@Icons.Material.Filled.QrCodeScanner" OnClick="AbrirScanner"
-                       Color="Color.Inherit" Size="Size.Medium" />
+        Color="Color.Inherit" Size="Size.Medium" />
     </div>
     <!-- Barra de pesquisa e botão filtro -->
     <div class="d-flex">
         <MudTextField Value="_pesquisarFiltro" Label="Pesquisar" Variant="Variant.Outlined"
-                      Adornment="Adornment.End" Margin="Margin.Dense" Immediate="true"
-                      ValueChanged="(async (string v) => { _pesquisarFiltro = v; await Pesquisar(v); })"
-                      AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Inherit" 
-                      ClearIcon="@Icons.Material.Filled.Clear" Clearable="true" />
+        Adornment="Adornment.End" Margin="Margin.Dense" Immediate="true"
+        ValueChanged="(async (string v) => { _pesquisarFiltro = v; await Pesquisar(v); })"
+        AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Inherit" 
+        ClearIcon="@Icons.Material.Filled.Clear" Clearable="true" />
         <MudSpacer />
         <MudIconButton Icon="@Icons.Material.Filled.FilterList" OnClick="Filtro"
-                       Color="Color.Inherit" Size="Size.Medium" />
+        Color="Color.Inherit" Size="Size.Medium" />
     </div>
     <!-- Barra de filtros -->
     <MudPopover Open="@_exibirFiltro" Fixed="true" Class="px-4 pt-4 w-100"
-                AnchorOrigin="Origin.TopRight" TransformOrigin="Origin.TopRight">
+    AnchorOrigin="Origin.TopRight" TransformOrigin="Origin.TopRight">
         <MudGrid Spacing="2" Justify="Justify.Center" Class="mb-1">
             <MudItem xs="6">
                 <MudSelect @bind-Value="_porPagina" Variant="Variant.Outlined"
-                           Label="Carregar De" Margin="Margin.Dense">
+                Label="Carregar De" Margin="Margin.Dense">
                     <MudSelectItem Value="@("10")" />
                     <MudSelectItem Value="@("15")" />
                     <MudSelectItem Value="@("20")" />
@@ -52,7 +52,7 @@
             </MudItem>
             <MudItem xs="6">
                 <MudSelect T="string" @bind-Value="_statusFiltro" Variant="Variant.Outlined"
-                           Label="Status" Margin="Margin.Dense">
+                Label="Status" Margin="Margin.Dense">
                     <MudSelectItem Value="@("Todos")" />
                     <MudSelectItem Value="@("Ativo")" />
                     <MudSelectItem Value="@("Inativo")" />
@@ -60,19 +60,19 @@
             </MudItem>
             <MudItem xs="12">
                 <MudDateRangePicker Label="Data de Criação" @bind-DateRange="_dataCriacaoFiltro"
-                                    Variant="Variant.Outlined"
-                                    PlaceholderStart="Data Início"
-                                    PlaceholderEnd="Data Fim" Clearable="true"
-                                    DateFormat="dd/MM/yyyy"
-                                    Margin="Margin.Dense" />
+                Variant="Variant.Outlined"
+                PlaceholderStart="Data Início"
+                PlaceholderEnd="Data Fim" Clearable="true"
+                DateFormat="dd/MM/yyyy"
+                Margin="Margin.Dense" />
             </MudItem>
             <MudItem xs="12">
                 <MudAutocomplete T="InstalacoesMarcas" Label="Marca"
-                                 Value="@(_listarInstalacoesMarcas?.FirstOrDefault(im => im!.marca!.id == _marcaFiltro))"
-                                 SearchFunc="@PesquisarMarcas" ToStringFunc="@(im => im!.marca!.nome.ToUpper())"
-                                 ValueChanged="@((InstalacoesMarcas im) => { _marcaFiltro = im!.marca!.id; })"
-                                 CloseIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Default" Variant="Variant.Outlined"
-                                 Strict="false" Margin="Margin.Dense" ShowProgressIndicator="true" ClearIcon="@Icons.Material.Filled.Clear" Clearable="true">
+                Value="@(_listarInstalacoesMarcas?.FirstOrDefault(im => im!.marca!.id == _marcaFiltro))"
+                SearchFunc="@PesquisarMarcas" ToStringFunc="@(im => im!.marca!.nome.ToUpper())"
+                ValueChanged="@((InstalacoesMarcas im) => { _marcaFiltro = im!.marca!.id; })"
+                CloseIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Default" Variant="Variant.Outlined"
+                Strict="false" Margin="Margin.Dense" ShowProgressIndicator="true" ClearIcon="@Icons.Material.Filled.Clear" Clearable="true">
                     <NoItemsTemplate>
                         <MudText Align="Align.Center" Class="px-4 py-1">
                             Nenhum resultado encontrado!
@@ -84,21 +84,21 @@
         <MudDivider />
         <div class="d-flex my-2 float-end">
             <MudFab Label="Fechar" Size="Size.Small"
-                    OnClick="Filtro" Class="mr-2" />
+            OnClick="Filtro" Class="mr-2" />
             <MudFab Label="Filtrar" Size="Size.Small"
-                    OnClick="AplicarFiltros" />
+            OnClick="AplicarFiltros" />
         </div>
     </MudPopover>
     <!-- Barra de card e botão criar -->
     <div class="d-flex">
         <MudTabs Elevation="4" Rounded="true" Centered="true" @ref="tabs">
             <MudTabPanel Icon="@Icons.Material.Filled.Storefront" Text="Produtos"
-                         OnClick="LimparEListarInstalacaoProdutos" />
+            OnClick="LimparEListarInstalacaoProdutos" />
             <MudTabPanel Text="Produtos" OnClick="LimparEListarProdutos" />
         </MudTabs>
         <MudSpacer />
         <MudIconButton Icon="@Icons.Material.Filled.Add" OnClick="CriarProduto"
-                       Color="Color.Inherit" Size="Size.Medium" />
+        Color="Color.Inherit" Size="Size.Medium" />
     </div>
 </MudPaper>
 
@@ -114,7 +114,7 @@
                     <MudItem xs="6">
                         <MudCard Style="height: 350px;" @onclick="(() => VisualizarInstalacaoProduto(instalacaoProduto))">
                             <MudIcon Style="position:absolute;" Class="mt-2 ml-2" Color="@(instalacaoProduto.status == "Ativo" ? Color.Dark : Color.Default)"
-                                     Icon="@(instalacaoProduto.status == "Ativo" ? Icons.Material.Filled.ThumbUp : @Icons.Material.Filled.ThumbDown)" />
+                            Icon="@(instalacaoProduto.status == "Ativo" ? Icons.Material.Filled.ThumbUp : @Icons.Material.Filled.ThumbDown)" />
                             <MudCardMedia Image="@($"data:image/png;base64,{instalacaoProduto!.produto.img_1}")" Height="200" />
                             <MudCardContent Class="py-2">
                                 <MudText Class="fw-bold" Typo="Typo.body1">
@@ -131,14 +131,14 @@
                             <MudCardActions Class="d-block py-0 pb-1">
                                 <div class="d-flex mt-1 px-3">
                                     <MudIconButton Size="Size.Medium" OnClick="(() => AtualizarInstalacaoProduto(instalacaoProduto))"
-                                                   Icon="@Icons.Material.Filled.Edit" />
+                                    Icon="@Icons.Material.Filled.Edit" />
                                     <MudIconButton OnClick="(() => VisualizarInstalacaoProduto(instalacaoProduto))">
                                         <MudBadge Content="instalacaoProduto!.estoque!.Count()" Overlap="true" Visible="true" Color="Color.Dark">
                                             <MudIcon Icon="@Icons.Material.Filled.Storage" />
                                         </MudBadge>
                                     </MudIconButton>
                                     <MudIconButton Size="Size.Medium" OnClick="(() => DeletarInstalacaoProduto(instalacaoProduto))"
-                                                   Icon="@Icons.Material.Filled.Delete" />
+                                    Icon="@Icons.Material.Filled.Delete" />
                                 </div>
                             </MudCardActions>
                         </MudCard>
@@ -149,7 +149,7 @@
                     @if (_paginacaoInstalacoesProdutos!.current_page != _paginacaoInstalacoesProdutos!.last_page)
                     {
                         <MudFab Class="w-100" Label="Carregar Mais" OnClick="CarregarMais"
-                                Disabled="false" Size="Size.Small" />
+                        Disabled="false" Size="Size.Small" />
                     }
 
                     <MudText Align="Align.Center" Typo="Typo.body2" Class="mt-2 w-100">
@@ -181,7 +181,7 @@
                     <MudItem xs="6">
                         <MudCard Style="height: 380px;" @onclick="(() => VisualizarProduto(produto))">
                             <MudIcon Style="position:absolute;" Class="mt-2 ml-2" Color="@(produto.status == "Ativo" ? Color.Dark : Color.Default)"
-                                     Icon="@(produto.status == "Ativo" ? Icons.Material.Filled.ThumbUp : Icons.Material.Filled.ThumbDown)" />
+                            Icon="@(produto.status == "Ativo" ? Icons.Material.Filled.ThumbUp : Icons.Material.Filled.ThumbDown)" />
                             <MudCardMedia Image="@($"data:image/png;base64,{produto.img_1}")" Height="200" />
                             <MudCardContent Class="py-2">
                                 <MudText Class="fw-bold" Typo="Typo.body1">
@@ -199,19 +199,19 @@
                                 @if (produto!.instalacao_produtos!.Count() > 0)
                                 {
                                     <MudFab Class="w-100" Label="Associado" StartIcon="@Icons.Material.Filled.Check"
-                                            Size="Size.Small" Disabled="true" />
+                                    Size="Size.Small" Disabled="true" />
                                 }
                                 else
                                 {
                                     <MudFab Class="w-100" Label="Associar" Size="Size.Small"
-                                            OnClick="(() => CriarInstalacaoProduto(produto))" />
+                                    OnClick="(() => CriarInstalacaoProduto(produto))" />
                                 }
                                 <div class="d-flex mt-1 px-3">
                                     <MudIconButton Size="Size.Medium" OnClick="(() => AtualizarProduto(produto))"
-                                                   Icon="@Icons.Material.Filled.Edit" />
+                                    Icon="@Icons.Material.Filled.Edit" />
                                     <MudSpacer />
                                     <MudIconButton Size="Size.Medium" OnClick="(() => DeletarProduto(produto))"
-                                                   Icon="@Icons.Material.Filled.Delete" />
+                                    Icon="@Icons.Material.Filled.Delete" />
                                 </div>
                             </MudCardActions>
                         </MudCard>
@@ -222,7 +222,7 @@
                     @if (_paginacaoProdutos!.current_page != _paginacaoProdutos!.last_page)
                     {
                         <MudFab Class="w-100" Label="Carregar Mais" OnClick="CarregarMais"
-                                Disabled="false" Size="Size.Small" />
+                        Disabled="false" Size="Size.Small" />
                     }
 
                     <MudText Align="Align.Center" Typo="Typo.body2" Class="mt-2 w-100">
@@ -549,7 +549,11 @@
                     FullScreen = true,
                     CloseButton = false,
                 };
-            var param = new DialogParameters { ["_produto"] = produto };
+            var param = new DialogParameters
+            {
+                ["Auth"] = Auth,
+                ["_produto"] = produto
+            };
             Dialog.Show<VisualizarProdutoCmp>("Visualizar Produto", param, options);
         }
         catch (Exception e)

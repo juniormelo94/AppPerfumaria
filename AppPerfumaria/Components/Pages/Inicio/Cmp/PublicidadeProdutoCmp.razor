@@ -1,156 +1,221 @@
-﻿@using AppPerfumaria.Models.Tables
+﻿@using AppPerfumaria.Api.ReinoCompany
+@using AppPerfumaria.Models.Auth
+@using AppPerfumaria.Models.Tables
+@using SkiaSharp
+@using System.Globalization
 
 @inject IJSRuntime JS
 @inject IDialogService Dialog
 @inject ISnackbar Snack
 
-<MudDialog Style="max-height: 100%;" ContentStyle="max-height: 100px; overflow: hidden;">
+<MudDialog>
     <DialogContent>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" Style="margin-bottom: 500px;" @onclick="CapturarImagem">
-            Compartilhar Imagem
-        </MudButton>
-
-        <div id="htmlToRender" style="position: relative; background-image: url('img/divulgacao/plano_fundo_divulgacao.png'); background-repeat: no-repeat; background-size: contain; background-position: center; min-height:1920px; width:1080px;">
-            <div style="display: flex; justify-content: center;">
-                <div class="titulo" style="
-                z-index: 10;
-                position: absolute;
-                top: 8%;
-                left: 50%;
-                transform: translateX(-50%);
-                background: white;
-                padding: 10px 30px;
-                border-radius: 20px;
-                font-size: 70px;
-                font-weight: bold;
-                text-align: center;
-                box-shadow: 2px 2px 10px rgba(0,0,0,0.2);">
-                    Malbec Bleu 100 ml
-                </div>
+        @if (!string.IsNullOrEmpty(_imagemMontadaBase64))
+        {
+            <div>
+                <MudIconButton Style="position:absolute;"
+                Variant="Variant.Filled" Color="Color.Secondary" Size="Size.Small"
+                Icon="@Icons.Material.Filled.Share" @onclick="CompartilharImagem" />
+                <MudImage Class="rounded-lg w-100" Src="@($"data:image/png;base64,{_imagemMontadaBase64}")" />
             </div>
-            <div style="display: flex; justify-content: center;">
-                <img src="@($"data:image/png;base64,{_estoque!.produto!.img_1}")" alt="Malbec Bleu" class="imagem-produto"
-                     style=" top: 245px; border: 15px solid #fff; transform: rotate(-4deg); height: 800px; width: 800px; position: absolute; border-radius: 12px; box-shadow: 2px 2px 10px rgba(0,0,0,0.3); ">
+        }
+        else
+        {
+            <div class="d-flex flex-column align-items-center justify-content-center py-2">
+                <MudProgressCircular Indeterminate="true" Color="Color.Default" />
             </div>
-            <div style="position: absolute; top: 30%; left: 7%; width: 650px; transform: rotate(-35deg); z-index: 5;">
-                <img src="img/divulgacao/etiqueta.png" alt="etiqueta" style="width: 100%;">
-
-                <div style="
-            position: absolute;
-            top: 49%;
-            left: 24%;
-            transform: rotate(47deg);
-            font-size: 58px;
-            font-weight: bold;
-            text-align: center;
-            z-index: 10;
-        ">
-                    <span style="font-size: 42px;">De: </span><span style="font-size: 42px; text-decoration: line-through;">219,90</span><br>
-                    <span style="color: #8B4513;">Por: 297,90</span><span style="font-size: 42px;"> (cartão)</span><br>
-                    <span style="color: #8B4513;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;200,00</span><span style="font-size: 42px;"> (à vista)</span>
-                </div>
-            </div>
-        </div>
-
+        }
     </DialogContent>
     <DialogActions>
-        <div class="d-block w-100 px-2">
-            @* @if (_carregando) *@
-            @* { *@
-            @*     <MudProgressLinear Color="Color.Secondary" Rounded="true" Striped="true" *@
-            @*                        Size="Size.Medium" Value="100" Class="mb-2" /> *@
-            @* } *@
-            @* <MudFab Class="w-100" Label="Salvar" Size="Size.Medium" *@
-            @*         OnClick="ValidarDadosForm" Disabled="_verificando" /> *@
-            @* <MudFab Class="w-100 mt-2 mb-5" Label="Fechar" OnClick="(() => _mudDialog!.Cancel())" *@
-            @*         Size="Size.Medium" Disabled="_verificando" /> *@
-        </div>
+
     </DialogActions>
 </MudDialog>
-
-@* <div id="htmlToRender" style="padding:100px; background:#efcbcb; height:1920px; width:1080px; background-image: url('img/plano_fundo_divulgacao.png');"> *@
-@* <div id="htmlToRender" style="background-image: url('img/divulgacao/plano_fundo_divulgacao.png'); background-repeat: no-repeat; background-size: 1080px 1920px; height:1920px; width:1080px;">
-    <div style="height:1920px; width:1080px;">
-        <MudText Align="Align.Center" Class="position-relative fw-bold" Style="margin-top: 100px; top: 100px; z-index: 99;" Typo="Typo.h2">
-            <span class="bg-white rounded p-3">
-                AAA AAA AAA AAA AAA AAA
-            </span>
-        </MudText> 
-        <div class="d-flex flex-column align-items-center justify-content-center">
-            <MudImage Src="@($"data:image/png;base64,{_estoque!.produto!.img_1}")" Width="800" Height="1100" Style="border: 15px solid #fff; margin-top: 100px; transform: rotate(-5deg);" />
-        </div>
-        <div class="position-absolute" style="margin-left: 230px;  transform: rotate(10deg); z-index: 99; width: 600px;">
-            <p Class="fw-bold" style="font-size: 45px;">De: <del>150,00</del></p>
-            <p Class="fw-bold" style="font-size: 45px;">Por: 100,00 (cartão)</p>
-            <p Class="fw-bold" style="font-size: 45px;">@($"    80,00 (à vista)")</p>
-        </div>
-        <MudImage Src="img/divulgacao/etiqueta.png" Width="650" Class="position-absolute" Style="top: 900px; transform: rotate(-35deg);" />
-    </div>
-</div> *@
-
-
-@* <div id="htmlToRender" style="position: relative; background-image: url('img/divulgacao/plano_fundo_divulgacao.png'); background-repeat: no-repeat; background-size: contain; background-position: center; min-height:1920px; width:1080px;">
-    <div style="display: flex; justify-content: center;">
-        <div class="titulo" style="
-                z-index: 10;
-                position: absolute;
-                top: 8%;
-                left: 50%;
-                transform: translateX(-50%);
-                background: white;
-                padding: 10px 30px;
-                border-radius: 20px;
-                font-size: 70px;
-                font-weight: bold;
-                text-align: center;
-                box-shadow: 2px 2px 10px rgba(0,0,0,0.2);">
-            Malbec Bleu 100 ml
-        </div>
-    </div>
-    <div style="display: flex; justify-content: center;">
-        <img src="@($"data:image/png;base64,{_estoque!.produto!.img_1}")" alt="Malbec Bleu" class="imagem-produto"
-             style=" top: 245px; border: 15px solid #fff; transform: rotate(-4deg); height: 800px; width: 800px; position: absolute; border-radius: 12px; box-shadow: 2px 2px 10px rgba(0,0,0,0.3); ">
-    </div>
-    <div style="position: absolute; top: 30%; left: 7%; width: 650px; transform: rotate(-35deg); z-index: 5;">
-        <img src="img/divulgacao/etiqueta.png" alt="etiqueta" style="width: 100%;">
-
-        <div style="
-            position: absolute;
-            top: 49%;
-            left: 24%;
-            transform: rotate(47deg);
-            font-size: 58px;
-            font-weight: bold;
-            text-align: center;
-            z-index: 10;
-        ">
-            <span style="font-size: 42px;">De: </span><span style="font-size: 42px; text-decoration: line-through;">219,90</span><br>
-            <span style="color: #8B4513;">Por: 297,90</span><span style="font-size: 42px;"> (cartão)</span><br>
-            <span style="color: #8B4513;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;200,00</span><span style="font-size: 42px;"> (à vista)</span>
-        </div>
-    </div>
-</div> *@
-
 
 @code {
     [CascadingParameter]
     private MudDialogInstance? _mudDialog { get; set; }
     [Parameter]
+    public Auth? _auth { get; set; }
+    [Parameter]
     public Estoques? _estoque { get; set; }
+    public ProdutosDivulgacoes? _produtoDivulgacao;
+    private string _imagemMontadaBase64 = string.Empty;
+    private string _caminhoImagemGerada = string.Empty;
 
-    private async Task CapturarImagem()
+    protected override async Task OnInitializedAsync()
     {
-        var base64 = await JS.InvokeAsync<string>("captureHtmlAsImage", "htmlToRender");
+        await BuscarColunaProdutoDivulgacao();
+        await GerarImagemComPreco();
+        StateHasChanged();
+    }
 
-        // Salvar localmente
-        var bytes = Convert.FromBase64String(base64.Split(',')[1]);
-        var filePath = Path.Combine(FileSystem.CacheDirectory, "html_output.png");
-        File.WriteAllBytes(filePath, bytes);
-
-        await Share.Default.RequestAsync(new ShareFileRequest
+    private async Task BuscarColunaProdutoDivulgacao()
+    {
+        try
         {
-            Title = "Compartilhar imagem",
-            File = new ShareFile(filePath)
-        });
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.ProdutosDivulagacoesBuscarColuna(_auth!.token!, _estoque!.produtos_id, "img_padrao_1");
+
+            if (response!.status)
+            {
+                _produtoDivulgacao = response!.data!;
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+            }
+
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar buscar a divulgação do produto!", Severity.Warning);
+        }
+    }
+
+    private async Task GerarImagemComPreco()
+    {
+        try
+        {
+            var base64 = _produtoDivulgacao.img_padrao_1;
+            var imageBytes = Convert.FromBase64String(base64);
+
+            using var originalImage = SKBitmap.Decode(imageBytes);
+            int largura = originalImage.Width;
+            int altura = originalImage.Height;
+
+            using var bitmap = new SKBitmap(largura, altura);
+            using var canvas = new SKCanvas(bitmap);
+
+            canvas.DrawBitmap(originalImage, 0, 0);
+            canvas.RotateDegrees(9);
+
+            // Configurar o estilo do texto
+            using var paint = new SKPaint
+                {
+                    Color = SKColors.DarkRed,
+                    TextSize = 58,
+                    IsAntialias = true,
+                    TextAlign = SKTextAlign.Center,
+                    Typeface = SKTypeface.FromFamilyName("Arial", SKFontStyle.Bold)
+                };
+
+            // Adicionando valor à vista
+            if (_estoque.desconto_pagamento_avista)
+            {
+                string precoDesconto = _estoque.preco_venda_desconto?.ToString("N2", new CultureInfo("pt-BR"));
+                string textoPorCartao = $"Por: {precoDesconto}";
+                canvas.DrawText(textoPorCartao, 610, 1330, paint);
+
+                double? valorAvista = (_estoque.preco_venda_original * (1 - 0.05));
+                if (_estoque.preco_venda_desconto != null)
+                {
+                    valorAvista = (_estoque.preco_venda_desconto * (1 - 0.05));
+                }
+
+                string precoAvista = valorAvista?.ToString("N2", new CultureInfo("pt-BR")); ;
+
+                string textoPorAvista = $"        {precoAvista}";
+                canvas.DrawText(textoPorAvista, 610, 1390, paint);
+            }
+            else
+            {
+                string precoDesconto = _estoque.preco_venda_desconto?.ToString("N2", new CultureInfo("pt-BR"));
+                string textoPorCartao = $"Por: {precoDesconto}";
+                canvas.DrawText(textoPorCartao, 640, 1330, paint);
+            }
+
+            paint.Color = SKColors.Black;
+            paint.TextSize = 40;
+
+            if (_estoque.desconto_pagamento_avista)
+            {
+                string textoCartao = "(cartão)";
+                canvas.DrawText(textoCartao, 851, 1330, paint);
+                string textoAvista = "(à vista)";
+                canvas.DrawText(textoAvista, 851, 1390, paint);
+            }
+            else
+            {
+                string textoCartaoAvista = "(cartão ou à vista)";
+                canvas.DrawText(textoCartaoAvista, 650, 1390, paint);
+            }
+
+            paint.TextSize = 50;
+
+            string precoSemDesconto = string.Empty;
+            float deX = 0;
+            if (_estoque.desconto_pagamento_avista)
+            {
+                precoSemDesconto = _estoque.preco_venda_original?.ToString("N2", new CultureInfo("pt-BR"));
+                string textoDe = $"De: {precoSemDesconto}";
+                deX = 610;
+                canvas.DrawText(textoDe, deX, 1260, paint);
+            }
+            else
+            {
+                precoSemDesconto = _estoque.preco_venda_original?.ToString("N2", new CultureInfo("pt-BR"));
+                string textoDe = $"De: {precoSemDesconto}";
+                deX = 650;
+                canvas.DrawText(textoDe, deX, 1260, paint);
+            }
+
+            using var linhaPaint = new SKPaint
+            {
+                Color = SKColors.Black,
+                StrokeWidth = 4,
+                IsAntialias = true
+            };
+
+            float xInicio = deX - 35;
+            float larguraTexto = (paint.MeasureText(precoSemDesconto) + 50);
+            float xFim = (xInicio + larguraTexto) - 35;
+            float yLinha = 1260 - paint.TextSize / 3;
+
+            canvas.DrawLine(xInicio, yLinha, xFim, yLinha, linhaPaint);
+
+            using var imagemFinal = SKImage.FromBitmap(bitmap);
+            using var dados = imagemFinal.Encode(SKEncodedImageFormat.Png, 100);
+            var caminho = Path.Combine(FileSystem.CacheDirectory, "oferta_produto.png");
+
+            if (File.Exists(caminho))
+                File.Delete(caminho);
+
+            using (var stream = File.OpenWrite(caminho))
+                dados.SaveTo(stream);
+
+            _imagemMontadaBase64 = Convert.ToBase64String(dados.ToArray());
+            _caminhoImagemGerada = caminho;
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar gerar a imagem!", Severity.Warning);
+        }
+    }
+
+    private async Task CompartilharImagem()
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(_caminhoImagemGerada) || !File.Exists(_caminhoImagemGerada))
+            {
+                Snack.Add("Imagem ainda não foi gerada para compartilhamento.", Severity.Warning);
+                return;
+            }
+
+            await Share.RequestAsync(new ShareFileRequest
+                {
+                    Title = $"{_estoque!.produto!.nome}",
+                    File = new ShareFile(_caminhoImagemGerada)
+                });
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar compartilhar a imagem!", Severity.Warning);
+        }
     }
 }

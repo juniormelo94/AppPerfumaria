@@ -97,9 +97,9 @@
                     <MudDivider Class="mt-2" />
                     <MudGrid Spacing="2" Justify="Justify.Center" Class="mb-1">
                         @foreach (var (index, value) in _instalacaoProduto!.estoque.Where(w => w.status != "Inativo")
-                                                                                 .Select((value, index) => (index, value))
-                                                                                 .OrderBy(o => o.value.vencimento != null ? 0 : 1)
-                                                                                 .ThenBy(o => o.value.vencimento))
+                                                                              .Select((value, index) => (index, value))
+                                                                              .OrderBy(o => o.value.vencimento != null ? 0 : 1)
+                                                                              .ThenBy(o => o.value.vencimento))
                         {
                             <MudItem xs="12">
                                 <MudPaper Class="pa-2 mt-1" Elevation="1" Style="@($"background:{Colors.BlueGray.Lighten5};")">
@@ -112,9 +112,12 @@
                                             </div>
                                         }
                                         <MudSpacer />
-                                        <MudIconButton Icon="@Icons.Material.Filled.Share"
-                                        Variant="Variant.Filled" Color="Color.Default" Size="Size.Small"
-                                        OnClick="(() => CompartilharProduto(value))" />
+                                        @if (_existeImagemDivulgacao != null && _existeImagemDivulgacao == true)
+                                        {                                  
+                                            <MudIconButton Icon="@Icons.Material.Filled.Share"
+                                            Variant="Variant.Filled" Color="Color.Default" Size="Size.Small"
+                                            OnClick="(() => CompartilharProduto(value))" />
+                                        }
                                         <MudSpacer />
                                         <MudIconButton Icon="@(_produtosCarinho?.FirstOrDefault(w => w.id == value!.id) != null ? Icons.Material.Filled.RemoveShoppingCart : Icons.Material.Filled.AddShoppingCart)"
                                         Variant="Variant.Filled" Color="Color.Secondary" Size="Size.Small" 
@@ -187,6 +190,7 @@
     private Instalacoes? _instalacao;
     private List<Estoques>? _produtosCarinho;
     private bool _carregando = true;
+    private bool? _existeImagemDivulgacao = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -204,6 +208,8 @@
             await Task.Delay(300);
         }
         while (_auth == null || _instalacao == null || _produtosCarinho == null);
+
+        await existeImagemDivulgacao();
         _carregando = false;
         StateHasChanged();
     }
@@ -239,11 +245,37 @@
         }
     }
 
+    private async Task existeImagemDivulgacao()
+    {
+        try
+        {
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.ProdutosDivulagacoesExisteValorColuna(_auth!.token!, _instalacaoProduto!.produtos_id, "img_padrao_1");
+
+            if (response!.status)
+            {
+                _existeImagemDivulgacao = response!.data!.exists;
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+            }
+
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar buscar a divulgação do produto!", Severity.Warning);
+        }
+    }
+
     public async Task CompartilharProduto(Estoques item)
     {
         var itemProduto = item.Clone();
         itemProduto!.produto = _instalacaoProduto!.produto;
-
 
         var options = new DialogOptions
             {
@@ -255,7 +287,8 @@
             };
         var param = new DialogParameters
             {
-                ["_estoque"] = itemProduto,
+                ["_auth"] = _auth,
+                ["_estoque"] = itemProduto
             };
         var dialog = Dialog.Show<PublicidadeProdutoCmp>("Compartilhar Produto", param, options);
         var result = await dialog.Result;

@@ -771,5 +771,91 @@ namespace AppPerfumaria.Api.ReinoCompany
             return JsonConvert.DeserializeObject<CombosResource>(responseString);
         }
         #endregion
+
+        #region Produtos Divulgações
+        public async Task<ProdutosDivulgacoesCollection?> ProdutosDivulagacoesListar(string token, string? filtros = null)
+        {
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+            var response = await client.GetAsync($"{_baseUrl}/api/produtosdivulgacoes{filtros}");
+
+            string responseString = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<ProdutosDivulgacoesCollection>(responseString);
+        }
+
+        public async Task<ProdutosDivulgacoesResource?> ProdutosDivulagacoesCriar(string token, ProdutosDivulgacoes produtoDivulgacao)
+        {
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+            var json = JsonConvert.SerializeObject(produtoDivulgacao);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var response = await client.PostAsync($"{_baseUrl}/api/produtosdivulgacoes", content);
+
+            string responseString = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<ProdutosDivulgacoesResource>(responseString);
+        }
+
+        public async Task<ProdutosDivulgacoesResource?> ProdutosDivulagacoesBuscar(string token, int produtoId)
+        {
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+            var response = await client.GetAsync($"{_baseUrl}/api/produtosdivulgacoes/{produtoId}");
+
+            string responseString = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<ProdutosDivulgacoesResource>(responseString);
+        }
+
+        public async Task<ProdutosDivulgacoesResource?> ProdutosDivulagacoesAtualizar(string token, ProdutosDivulgacoes produtoDivulgacao)
+        {
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+            var json = JsonConvert.SerializeObject(produtoDivulgacao);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var response = await client.PutAsync($"{_baseUrl}/api/produtosdivulgacoes/{produtoDivulgacao.produtos_id}", content);
+
+            string responseString = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<ProdutosDivulgacoesResource>(responseString);
+        }
+
+        public async Task<ProdutosDivulgacoesResource?> ProdutosDivulagacoesDeletar(string token, ProdutosDivulgacoes produtoDivulgacao)
+        {
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+            var response = await client.DeleteAsync($"{_baseUrl}/api/produtosdivulgacoes/{produtoDivulgacao.produtos_id}");
+
+            string responseString = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<ProdutosDivulgacoesResource>(responseString);
+        }
+
+        public async Task<ProdutosDivulgacoesResource?> ProdutosDivulagacoesBuscarColuna(string token, int produtoId, string coluna)
+        {
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+            var response = await client.GetAsync($"{_baseUrl}/api/produtosdivulgacoes/getValueColumn/{produtoId}/{coluna}");
+
+            string responseString = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<ProdutosDivulgacoesResource>(responseString);
+        }
+
+        public async Task<ProdutosDivulgacoesResource?> ProdutosDivulagacoesExisteValorColuna(string token, int produtoId, string coluna)
+        {
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+            var response = await client.GetAsync($"{_baseUrl}/api/produtosdivulgacoes/existsValueColumn/{produtoId}/{coluna}");
+
+            string responseString = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<ProdutosDivulgacoesResource>(responseString);
+        }
+
+        public async Task<ProdutosDivulgacoesResource?> ProdutosDivulagacoesExiste(string token, int produtoId)
+        {
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+            var response = await client.GetAsync($"{_baseUrl}/api/produtosdivulgacoes/exists/{produtoId}");
+
+            string responseString = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<ProdutosDivulgacoesResource>(responseString);
+        }
+        #endregion
     }
 }

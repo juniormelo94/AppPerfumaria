@@ -3,6 +3,7 @@ using Blazored.LocalStorage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Controls.Compatibility.Hosting;
 using MudBlazor.Services;
+using SkiaSharp.Views.Maui.Controls.Hosting;
 using ZXing.Net.Maui.Controls;
 
 namespace AppPerfumaria
@@ -18,6 +19,7 @@ namespace AppPerfumaria
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 })
+                .UseSkiaSharp()
                 .UseBarcodeReader();
 
 

@@ -1,0 +1,325 @@
+﻿@using AppPerfumaria.Api.ReinoCompany
+@using AppPerfumaria.Components.CmpsGerais
+@using AppPerfumaria.Models.Auth
+@using AppPerfumaria.Models.Resources
+@using AppPerfumaria.Models.Tables
+@using ZXing.Net.Maui
+
+@inject IDialogService Dialog
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject ISnackbar Snack
+
+<MudDialog Style="max-height: 70%;">
+    <DialogContent>
+        <EditForm Model="_produtoDivulgacaoForm" OnValidSubmit="Salvar" @ref="_produtoivulgacaoFormRef">
+            <DataAnnotationsValidator />
+
+            <MudFocusTrap Disabled="false" DefaultFocus="DefaultFocus.FirstChild">
+                <MudFileUpload T="IBrowserFile" FilesChanged="UploadImgPadrao1" Accept="image/*" 
+                               Disabled="_verificando">
+                    <ActivatorContent>
+                        <MudButton Variant="Variant.Outlined" Size="Size.Medium" Class="w-100 mt-1"
+                                   StartIcon="@Icons.Material.Filled.FileUpload">
+                                   Carregar Imagem Padrão
+                        </MudButton>
+                        @if (_carregandoImgPadrao1)
+                        {
+                            <MudProgressLinear Color="Color.Secondary" Rounded="true" Striped="true"
+                                               Size="Size.Medium" Value="100" />
+                        }
+                    </ActivatorContent>
+                </MudFileUpload>
+                <ValidationMessage For="() => _produtoDivulgacaoForm.img_padrao_1" />
+                @if (_imgPadrao1 != null)
+                {
+                    <div class="d-flex">
+                        <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                           OnClick="(() => VisualizarImagem(_produtoDivulgacaoForm.img_padrao_1))" Disabled="_verificando" />
+                        <div>
+                            <MudText Class="d-block">
+                                <p class="my-0">
+                                    @if (_imgPadrao1.Name.Length > 24)
+                                    {
+                                        @($"{_imgPadrao1.Name.Substring(0, 24)}...")
+                                    }
+                                    else
+                                    {
+                                        @_imgPadrao1.Name
+                                    }
+                                </p>
+                                    <code class="my-0">@_imgPadrao1.Size bytes</code>
+                            </MudText>
+                        </div>
+                    </div>
+                }
+                else if (_produtoDivulgacaoForm.img_padrao_1 != null)
+                {
+                    <div class="d-flex">
+                        <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                           OnClick="(() => VisualizarImagem(_produtoDivulgacaoForm.img_padrao_1))" Disabled="_verificando" />
+                        <MudText Class="mt-3">imagem_padrao.png</MudText>
+                    </div>
+                }
+
+                <MudFileUpload T="IBrowserFile" FilesChanged="UploadImgPromocao1" Accept="image/*"
+                               Disabled="_verificando">
+                    <ActivatorContent>
+                        <MudButton Variant="Variant.Outlined" Size="Size.Medium" Class="w-100 mt-1"
+                                   StartIcon="@Icons.Material.Filled.FileUpload">
+                            Carregar Imagem Promoção
+                        </MudButton>
+                        @if (_carregandoImgPromocao1)
+                        {
+                            <MudProgressLinear Color="Color.Secondary" Rounded="true" Striped="true"
+                                               Size="Size.Medium" Value="100" />
+                        }
+                    </ActivatorContent>
+                </MudFileUpload>
+                <ValidationMessage For="() => _produtoDivulgacaoForm.img_promocao_1" />
+                @if (_imgPromocao1 != null)
+                {
+                    <div class="d-flex">
+                        <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                       OnClick="(() => VisualizarImagem(_produtoDivulgacaoForm.img_promocao_1))" Disabled="_verificando" />
+                        <div>
+                            <MudText Class="d-block">
+                                <p class="my-0">
+                                    @if (_imgPromocao1.Name.Length > 24)
+                                    {
+                                        @($"{_imgPromocao1.Name.Substring(0, 24)}...")
+                                    }
+                                    else
+                                    {
+                                        @_imgPromocao1.Name
+                                    }
+                                </p>
+                                <code class="my-0">@_imgPromocao1.Size bytes</code>
+                            </MudText>
+                        </div>
+                    </div>
+                }
+                else if (_produtoDivulgacaoForm.img_promocao_1 != null)
+                {
+                    <div class="d-flex">
+                        <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                       OnClick="(() => VisualizarImagem(_produtoDivulgacaoForm.img_promocao_1))" Disabled="_verificando" />
+                        <MudText Class="mt-3">imagem_promocao.png</MudText>
+                    </div>
+                }
+
+                <MudSelect @bind-Value="_produtoDivulgacaoForm.status" Variant="Variant.Outlined"
+                           Label="Status*" Margin="Margin.Dense" Disabled="_verificando" >
+                    <MudSelectItem Value="@("Ativo")" />
+                    <MudSelectItem Value="@("Inativo")" />
+                </MudSelect>
+                <ValidationMessage For="() => _produtoDivulgacaoForm.status" />
+            </MudFocusTrap>
+        </EditForm>
+    </DialogContent>
+    <DialogActions>
+        <div class="d-block w-100 px-2">
+            @if (_carregando)
+            {
+                <MudProgressLinear Color="Color.Secondary" Rounded="true" Striped="true"
+                                   Size="Size.Medium" Value="100" Class="mb-2" />
+            }
+            <MudFab Class="w-100" Label="Salvar" Size="Size.Medium"
+                    OnClick="ValidarDadosForm" Disabled="_verificando" />
+            <MudFab Class="w-100 mt-2 mb-5" Label="Fechar" OnClick="(() => _mudDialog!.Cancel())"
+                    Size="Size.Medium" Disabled="_verificando" />
+        </div>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance? _mudDialog { get; set; }
+    [Parameter]
+    public ProdutosDivulgacoes? _produtoDivulgacaoForm { get; set; }
+    private Auth? _auth;
+    private EditForm? _produtoivulgacaoFormRef;
+    private IBrowserFile? _imgPadrao1;
+    private IBrowserFile? _imgPromocao1;
+    private bool _carregando = true;
+    private bool _carregandoImgPadrao1 = false;
+    private bool _carregandoImgPromocao1 = false;
+    private bool _verificando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _auth = await LocalStorage.GetItemAsync<Auth>("auth");
+
+        _carregando = false;
+        _verificando = false;
+        StateHasChanged();
+    }
+
+    private async Task ValidarDadosForm()
+    {
+        try
+        {
+            _carregando = true;
+            _verificando = true;
+
+            if (_produtoivulgacaoFormRef!.EditContext!.Validate())
+            {
+                await Salvar();
+            }
+            else
+            {
+                Snack.Add("Por favor, verifique todos os campos!", Severity.Warning);
+                _verificando = false;
+                _carregando = false;
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar validar dados!", Severity.Warning);
+        }
+    }
+
+    private async void UploadImgPadrao1(IBrowserFile file)
+    {
+        try
+        {
+            _carregandoImgPadrao1 = true;
+
+            // Limite de 200 KB
+            var maxSizeInBytes = 200000;
+            var targetWidth = 1024;
+            var targetHeight = int.MaxValue;
+
+            if (file.Size > maxSizeInBytes)
+            {
+                Snack.Add("Tivemos um problema pois a imagem é maior do que 200 KB!", Severity.Warning);
+                _carregandoImgPadrao1 = false;
+                return;
+            }
+
+            _imgPadrao1 = file;
+
+            using var stream = file.OpenReadStream(maxAllowedSize: maxSizeInBytes);
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            var base64String = Convert.ToBase64String(memoryStream.ToArray());
+            _produtoDivulgacaoForm.img_padrao_1 = base64String;
+
+            _carregandoImgPadrao1 = false;
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar fazer o upload da imagem!", Severity.Warning);
+            _carregandoImgPadrao1 = false;
+        }
+    }
+
+    private async void UploadImgPromocao1(IBrowserFile file)
+    {
+        try
+        {
+            _carregandoImgPromocao1 = true;
+
+            // Limite de 200 KB
+            var maxSizeInBytes = 200000;
+            var targetWidth = 1024;
+            var targetHeight = int.MaxValue;
+
+            if (file.Size > maxSizeInBytes)
+            {
+                Snack.Add("Tivemos um problema pois a imagem é maior do que 200 KB!", Severity.Warning);
+                _carregandoImgPromocao1 = false;
+                return;
+            }
+
+            _imgPromocao1 = file;
+
+            using var stream = file.OpenReadStream(maxAllowedSize: maxSizeInBytes);
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            var base64String = Convert.ToBase64String(memoryStream.ToArray());
+            _produtoDivulgacaoForm.img_promocao_1 = base64String;
+
+            _carregandoImgPromocao1 = false;
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar fazer o upload da imagem!", Severity.Warning);
+            _carregandoImgPromocao1 = false;
+        }
+    }
+
+    private void VisualizarImagem(string imagem)
+    {
+        try
+        {
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullWidth = true,
+                    CloseButton = true,
+                };
+            var param = new DialogParameters { ["Imagem"] = imagem };
+            Dialog.Show<VisualizarImagem>("Visualizar Imagem", param, options);
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar exibir a imagem!", Severity.Warning);
+        }
+    }
+
+    public async Task Salvar()
+    {
+        try
+        {
+            var reinoCompany = new ReinoCompany();
+            ProdutosDivulgacoesResource? response;
+
+            if (_produtoDivulgacaoForm!.id > 0)
+            {
+                response = await reinoCompany.ProdutosDivulagacoesAtualizar(_auth!.token!, _produtoDivulgacaoForm!);
+            }
+            else
+            {
+                response = await reinoCompany.ProdutosDivulagacoesCriar(_auth!.token!, _produtoDivulgacaoForm!);
+            }
+
+            if (response!.status)
+            {
+                _mudDialog!.Close(DialogResult.Ok<ProdutosDivulgacoes>(_produtoDivulgacaoForm!));
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+
+                if (response.erros != null)
+                {
+                    var erros = response.erros;
+                    foreach (var propriedade in erros.GetType().GetProperties())
+                    {
+                        List<string>? propErros = (List<string>)erros.GetType().GetProperty(propriedade.Name).GetValue(erros, null);
+                        if (propErros != null)
+                        {
+                            foreach (var mensagem in propErros)
+                            {
+                                Snack.Add(mensagem, Severity.Warning);
+                            }
+                        }
+                    }
+                }
+                _verificando = false;
+                _carregando = false;
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar salvar!", Severity.Warning);
+            _verificando = false;
+            _carregando = false;
+        }
+    }
+}
