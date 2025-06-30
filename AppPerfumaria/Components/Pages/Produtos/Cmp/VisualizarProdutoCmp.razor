@@ -1,4 +1,5 @@
 ﻿@using AppPerfumaria.Api.ReinoCompany
+@using AppPerfumaria.Components.CmpsGerais
 @using AppPerfumaria.Models.Auth
 @using AppPerfumaria.Models.Tables
 
@@ -52,7 +53,7 @@
                 DIVULGAÇÃO
             </MudAlert>
 
-            @if (_carregando)
+            @if (_carregandoDivulgacao)
             {
                 <div class="d-flex flex-column align-items-center justify-content-center py-2">
                     <MudProgressCircular Indeterminate="true" Color="Color.Default" />
@@ -62,8 +63,13 @@
             {
                 @if (_produtoDivulgacao != null)
                 {
-                    <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="AtualizarProduto"
-                                   Color="Color.Inherit" Size="Size.Medium" />
+                    <div class="d-flex">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="AtualizarProdutoDivulgacao"
+                                       Color="Color.Inherit" Size="Size.Medium" />
+                        <MudSpacer />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="DeletarProdutoDivulgacao"
+                                       Color="Color.Inherit" Size="Size.Medium" />
+                    </div>
 
                     @if (!string.IsNullOrEmpty(_produtoDivulgacao!.img_padrao_1))
                     {
@@ -86,7 +92,7 @@
                 else
                 {
                     <MudIconButton Icon="@Icons.Material.Filled.Add" OnClick="CriarProdutoDivulgacao"
-                                   Color="Color.Inherit" Size="Size.Medium" />
+                    Color="Color.Inherit" Size="Size.Medium" />
                 }
             }
         </MudPaper>
@@ -101,13 +107,13 @@
     [Parameter]
     public Produtos? _produto { get; set; }
     public ProdutosDivulgacoes? _produtoDivulgacao;
-    public bool _carregando = true;
+    public bool _carregandoDivulgacao = true;
 
     protected override async Task OnInitializedAsync()
     {
         await BuscarProdutoPublicidade();
 
-        _carregando = false;
+        _carregandoDivulgacao = false;
 
         StateHasChanged();
     }
@@ -118,6 +124,8 @@
     {
         try
         {
+            _carregandoDivulgacao = true; 
+
             var reinoCompany = new ReinoCompany();
             var response = await reinoCompany.ProdutosDivulagacoesBuscar(Auth!.token!, _produto!.id);
 
@@ -138,6 +146,11 @@
         catch (Exception e)
         {
             Snack.Add("Tivemos um problema ao tentar buscar a divulgação do produto!", Severity.Warning);
+        }
+        finally
+        {
+            _carregandoDivulgacao = false;
+            StateHasChanged();
         }
     }
 
@@ -170,11 +183,10 @@
         catch (Exception e)
         {
             Snack.Add("Tivemos um problema ao tentar criar as divulgações do produto!", Severity.Warning);
-            _carregando = false;
         }
     }
 
-    public async Task AtualizarProduto()
+    public async Task AtualizarProdutoDivulgacao()
     {
         try
         {
@@ -199,7 +211,43 @@
         catch (Exception e)
         {
             Snack.Add("Tivemos um problema ao tentar atualizar as divulgações do produto!", Severity.Warning);
-            _carregando = false;
+            _carregandoDivulgacao = false;
+        }
+    }
+
+    public async Task DeletarProdutoDivulgacao()
+    {
+        try
+        {
+            var param = new DialogParameters<AlertaDelete>
+            {
+                { x => x.ContentText, "Tem certeza que deseja deletar as <b>DIVULGAÇOES</b> do <b>PRODUTO</b> e todos os dados a ela ligados?" }
+            };
+            var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+            var dialog = Dialog.Show<AlertaDelete>("Deletar Divulgações", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled)
+            {
+                var reinoCompany = new ReinoCompany();
+                var response = await reinoCompany.ProdutosDivulagacoesDeletar(Auth!.token!, _produtoDivulgacao);
+
+                if (response!.status)
+                {
+                    Snack.Add("Divulgações deletadas com sucesso!", Severity.Success);
+                    await BuscarProdutoPublicidade();
+                }
+                else
+                {
+                    if (!string.IsNullOrEmpty(response.message))
+                    {
+                        Snack.Add(response.message, Severity.Warning);
+                    }
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar deletar as divulgações do produto!", Severity.Warning);
         }
     }
 }
