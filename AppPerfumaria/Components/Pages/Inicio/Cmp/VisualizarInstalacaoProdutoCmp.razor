@@ -115,13 +115,13 @@
                                         @if (_existeImagemDivulgacao != null && _existeImagemDivulgacao == true)
                                         {                                  
                                             <MudIconButton Icon="@Icons.Material.Filled.Share"
-                                            Variant="Variant.Filled" Color="Color.Default" Size="Size.Small"
-                                            OnClick="(() => CompartilharProduto(value))" />
+                                                           Variant="Variant.Filled" Color="Color.Default" Size="Size.Small"
+                                                           OnClick="(() => CompartilharProduto(value))" />
                                         }
                                         <MudSpacer />
                                         <MudIconButton Icon="@(_produtosCarinho?.FirstOrDefault(w => w.id == value!.id) != null ? Icons.Material.Filled.RemoveShoppingCart : Icons.Material.Filled.AddShoppingCart)"
-                                        Variant="Variant.Filled" Color="Color.Secondary" Size="Size.Small" 
-                                        OnClick="(() => AdicionarOuRemoverCarinho(value))" />
+                                                       Variant="Variant.Filled" Color="Color.Secondary" Size="Size.Small" 
+                                                       OnClick="(() => AdicionarOuRemoverCarinho(value))" />
                                     </div>
 
                                     <div class="d-flex mt-1">
@@ -250,7 +250,7 @@
         try
         {
             var reinoCompany = new ReinoCompany();
-            var response = await reinoCompany.ProdutosDivulagacoesExisteValorColuna(_auth!.token!, _instalacaoProduto!.produtos_id, "img_padrao_1");
+            var response = await reinoCompany.ProdutosDivulagacoesExisteValorColuna(_auth!.token!, _instalacaoProduto!.produtos_id, "img_promocao_1");
 
             if (response!.status)
             {

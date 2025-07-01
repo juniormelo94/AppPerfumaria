@@ -54,7 +54,7 @@
         try
         {
             var reinoCompany = new ReinoCompany();
-            var response = await reinoCompany.ProdutosDivulagacoesBuscarColuna(_auth!.token!, _estoque!.produtos_id, "img_padrao_1");
+            var response = await reinoCompany.ProdutosDivulagacoesBuscarColuna(_auth!.token!, _estoque!.produtos_id, "img_promocao_1");
 
             if (response!.status)
             {
@@ -80,7 +80,7 @@
     {
         try
         {
-            var base64 = _produtoDivulgacao.img_padrao_1;
+            var base64 = _produtoDivulgacao.img_promocao_1;
             var imageBytes = Convert.FromBase64String(base64);
 
             using var originalImage = SKBitmap.Decode(imageBytes);
