@@ -1,0 +1,375 @@
+﻿@using AppPerfumaria.Api.ReinoCompany
+@using AppPerfumaria.Components.CmpsGerais
+@using AppPerfumaria.Components.Pages.MaquinasCartao.Cmp
+@using AppPerfumaria.Models.Auth
+@using System.Text.Json.Serialization
+@using AppPerfumaria.Models.Collections
+@using AppPerfumaria.Models.Pagination
+@using AppPerfumaria.Models.Tables
+
+@inject IDialogService Dialog
+@inject ISnackbar Snack
+
+<MudOverlay DarkBackground Visible="_carregando" ZIndex="10">
+    <MudProgressCircular Indeterminate="true" Color="Color.Default" />
+</MudOverlay>
+
+<MudPaper Class="px-2 w-100" Elevation="4" Style="position:fixed; z-index: 9;">
+    <!-- Barra de pesquisa e botão filtro -->
+    <div class="d-flex">
+        <MudTextField Value="_pesquisarFiltro" Label="Pesquisar" Variant="Variant.Outlined"
+                      Adornment="Adornment.End" Margin="Margin.Dense" Immediate="true" 
+                      ValueChanged="(async (string v) => { _pesquisarFiltro = v; await Pesquisar(v); })"
+                      AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Inherit" 
+                      ClearIcon="@Icons.Material.Filled.Clear" Clearable="true" />
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.FilterList" OnClick="Filtro"
+                        Color="Color.Inherit" Size="Size.Medium" />
+    </div>
+    <!-- Barra de filtros -->
+    <MudPopover Open="@_exibirFiltro" Fixed="true" Class="px-4 pt-4 w-100" 
+                AnchorOrigin="Origin.TopRight" TransformOrigin="Origin.TopRight" >
+        <MudGrid Spacing="2" Justify="Justify.Center" Class="mb-1">
+            <MudItem xs="6">
+                <MudSelect @bind-Value="_porPagina" Variant="Variant.Outlined"
+                            Label="Carregar De" Margin="Margin.Dense">
+                    <MudSelectItem Value="@("10")" />
+                    <MudSelectItem Value="@("15")" />
+                    <MudSelectItem Value="@("20")" />
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="6">
+                <MudSelect T="string" @bind-Value="_statusFiltro" Variant="Variant.Outlined"
+                            Label="Status" Margin="Margin.Dense">
+                    <MudSelectItem Value="@("Todos")" />
+                    <MudSelectItem Value="@("Ativo")" />
+                    <MudSelectItem Value="@("Inativo")" />
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12">
+                <MudDateRangePicker Label="Data de Criação" @bind-DateRange="_dataCriacaoFiltro" 
+                                    Variant="Variant.Outlined"
+                                    PlaceholderStart="Data Início"
+                                    PlaceholderEnd="Data Fim" Clearable="true"
+                                    DateFormat="dd/MM/yyyy"
+                                    Margin="Margin.Dense" />
+            </MudItem>
+        </MudGrid>
+        <MudDivider />
+        <div class="d-flex my-2 float-end">
+            <MudFab Label="Fechar" Size="Size.Small" 
+                    OnClick="Filtro" Class="mr-2" />
+            <MudFab Label="Filtrar" Size="Size.Small" 
+                    OnClick="AplicarFiltros" />
+        </div>
+    </MudPopover>
+    <!-- Barra de card e botão criar -->
+    <div class="d-flex">
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.Add" OnClick="CriarMaquinaCartao"
+                       Color="Color.Inherit" Size="Size.Medium" />
+    </div>
+</MudPaper>
+
+<div class="pa-2" style="margin-top: 100px;">
+    <!-- Listar resultados das maquinas de cartão -->
+    <MudGrid Spacing="2" Justify="Justify.Center">
+        @if (_listarMaquinasCartao != null && _listarMaquinasCartao.Count() > 0)
+        {
+            @foreach (var maquinaCartao in _listarMaquinasCartao)
+            {
+                <MudItem xs="6">
+                    <MudCard Style="height: 380px;" @onclick="(() => VisualizarMaquinaCartao(maquinaCartao))">
+                        <MudIcon Style="position:absolute;" Class="mt-2 ml-2" Color="@(maquinaCartao.status == "Ativo" ? Color.Dark : Color.Default)"
+                                 Icon="@(maquinaCartao.status == "Ativo" ? Icons.Material.Filled.ThumbUp : Icons.Material.Filled.ThumbDown)" />
+                        @* <MudCardMedia Image="@($"data:image/png;base64,{marca.logo_img}")" Height="200" /> *@
+                        <MudCardContent Class="py-2">
+                            <MudText Class="fw-bold" Typo="Typo.body1">
+                                @if (maquinaCartao.modelo.Length > 35)
+                                {
+                                    @($"{maquinaCartao.modelo.Substring(0, 35).ToUpper()}...")
+                                }
+                                else
+                                {
+                                    @maquinaCartao.modelo.ToUpper()
+                                }
+                            </MudText>
+                        </MudCardContent>
+                        <MudCardActions Class="d-block py-0 pb-1">
+                            <div class="d-flex mt-1 px-3">
+                                <MudIconButton Size="Size.Medium" OnClick="(() => AtualizarMaquinaCartao(maquinaCartao))"
+                                                Icon="@Icons.Material.Filled.Edit" />
+                                <MudSpacer />
+                                <MudIconButton Size="Size.Medium" OnClick="(() => DeletarMaquinaCartao(maquinaCartao))"
+                                                Icon="@Icons.Material.Filled.Delete" />
+                            </div>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            }
+
+            <MudItem Class="py-5" xs="12">
+                @if (_paginacaoMaquinasCartao!.current_page != _paginacaoMaquinasCartao!.last_page)
+                {
+                    <MudFab Class="w-100" Label="Carregar Mais" OnClick="CarregarMais"
+                            Disabled="false" Size="Size.Small" />
+                }
+
+                <MudText Align="Align.Center" Typo="Typo.body2" Class="mt-2 w-100">
+                    @($"Total: {_paginacaoMaquinasCartao!.total} | Exibidos: {_paginacaoMaquinasCartao!.to}")
+                </MudText>
+            </MudItem>
+        }
+        else
+        {
+            @if (!_carregando)
+            {
+                <MudItem Class="py-5" xs="12">
+                    <Animate class="w-100" Animation="Animations.FadeDown" Duration="TimeSpan.FromSeconds(0.5)" Delay="TimeSpan.FromSeconds(0.4)">
+                        <MudText Class="mt-5" Align="Align.Center" Typo="Typo.body1">Nenhum resultado foi encontrado!</MudText>
+                    </Animate>
+                </MudItem>
+            }
+        }
+    </MudGrid>
+</div>
+
+@code {
+    [Parameter] public Auth? Auth { get; set; }
+    [Parameter] public Instalacoes? Instalacao { get; set; }
+    private List<MaquinasCartao>? _listarMaquinasCartao = new List<MaquinasCartao>();
+    private MetaPagination? _paginacaoMaquinasCartao;
+    private bool _carregando = true;
+    private bool _exibirFiltro = false;
+    private string? _pesquisarFiltro;
+    private string? _statusFiltro = "Todos";
+    private DateRange _dataCriacaoFiltro = new DateRange();
+    private string _porPagina = "10";
+    private int _paginaPaginacao = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        do
+        {
+            await Task.Delay(300);
+        }
+        while (Auth == null || Instalacao == null);
+
+        await ListarMaquinasCartao();
+    }
+
+    private async Task Pesquisar(string pesquisar)
+    {
+        await Task.Delay(1500);
+
+        if (pesquisar == _pesquisarFiltro)
+        {
+            await AplicarFiltros();
+        }
+    }
+
+    public async Task CarregarMais()
+    {
+        _paginaPaginacao++;
+        await ListarMaquinasCartao();
+    }
+
+    private void Filtro()
+    {
+        _exibirFiltro = !_exibirFiltro;
+    }
+
+    public string? PegarFiltros()
+    {
+        string filtros = $"?instalacoes_id={Instalacao!.id}&page={_paginaPaginacao}&por_pagina={_porPagina}";
+
+        if (!string.IsNullOrEmpty(_pesquisarFiltro))
+        {
+            filtros += $"&pesquisar={_pesquisarFiltro}";
+        }
+        if (!string.IsNullOrEmpty(_statusFiltro) && _statusFiltro != "Todos")
+        {
+            filtros += $"&status={_statusFiltro}";
+        }
+        if (_dataCriacaoFiltro.Start != null && _dataCriacaoFiltro.End != null)
+        {
+            filtros += $"&criado_de={_dataCriacaoFiltro.Start?.ToString("yyyy-MM-dd")}&criado_ate={_dataCriacaoFiltro.End?.ToString("yyyy-MM-dd")}";
+        }
+
+        return filtros;
+    }
+
+    public async Task AplicarFiltros()
+    {
+        _exibirFiltro = false;
+        await LimparEListarMaquinasCartao();
+    }
+
+    public async Task LimparEListarMaquinasCartao()
+    {
+        _paginaPaginacao = 1;
+        _listarMaquinasCartao = new List<MaquinasCartao>();
+        await ListarMaquinasCartao();
+    }
+
+    public async Task ListarMaquinasCartao()
+    {
+        try
+        {
+            _carregando = true;
+            StateHasChanged();
+            string? filtros = PegarFiltros();
+
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.MaquinasCartaoListar(Auth!.token!, filtros);
+
+            if (response!.status)
+            {
+                _paginacaoMaquinasCartao = response.meta;
+                _listarMaquinasCartao!.AddRange(response!.data!);
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+            }
+
+            _carregando = false;
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar listar as máquinas de cartão dessa instalação!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    private void VisualizarMaquinaCartao(MaquinasCartao maquinaCartao)
+    {
+        try
+        {
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullWidth = true,
+                    FullScreen = true,
+                    CloseButton = false,
+                };
+            var param = new DialogParameters { ["_maquinaCartao"] = maquinaCartao };
+            Dialog.Show<VisualizarMaquinaCartaoCmp>("Visualizar Máquina", param, options);
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar exibir a máquina de cartão!", Severity.Warning);
+        }
+    }
+
+    public async Task CriarMaquinaCartao()
+    {
+        try
+        {
+            var maquinaCartao = new MaquinasCartao()
+                {
+                    instalacoes_id = Instalacao!.id
+                };
+
+            var options = new DialogOptions { 
+                    MaxWidth = MaxWidth.ExtraExtraLarge, 
+                    FullWidth = true, 
+                    BackdropClick = false, 
+                    CloseButton = true, 
+                    Position = DialogPosition.TopCenter 
+            };
+            var param = new DialogParameters { ["_maquinaCartaoForm"] = maquinaCartao };
+            var dialog = Dialog.Show<MaquinaCartaoFormCmp>("Adicionar Máquina", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled && (bool)result.Data == true)
+            {
+                Snack.Add("Máquina de cartão criada com sucesso!", Severity.Success);
+                await LimparEListarMaquinasCartao();
+            }
+            else if (!result.Canceled && (bool)result.Data == false)
+            {
+                Snack.Add("Tivemos um problema ao tentar criar a máquina de cartão!", Severity.Warning);
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar criar a máquina de cartão!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    public async Task AtualizarMaquinaCartao(MaquinasCartao maquinaCartao)
+    {
+        try
+        {
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullWidth = true,
+                    BackdropClick = false,
+                    CloseButton = true,
+                    Position = DialogPosition.TopCenter
+                };
+            var param = new DialogParameters { ["_maquinaCartaoForm"] = maquinaCartao.Clone() };
+            var dialog = Dialog.Show<MaquinaCartaoFormCmp>("Atualizar Máquina", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled && (bool)result.Data == true)
+            {
+                Snack.Add("Máquina de cartão atualizada com sucesso!", Severity.Success);
+                await LimparEListarMaquinasCartao();
+            }
+            else if (!result.Canceled && (bool)result.Data == false)
+            {
+                Snack.Add("Tivemos um problema ao tentar atualizar a máquina de cartão!", Severity.Warning);
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar atualizar a máquina de cartão!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    public async Task DeletarMaquinaCartao(MaquinasCartao maquinaCartao)
+    {
+        try
+        {
+            var param = new DialogParameters<AlertaDelete>
+            {
+                { x => x.ContentText, "Tem certeza que deseja deletar essa <b>MÁQUINA DE CARTÃO</b> e todos os dados a ela ligados?" }
+            };
+            var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+            var dialog = Dialog.Show<AlertaDelete>("Deletar Máquina", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled)
+            {
+                _carregando = true;
+                var reinoCompany = new ReinoCompany();
+                var response = await reinoCompany.MaquinasCartaoDeletar(Auth!.token!, maquinaCartao);
+
+                if (response!.status)
+                {
+                    Snack.Add("Máquina de cartão deletada com sucesso!", Severity.Success);
+                    await LimparEListarMaquinasCartao();
+                }
+                else
+                {
+                    if (!string.IsNullOrEmpty(response.message))
+                    {
+                        Snack.Add(response.message, Severity.Warning);
+                    }
+                    _carregando = false;
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar deletar a máquina de cartão!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+}

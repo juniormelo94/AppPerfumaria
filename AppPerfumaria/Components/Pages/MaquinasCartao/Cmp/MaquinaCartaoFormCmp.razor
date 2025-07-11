@@ -1,0 +1,315 @@
+﻿@using AppPerfumaria.Api.ReinoCompany
+@using AppPerfumaria.Components.CmpsGerais
+@using AppPerfumaria.Models.Auth
+@using AppPerfumaria.Models.Resources
+@using AppPerfumaria.Models.Tables
+@using System.Globalization
+
+@inject IDialogService Dialog
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject ISnackbar Snack
+
+<MudDialog Style="max-height: 70%;">
+    <DialogContent>
+        <EditForm Model="_maquinaCartaoForm" OnValidSubmit="Salvar" @ref="_maquinaCartaoFormRef">
+            <DataAnnotationsValidator />
+
+            <MudFocusTrap Disabled="false" DefaultFocus="DefaultFocus.FirstChild">
+                <MudTextField T="string" @bind-Value="_maquinaCartaoForm.modelo" Variant="Variant.Outlined"
+                              Label="Modelo*" Disabled="_verificando" Margin="Margin.Dense" />
+                <ValidationMessage For="() => _maquinaCartaoForm.modelo" />
+
+                <MudTextField T="string" @bind-Value="_maquinaCartaoForm.empresa_responsavel" Variant="Variant.Outlined"
+                              Label="Empresa Responsável*" Disabled="_verificando" Margin="Margin.Dense" />
+                <ValidationMessage For="() => _maquinaCartaoForm.empresa_responsavel" />
+
+                <MudExpansionPanels Class="my-2">
+                    <MudExpansionPanel Text="Bandeiras Aceitas:" HeaderClass="py-0" Expanded="false">
+                        @if (_maquinaCartaoForm?.bandeiras_aceitas != null)
+                        {
+                            @foreach (var item in _maquinaCartaoForm?.bandeiras_aceitas.Select((value, index) => new { index, value }))
+                            {
+                                <div class="d-flex">
+                                    <MudTextField @bind-Value="_maquinaCartaoForm!.bandeiras_aceitas![item.index]"
+                                                  Margin="Margin.Dense" Label="@($"{item.index + 1}ª Bandeira")"
+                                                  Variant="Variant.Outlined"></MudTextField>
+                                    <div>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Remove"
+                                                       OnClick="(() => { _maquinaCartaoForm!.bandeiras_aceitas.Remove(item.value); StateHasChanged(); })"
+                                                       Size="Size.Medium" Style="margin-top:3px;" />
+                                    </div>
+                                </div>
+                            }
+                        }
+                        <div class="d-flex mt-4">
+                            <MudTextField Label="Adicionar Bandeira Aceita" 
+                                          @bind-Value="_bandeiraAceita" Margin="Margin.Dense"
+                                          Variant="Variant.Outlined"></MudTextField>
+                            <div>
+                                <MudIconButton Icon="@Icons.Material.Filled.Add" OnClick="AddBandeiraAceita"
+                                               Size="Size.Medium" Style="margin-top: 3px;" />
+                            </div>
+                        </div>
+                    </MudExpansionPanel>
+                </MudExpansionPanels>
+                <ValidationMessage For="() => _maquinaCartaoForm.bandeiras_aceitas" />
+
+                <MudNumericField Immediate="false" Label="Taxa Débito Máquina" Format="N2" HideSpinButtons="true"
+                                 @bind-Value="_maquinaCartaoForm!.taxa_debito" Margin="Margin.Dense"
+                                 T="double?" Culture="_convercaoMoeda" Variant="Variant.Outlined" Min="0.0"
+                                 AdornmentText="R$" Adornment="Adornment.Start" />
+                <ValidationMessage For="() => _maquinaCartaoForm.taxa_debito" />
+
+                <MudExpansionPanels Class="my-2">
+                    <MudExpansionPanel Text="Taxas Crédito Máquina:" HeaderClass="py-0" Expanded="false">
+                        @if (_maquinaCartaoForm?.taxas_parcelas != null)
+                        {
+                            @foreach (var parcela in _maquinaCartaoForm?.taxas_parcelas?.Keys.ToList())
+                            {
+                                <div class="d-flex">
+                                    <MudNumericField Immediate="false" Label="@($"{parcela}ª Parcela")" Format="N2" HideSpinButtons="true"
+                                                     Value="_maquinaCartaoForm!.taxas_parcelas![parcela]"
+                                                     ValueChanged="@(v => _maquinaCartaoForm!.taxas_parcelas![parcela] = v)"
+                                                     T="double" Culture="_convercaoMoeda" Variant="Variant.Outlined" Min="0.0"
+                                                     AdornmentText="R$" Adornment="Adornment.Start" Margin="Margin.Dense" />
+                                    <div>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Remove"
+                                                       OnClick="(() => { _maquinaCartaoForm!.taxas_parcelas.Remove(parcela); StateHasChanged(); })"
+                                                       Size="Size.Medium" Style="margin-top:3px;" />
+                                    </div>
+                                </div>
+                            }
+                        }
+                        <div class="d-flex mt-4">
+                            <MudNumericField Immediate="false" Label="Adicionar Taxa Crédito Máquina" Format="N2" HideSpinButtons="true"
+                                                Value="@(_taxaCreditoMaquina["0"])"
+                                                ValueChanged="@(v => _taxaCreditoMaquina["0"] = v)"
+                                                T="double" Culture="_convercaoMoeda" Variant="Variant.Outlined" Min="0.0"
+                                                AdornmentText="R$" Adornment="Adornment.Start" Margin="Margin.Dense" />
+                            <div>
+                                <MudIconButton Icon="@Icons.Material.Filled.Add" OnClick="AddTaxaCreditoMaquina"
+                                                Size="Size.Medium" Style="margin-top: 3px;" />
+                            </div>
+                        </div>
+                    </MudExpansionPanel>
+                </MudExpansionPanels>
+                <ValidationMessage For="() => _maquinaCartaoForm.taxas_parcelas" />
+
+                <MudExpansionPanels Class="my-2">
+                    <MudExpansionPanel Text="Taxas Crédito Link:" HeaderClass="py-0" Expanded="false">
+                        @if (_maquinaCartaoForm?.taxas_links_parcelas != null)
+                        {                           
+                            @foreach (var parcela in _maquinaCartaoForm?.taxas_links_parcelas?.Keys.ToList())
+                            {
+                                <div class="d-flex">
+                                    <MudNumericField Immediate="false" Label="@($"{parcela}ª Parcela")" Format="N2" HideSpinButtons="true"
+                                                     Value="_maquinaCartaoForm!.taxas_links_parcelas![parcela]"
+                                                     ValueChanged="@(v => _maquinaCartaoForm!.taxas_links_parcelas![parcela] = v)"
+                                                     T="double" Culture="_convercaoMoeda" Variant="Variant.Outlined" Min="0.0"
+                                                     AdornmentText="R$" Adornment="Adornment.Start" Margin="Margin.Dense" />
+                                    <div>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Remove"
+                                                       OnClick="(() => { _maquinaCartaoForm!.taxas_links_parcelas.Remove(parcela); StateHasChanged(); })"
+                                                       Size="Size.Medium" Style="margin-top:3px;" />
+                                    </div>
+                                </div>
+                            }
+                        }
+                        <div class="d-flex mt-4">
+                            <MudNumericField Immediate="false" Label="Adicionar Taxa Crédito Link" Format="N2" HideSpinButtons="true"
+                                             Value="@(_taxaCreditoLink["0"])"
+                                             ValueChanged="@(v => _taxaCreditoLink["0"] = v)"
+                                             T="double" Culture="_convercaoMoeda" Variant="Variant.Outlined" Min="0.0"
+                                             AdornmentText="R$" Adornment="Adornment.Start" Margin="Margin.Dense" />
+                            <div>
+                                <MudIconButton Icon="@Icons.Material.Filled.Add" OnClick="AddTaxaCreditoLink"
+                                               Size="Size.Medium" Style="margin-top: 3px;" />
+                            </div>
+                        </div>
+                    </MudExpansionPanel>
+                </MudExpansionPanels>
+                <ValidationMessage For="() => _maquinaCartaoForm.taxas_links_parcelas" />
+
+                <MudNumericField Immediate="false" Label="Taxa Pix" Format="N2" HideSpinButtons="true"
+                                 @bind-Value="_maquinaCartaoForm!.taxa_pix" Margin="Margin.Dense"
+                                 T="double?" Culture="_convercaoMoeda" Variant="Variant.Outlined" Min="0.0"
+                                 AdornmentText="R$" Adornment="Adornment.Start" />
+                <ValidationMessage For="() => _maquinaCartaoForm.taxa_pix" />
+
+                <MudSelect @bind-Value="_maquinaCartaoForm.status" Variant="Variant.Outlined"
+                           Label="Status*" Margin="Margin.Dense" >
+                    <MudSelectItem Value="@("Ativo")" />
+                    <MudSelectItem Value="@("Inativo")" />
+                </MudSelect>
+                <ValidationMessage For="() => _maquinaCartaoForm.status" />
+            </MudFocusTrap>
+        </EditForm>
+    </DialogContent>
+    <DialogActions>
+        <div class="d-block w-100 px-2">
+            @if (_carregando)
+            {
+                <MudProgressLinear Color="Color.Secondary" Rounded="true" Striped="true"
+                                   Size="Size.Medium" Value="100" Class="mb-2" />
+            }
+            <MudFab Class="w-100" Label="Salvar" Size="Size.Medium"
+                    OnClick="ValidarDadosForm" Disabled="_verificando" />
+            <MudFab Class="w-100 mt-2 mb-5" Label="Fechar" OnClick="(() => _mudDialog!.Cancel())"
+                    Size="Size.Medium" Disabled="_verificando" />
+        </div>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance? _mudDialog { get; set; }
+    [Parameter]
+    public MaquinasCartao? _maquinaCartaoForm { get; set; }
+    private Auth? _auth;
+    private EditForm? _maquinaCartaoFormRef;
+    private CultureInfo _convercaoMoeda = CultureInfo.GetCultureInfo("de-DE");
+    private string _bandeiraAceita = string.Empty;
+    private Dictionary<string, double> _taxaCreditoMaquina = new Dictionary<string, double>
+    {
+        { "0", 0.0 }
+    };
+    private Dictionary<string, double> _taxaCreditoLink = new Dictionary<string, double>
+    {
+        { "0", 0.0 }
+    };
+    private bool _carregando = false;
+    private bool _verificando = false;
+
+    private void AddBandeiraAceita()
+    {
+        if (_maquinaCartaoForm?.bandeiras_aceitas == null)
+        {
+            _maquinaCartaoForm!.bandeiras_aceitas = new List<string>();
+        }
+
+        _maquinaCartaoForm.bandeiras_aceitas.Add(_bandeiraAceita);
+
+        _bandeiraAceita = string.Empty;
+        StateHasChanged();
+    }
+
+    private void AddTaxaCreditoMaquina()
+    {
+        if (_maquinaCartaoForm?.taxas_parcelas == null)
+        {
+            _maquinaCartaoForm!.taxas_parcelas = new Dictionary<string, double>();
+        }
+
+        int parcela = _maquinaCartaoForm.taxas_parcelas.Count() + 1;
+        _maquinaCartaoForm.taxas_parcelas[parcela.ToString()] = _taxaCreditoMaquina["0"];
+
+        _taxaCreditoMaquina["0"] = 0.0;
+        StateHasChanged();
+    }
+
+    private void AddTaxaCreditoLink()
+    {
+        if (_maquinaCartaoForm?.taxas_links_parcelas == null)
+        {
+            _maquinaCartaoForm!.taxas_links_parcelas = new Dictionary<string, double>();
+        }
+
+        int parcela = _maquinaCartaoForm.taxas_links_parcelas.Count() + 1;
+        _maquinaCartaoForm.taxas_links_parcelas[parcela.ToString()] = _taxaCreditoLink["0"];
+
+        _taxaCreditoLink["0"] = 0.0;
+        StateHasChanged();
+    }
+
+    private async Task ValidarDadosForm()
+    {
+        try
+        {
+            _carregando = true;
+            _verificando = true;
+
+            if (_maquinaCartaoFormRef!.EditContext!.Validate())
+            {
+                await Salvar();
+            }
+            else
+            {
+                Snack.Add("Por favor, verifique todos os campos!", Severity.Warning);
+                _verificando = false;
+                _carregando = false;
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar validar dados!", Severity.Warning);
+        }
+    }
+
+    public async Task Salvar()
+    {
+        try
+        {
+            _auth = await LocalStorage.GetItemAsync<Auth>("auth");
+            var reinoCompany = new ReinoCompany();
+            MaquinasCartaoResource? response;
+
+            if (_maquinaCartaoForm?.bandeiras_aceitas?.Count() == 0)
+            {
+                _maquinaCartaoForm!.bandeiras_aceitas = null;
+            }
+            if (_maquinaCartaoForm?.taxas_parcelas?.Count() == 0)
+            {
+                _maquinaCartaoForm!.taxas_parcelas = null;
+            }
+            if (_maquinaCartaoForm?.taxas_links_parcelas?.Count() == 0)
+            {
+                _maquinaCartaoForm!.taxas_links_parcelas = null;
+            }
+
+            if (_maquinaCartaoForm!.id > 0)
+            {
+                response = await reinoCompany.MaquinasCartaoAtualizar(_auth!.token!, _maquinaCartaoForm!);
+            }
+            else
+            {
+                response = await reinoCompany.MaquinasCartaoCriar(_auth!.token!, _maquinaCartaoForm!);
+            }
+
+            if (response!.status)
+            {
+                _mudDialog!.Close(DialogResult.Ok<bool>(true));
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+
+                if (response.erros != null)
+                {
+                    var erros = response.erros;
+                    foreach (var propriedade in erros.GetType().GetProperties())
+                    {
+                        List<string>? propErros = (List<string>)erros.GetType().GetProperty(propriedade.Name).GetValue(erros, null);
+                        if (propErros != null)
+                        {
+                            foreach (var mensagem in propErros)
+                            {
+                                Snack.Add(mensagem, Severity.Warning);
+                            }
+                        }
+                    }
+                }
+                _verificando = false;
+                _carregando = false;
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar salvar!", Severity.Warning);
+            _verificando = false;
+            _carregando = false;
+        }
+    }
+}
