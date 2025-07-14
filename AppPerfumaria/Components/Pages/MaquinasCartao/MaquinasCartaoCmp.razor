@@ -79,12 +79,12 @@
             @foreach (var maquinaCartao in _listarMaquinasCartao)
             {
                 <MudItem xs="6">
-                    <MudCard Style="height: 380px;" @onclick="(() => VisualizarMaquinaCartao(maquinaCartao))">
+                    <MudCard Style="height: 150px;" @onclick="(() => VisualizarMaquinaCartao(maquinaCartao))">
                         <MudIcon Style="position:absolute;" Class="mt-2 ml-2" Color="@(maquinaCartao.status == "Ativo" ? Color.Dark : Color.Default)"
                                  Icon="@(maquinaCartao.status == "Ativo" ? Icons.Material.Filled.ThumbUp : Icons.Material.Filled.ThumbDown)" />
                         @* <MudCardMedia Image="@($"data:image/png;base64,{marca.logo_img}")" Height="200" /> *@
-                        <MudCardContent Class="py-2">
-                            <MudText Class="fw-bold" Typo="Typo.body1">
+                        <MudCardContent Class="py-2 mt-5">
+                            <MudText Class="fw-bold mt-2" Typo="Typo.body1">
                                 @if (maquinaCartao.modelo.Length > 35)
                                 {
                                     @($"{maquinaCartao.modelo.Substring(0, 35).ToUpper()}...")
@@ -93,6 +93,9 @@
                                 {
                                     @maquinaCartao.modelo.ToUpper()
                                 }
+                            </MudText>
+                            <MudText Typo="Typo.body2">
+                                @maquinaCartao.empresa_responsavel.ToUpper()
                             </MudText>
                         </MudCardContent>
                         <MudCardActions Class="d-block py-0 pb-1">

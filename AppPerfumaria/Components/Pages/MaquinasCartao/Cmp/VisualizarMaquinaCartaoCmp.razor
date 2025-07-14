@@ -1,4 +1,5 @@
 ﻿@using AppPerfumaria.Models.Tables
+@using System.Globalization
 
 <MudDialog ContentClass="bg-gray py-5" TitleClass="d-flex pb-0 pt-2">
     <TitleContent>
@@ -23,6 +24,72 @@
             <MudText Typo="Typo.body2">
                 @_maquinaCartao.empresa_responsavel.ToUpper()
             </MudText>
+
+            <MudDivider Class="mt-2" />
+
+            @if (_maquinaCartao?.bandeiras_aceitas != null)
+            {
+                <MudExpansionPanels Class="my-2">
+                    <MudExpansionPanel Text="Bandeiras Aceitas:" HeaderClass="py-0 fw-bold" Expanded="true">
+                        @foreach (var bandeira in _maquinaCartao?.bandeiras_aceitas)
+                        {
+                            <MudText Typo="Typo.body2">
+                                *@bandeira
+                            </MudText>
+                        }
+                    </MudExpansionPanel>
+                </MudExpansionPanels>
+            }
+
+            @if (_maquinaCartao.taxa_debito != null)
+            {
+                <MudExpansionPanels Class="my-2">
+                    <MudExpansionPanel Text="Taxa Débito Máquina:" HeaderClass="py-0 fw-bold" Expanded="true">
+                        <MudText Typo="Typo.body2">
+                            @_maquinaCartao.taxa_debito%
+                        </MudText>
+                    </MudExpansionPanel>
+                </MudExpansionPanels>
+            }
+
+            @if (_maquinaCartao.taxa_pix != null)
+            {
+                <MudExpansionPanels Class="my-2">
+                    <MudExpansionPanel Text="Taxa Pix Máquina:" HeaderClass="py-0 fw-bold" Expanded="true">
+                        <MudText Typo="Typo.body2">
+                            @_maquinaCartao.taxa_pix%
+                        </MudText>
+                    </MudExpansionPanel>
+                </MudExpansionPanels>
+            }
+
+            @if (_maquinaCartao?.taxas_parcelas != null)
+            {
+                <MudExpansionPanels Class="my-2">
+                    <MudExpansionPanel Text="Taxas Crédito Máquina:" HeaderClass="py-0 fw-bold" Expanded="true">
+                        @foreach (var parcela in _maquinaCartao?.taxas_parcelas)
+                        {
+                            <MudText Typo="Typo.body2">
+                                @($"{parcela.Key}ª Parcela - {parcela.Value}%")
+                            </MudText>
+                        }
+                    </MudExpansionPanel>
+                </MudExpansionPanels>
+            }
+
+            @if (_maquinaCartao?.taxas_links_parcelas != null)
+            {
+                <MudExpansionPanels Class="my-2">
+                    <MudExpansionPanel Text="Taxas Crédito Link:" HeaderClass="py-0 fw-bold" Expanded="true">
+                        @foreach (var parcela in _maquinaCartao?.taxas_links_parcelas)
+                        {
+                            <MudText Typo="Typo.body2">
+                                @($"{parcela.Key}ª Parcela - {parcela.Value}%")
+                            </MudText>
+                        }
+                    </MudExpansionPanel>
+                </MudExpansionPanels>
+            }
 
         </MudPaper>
     </DialogContent>
