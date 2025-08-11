@@ -150,28 +150,20 @@
                                     <MudGrid Spacing="2" Justify="Justify.Center">
                                         <MudItem xs="10">
                                             <div class="d-flex">
-                                                <MudText Typo="Typo.body2">
-                                                    Vencimento:
-                                                </MudText>
-                                                <MudSpacer />
-                                                <MudText Typo="Typo.body2">
-                                                    @context.vencimento?.ToString("dd/MM/yyyy")
-@*                                                     @($"{(context.vencimento - _dataAtual).Days} dias")
- *@                                                </MudText>
-                                            </div>
 
-@*                                             @if (context.preco_venda_desconto != null)
-                                            {
-                                                <div class="d-flex">
-                                                    <MudText Typo="Typo.body2">
-                                                        Preço Desconto:
+                                                @if (context.vencimento != null)
+                                                {
+                                                    <MudText Class="ml-2" Typo="Typo.body2">
+                                                        @((MarkupString)$"{context.vencimento?.ToString("dd/MM/yyyy")} <b>({Vencimento(context.vencimento).Value.Days} dias)</b>")
                                                     </MudText>
-                                                    <MudSpacer />
-                                                    <MudText Class="fw-bold" Typo="Typo.body2">
-                                                        @string.Format(new CultureInfo("pt-BR"), "{0:C}", context.preco_venda_desconto)
+                                                }
+                                                else
+                                                {
+                                                    <MudText Class="fw-bold ml-2" Color="Color.Warning" Typo="Typo.body2">
+                                                        ? dias
                                                     </MudText>
-                                                </div>
-                                            } *@
+                                                }
+                                            </div>
                                         </MudItem>
                                         <MudItem xs="2" Class="d-flex align-items-center justify-content-center">
                                             @*                                         <MudIconButton Icon="@Icons.Material.Filled.RemoveShoppingCart"
@@ -197,7 +189,7 @@
                 <MudPagination Selected="_paginaPaginacao" BoundaryCount="1" MiddleCount="3"
                                SelectedChanged="(async(int p) => { _paginaPaginacao = p; await CarregarMais(); })"
                                Count="@(_paginacaoEstoques!.last_page)" Class="pa-4"
-                               Rectangular="true" Variant="Variant.Filled" Size="Size.Medium" />
+                               Rectangular="true" Variant="Variant.Filled" Size="Size.Small" />
     
                 <MudText Align="Align.Center" Typo="Typo.body2" Class="w-100">
                     @($"Total: {_paginacaoEstoques!.total} | Exibidos: {_paginacaoEstoques!.from} à {_paginacaoEstoques!.to}")
@@ -257,6 +249,14 @@
 
         _ = ListarInstalacaoMarcas();
         await ListarEstoques();
+    }
+
+    private TimeSpan? Vencimento(DateTime? vencimento)
+    {
+        DateTime dataAtual = DateTime.Now;
+        TimeSpan? data = (vencimento - dataAtual);
+
+        return data;
     }
 
     private async Task Pesquisar(string pesquisar)

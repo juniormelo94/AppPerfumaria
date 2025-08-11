@@ -55,9 +55,6 @@
                 </MudExpansionPanel>
             </MudExpansionPanels>
 
-            <MudText Typo="Typo.body2">
-                @_instalacaoProduto!.produto.codigo_barras
-            </MudText>
         </MudPaper>
 
         <MudPaper Class="pa-2 mt-3" Elevation="0">
@@ -540,7 +537,7 @@
         {
             _carregando = true;
             StateHasChanged();
-            string? filtros = $"?instalacoes_id={_instalacao!.id}&produtos_id={_instalacaoProduto!.produtos_id}&vendido=1&page={_paginaPaginacao}&por_pagina={_porPagina}";
+            string? filtros = $"?instalacoes_id={_instalacao!.id}&produtos_id={_instalacaoProduto!.produtos_id}&vendido=1&page={_paginaPaginacao}&por_pagina={_porPagina}&ordenar_coluna=id&ordenar_ordem=desc";
 
             var reinoCompany = new ReinoCompany();
             var response = await reinoCompany.EstoquesListar(_auth!.token!, filtros);

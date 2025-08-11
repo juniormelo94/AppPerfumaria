@@ -49,13 +49,20 @@
 
                 <MudExpansionPanels Class="mt-2">
                     <MudExpansionPanel Text="Descrição:" HeaderClass="fw-bold py-0" Expanded="true">
-                        @_instalacaoProduto!.produto.descricao
+                        <MudText Typo="Typo.body2">
+                            @_instalacaoProduto!.produto.descricao
+                        </MudText>
                     </MudExpansionPanel>
                 </MudExpansionPanels>
 
-                <MudText Typo="Typo.body2">
-                    @_instalacaoProduto!.produto.codigo_barras
-                </MudText>
+                <MudExpansionPanels Class="mt-2">
+                    <MudExpansionPanel Text="Código Barras:" HeaderClass="fw-bold py-0" Expanded="true">
+                        <MudText Typo="Typo.body2">
+                            @_instalacaoProduto!.produto.codigo_barras
+                        </MudText>
+                    </MudExpansionPanel>
+                </MudExpansionPanels>
+
             </MudPaper>
 
             <MudPaper Class="pa-2 mt-3" Elevation="0">
