@@ -186,6 +186,18 @@
                                             </MudText>
                                         </div>
                                     }
+                                    @if (value.preco_venda_avista != null)
+                                    {
+                                        <div class="d-flex">
+                                            <MudText Typo="Typo.body2">
+                                                Preço Venda à Vista:
+                                            </MudText>
+                                            <MudSpacer />
+                                            <MudText Class="fw-bold" Typo="Typo.body2">
+                                                @string.Format(new CultureInfo("pt-BR"), "{0:C}", value.preco_venda_avista)
+                                            </MudText>
+                                        </div>
+                                    }
                                     @if (value.desconto_venda != null)
                                     {
                                         <div class="d-flex">
@@ -198,7 +210,6 @@
                                             </MudText>
                                         </div>
                                     }
-
 
                                     <div class="d-flex mt-2">
                                         <MudText Typo="Typo.body2">
@@ -371,6 +382,18 @@
                                             <MudSpacer />
                                             <MudText Class="fw-bold" Typo="Typo.body2">
                                                 @string.Format(new CultureInfo("pt-BR"), "{0:C}", value.preco_venda_desconto)
+                                            </MudText>
+                                        </div>
+                                    }
+                                    @if (value.preco_venda_avista != null)
+                                    {
+                                        <div class="d-flex">
+                                            <MudText Typo="Typo.body2">
+                                                Preço Venda à Vista:
+                                            </MudText>
+                                            <MudSpacer />
+                                            <MudText Class="fw-bold" Typo="Typo.body2">
+                                                @string.Format(new CultureInfo("pt-BR"), "{0:C}", value.preco_venda_avista)
                                             </MudText>
                                         </div>
                                     }

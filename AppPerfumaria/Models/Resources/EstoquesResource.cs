@@ -25,6 +25,7 @@ namespace AppPerfumaria.Models.Resources
         public List<string>? desconto_venda { get; set; }
         public List<string>? preco_venda_original { get; set; }
         public List<string>? preco_venda_desconto { get; set; }
+        public List<string>? preco_venda_avista { get; set; }
         public List<string>? vendido { get; set; }
         public List<string>? vencimento { get; set; }
         public List<string>? produtos_id { get; set; }
