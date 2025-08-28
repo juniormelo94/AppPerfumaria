@@ -91,10 +91,10 @@
                                      Icon="@(instalacaoMarca.status == "Ativo" ? Icons.Material.Filled.ThumbUp : @Icons.Material.Filled.ThumbDown)" />
                             <MudCardMedia Image="@($"data:image/png;base64,{instalacaoMarca!.marca.logo_img}")" Height="200" />
                             <MudCardContent Class="py-2">
-                                <MudText Class="fw-bold" Typo="Typo.body1">
-                                    @if (instalacaoMarca.marca.nome.Length > 35)
+                                <MudText Class="fw-bold" Typo="Typo.caption">
+                                    @if (instalacaoMarca.marca.nome.Length > 48)
                                     {
-                                        @($"{instalacaoMarca.marca.nome.Substring(0, 35).ToUpper()}...")
+                                        @($"{instalacaoMarca.marca.nome.Substring(0, 48).ToUpper()}...")
                                     }
                                     else
                                     {
@@ -154,10 +154,10 @@
                                      Icon="@(marca.status == "Ativo" ? Icons.Material.Filled.ThumbUp : Icons.Material.Filled.ThumbDown)" />
                             <MudCardMedia Image="@($"data:image/png;base64,{marca.logo_img}")" Height="200" />
                             <MudCardContent Class="py-2">
-                                <MudText Class="fw-bold" Typo="Typo.body1">
-                                    @if (marca.nome.Length > 35)
+                                <MudText Class="fw-bold" Typo="Typo.caption">
+                                    @if (marca.nome.Length > 48)
                                     {
-                                        @($"{marca.nome.Substring(0, 35).ToUpper()}...")
+                                        @($"{marca.nome.Substring(0, 48).ToUpper()}...")
                                     }
                                     else
                                     {

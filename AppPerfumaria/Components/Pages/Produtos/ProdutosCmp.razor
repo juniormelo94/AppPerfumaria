@@ -40,7 +40,7 @@
     </div>
     <!-- Barra de filtros -->
     <MudPopover Open="@_exibirFiltro" Fixed="true" Class="px-4 pt-4 w-100"
-    AnchorOrigin="Origin.TopRight" TransformOrigin="Origin.TopRight">
+                AnchorOrigin="Origin.TopRight" TransformOrigin="Origin.TopRight">
         <MudGrid Spacing="2" Justify="Justify.Center" Class="mb-1">
             <MudItem xs="6">
                 <MudSelect @bind-Value="_porPagina" Variant="Variant.Outlined"
@@ -117,10 +117,10 @@
                             Icon="@(instalacaoProduto.status == "Ativo" ? Icons.Material.Filled.ThumbUp : @Icons.Material.Filled.ThumbDown)" />
                             <MudCardMedia Image="@($"data:image/png;base64,{instalacaoProduto!.produto.img_1}")" Height="200" />
                             <MudCardContent Class="py-2">
-                                <MudText Class="fw-bold" Typo="Typo.body1">
-                                    @if (instalacaoProduto!.produto.nome.Length > 35)
+                                <MudText Class="fw-bold" Typo="Typo.caption">
+                                    @if (instalacaoProduto!.produto.nome.Length > 48)
                                     {
-                                        @($"{instalacaoProduto!.produto.nome.Substring(0, 35).ToUpper()}...")
+                                        @($"{instalacaoProduto!.produto.nome.Substring(0, 48).ToUpper()}...")
                                     }
                                     else
                                     {
@@ -181,13 +181,13 @@
                     <MudItem xs="6">
                         <MudCard Style="height: 380px;" @onclick="(() => VisualizarProduto(produto))">
                             <MudIcon Style="position:absolute;" Class="mt-2 ml-2" Color="@(produto.status == "Ativo" ? Color.Dark : Color.Default)"
-                            Icon="@(produto.status == "Ativo" ? Icons.Material.Filled.ThumbUp : Icons.Material.Filled.ThumbDown)" />
+                                     Icon="@(produto.status == "Ativo" ? Icons.Material.Filled.ThumbUp : Icons.Material.Filled.ThumbDown)" />
                             <MudCardMedia Image="@($"data:image/png;base64,{produto.img_1}")" Height="200" />
                             <MudCardContent Class="py-2">
-                                <MudText Class="fw-bold" Typo="Typo.body1">
-                                    @if (produto.nome.Length > 35)
+                                <MudText Class="fw-bold" Typo="Typo.caption">
+                                    @if (produto.nome.Length > 48)
                                     {
-                                        @($"{produto.nome.Substring(0, 35).ToUpper()}...")
+                                        @($"{produto.nome.Substring(0, 48).ToUpper()}...")
                                     }
                                     else
                                     {
@@ -208,10 +208,16 @@
                                 }
                                 <div class="d-flex mt-1 px-3">
                                     <MudIconButton Size="Size.Medium" OnClick="(() => AtualizarProduto(produto))"
-                                    Icon="@Icons.Material.Filled.Edit" />
+                                                   Icon="@Icons.Material.Filled.Edit" />
+                                    @if(produto.divulgacao_existe)
+                                    {
+                                        <MudSpacer />
+                                        <MudIconButton Size="Size.Medium" OnClick="(() => VisualizarProduto(produto))"
+                                                       Icon="@Icons.Material.Filled.Campaign" />
+                                    }
                                     <MudSpacer />
                                     <MudIconButton Size="Size.Medium" OnClick="(() => DeletarProduto(produto))"
-                                    Icon="@Icons.Material.Filled.Delete" />
+                                                   Icon="@Icons.Material.Filled.Delete" />
                                 </div>
                             </MudCardActions>
                         </MudCard>

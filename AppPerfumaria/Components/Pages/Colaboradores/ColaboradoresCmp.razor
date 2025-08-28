@@ -91,10 +91,10 @@
                                      Icon="@(instalacaoColaborador.status == "Ativo" ? Icons.Material.Filled.ThumbUp : @Icons.Material.Filled.ThumbDown)" />
                             <MudCardMedia Image="@($"data:image/png;base64,{instalacaoColaborador!.colaborador!.img}")" Height="200" />
                             <MudCardContent Class="py-2">
-                                <MudText Class="fw-bold" Typo="Typo.body1">
-                                    @if (instalacaoColaborador!.colaborador!.nome_completo.Length > 35)
+                                <MudText Class="fw-bold" Typo="Typo.caption">
+                                    @if (instalacaoColaborador!.colaborador!.nome_completo.Length > 48)
                                     {
-                                        @($"{instalacaoColaborador!.colaborador!.nome_completo.Substring(0, 35).ToUpper()}...")
+                                        @($"{instalacaoColaborador!.colaborador!.nome_completo.Substring(0, 48).ToUpper()}...")
                                     }
                                     else
                                     {
@@ -154,10 +154,10 @@
                                      Icon="@(colaborador.status == "Ativo" ? Icons.Material.Filled.ThumbUp : Icons.Material.Filled.ThumbDown)" />
                             <MudCardMedia Image="@($"data:image/png;base64,{colaborador.img}")" Height="200" />
                             <MudCardContent Class="py-2">
-                                <MudText Class="fw-bold" Typo="Typo.body1">
-                                    @if (colaborador.nome_completo.Length > 35)
+                                <MudText Class="fw-bold" Typo="Typo.caption">
+                                    @if (colaborador.nome_completo.Length > 48)
                                     {
-                                        @($"{colaborador.nome_completo.Substring(0, 35).ToUpper()}...")
+                                        @($"{colaborador.nome_completo.Substring(0, 48).ToUpper()}...")
                                     }
                                     else
                                     {

@@ -17,16 +17,14 @@
 </MudOverlay>
 
 <MudPaper Class="px-2 w-100" Elevation="4" Style="position:fixed; z-index: 9;">
-    <!-- Barra de card, botão gráficos e botão filtro -->
+    <!-- Barra de pesquisa e botão filtro -->
     <div class="d-flex">
-        <MudTabs Elevation="4" Rounded="true" Centered="true" @ref="tabs">
-            <MudTabPanel Icon="@Icons.Material.Filled.Storefront" Text="Vendas" 
-                         OnClick="(() => LimparEListarVendas(true))" />
-            <MudTabPanel Text="Vendas" OnClick="(() => LimparEListarVendas(false))" />
-        </MudTabs>
+        <MudTextField Value="_pesquisarFiltro" Label="Pesquisar" Variant="Variant.Outlined"
+                      Adornment="Adornment.End" Margin="Margin.Dense" Immediate="true"
+                      ValueChanged="(async (string v) => { _pesquisarFiltro = v; await Pesquisar(v); })"
+                      AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Inherit" 
+                      ClearIcon="@Icons.Material.Filled.Clear" Clearable="true" />
         <MudSpacer />
-        <MudIconButton Icon="@Icons.Material.Filled.InsertChartOutlined" OnClick="VisualizarGraficos"
-                       Color="Color.Inherit" Size="Size.Medium" />
         <MudIconButton Icon="@Icons.Material.Filled.FilterList" OnClick="Filtro"
                        Color="Color.Inherit" Size="Size.Medium" />
     </div>
@@ -51,7 +49,7 @@
                 </MudSelect>
             </MudItem>
             <MudItem xs="6">
-                <MudSelect T="int" @bind-Value="_statusFormaPagamento" Variant="Variant.Outlined"
+                <MudSelect T="int" @bind-Value="_formaPagamentoFiltro" Variant="Variant.Outlined"
                            Label="Forma de Pagamento" Margin="Margin.Dense">
                     <MudSelectItem Value="0">Todas</MudSelectItem>
                     @if (_listarFormasPagamentos != null)
@@ -76,6 +74,36 @@
                                     DateFormat="dd/MM/yyyy"
                                     Margin="Margin.Dense" />
             </MudItem>
+            <MudItem xs="12">
+                <MudAutocomplete T="Clientes" Label="Cliente"
+                                 Value="@(_listarClientes?.FirstOrDefault(c => c!.id == _clienteFiltro))"
+                                 SearchFunc="@PesquisarClientes" ToStringFunc="@(c => c?.nome_completo?.ToUpper())"
+                                 ValueChanged="@((Clientes c) => { _clienteFiltro = c!.id; })"
+                                 OnClearButtonClick="@(() => { _clienteFiltro = 0; })"
+                                 CloseIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Default" Variant="Variant.Outlined"
+                                 Strict="false" Margin="Margin.Dense" ShowProgressIndicator="true" ClearIcon="@Icons.Material.Filled.Clear" Clearable="true">
+                    <NoItemsTemplate>
+                        <MudText Align="Align.Center" Class="px-4 py-1">
+                            Nenhum resultado encontrado!
+                        </MudText>
+                    </NoItemsTemplate>
+                </MudAutocomplete>
+            </MudItem>
+            <MudItem xs="12">
+                <MudAutocomplete T="InstalacoesColaboradores" Label="Colaborador"
+                                 Value="@(_listarInstalacoesColaboradores?.FirstOrDefault(ic => ic.colaborador!.id == _colaboradorFiltro))"
+                                 SearchFunc="@PesquisarInstalacoesColaboradores" ToStringFunc="@(ic => ic?.colaborador!.nome_completo.ToUpper())"
+                                 ValueChanged="@((InstalacoesColaboradores ic) => { _colaboradorFiltro = ic.colaborador!.id; })"
+                                 OnClearButtonClick="@(() => { _colaboradorFiltro = 0; })"
+                                 CloseIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Default" Variant="Variant.Outlined"
+                                 Strict="false" Margin="Margin.Dense" ShowProgressIndicator="true" ClearIcon="@Icons.Material.Filled.Clear" Clearable="true">
+                    <NoItemsTemplate>
+                        <MudText Align="Align.Center" Class="px-4 py-1">
+                            Nenhum resultado encontrado!
+                        </MudText>
+                    </NoItemsTemplate>
+                </MudAutocomplete>
+            </MudItem>
         </MudGrid>
         <MudDivider />
         <div class="d-flex my-2 float-end">
@@ -85,9 +113,20 @@
                     OnClick="AplicarFiltros" />
         </div>
     </MudPopover>
+    <!-- Barra de card e botão gráficos -->
+    <div class="d-flex">
+        <MudTabs Elevation="4" Rounded="true" Centered="true" @ref="tabs">
+            <MudTabPanel Icon="@Icons.Material.Filled.Storefront" Text="Vendas" 
+                         OnClick="(() => LimparEListarVendas(true))" />
+            <MudTabPanel Text="Vendas" OnClick="(() => LimparEListarVendas(false))" />
+        </MudTabs>
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.InsertChartOutlined" OnClick="VisualizarGraficos"
+                       Color="Color.Inherit" Size="Size.Medium" />
+    </div>
 </MudPaper>
 
-<div class="pa-2" style="margin-top: 55px;">
+<div class="pa-2" style="margin-top: 100px;">
     @if (_indiceMenuVenda == 0)
     {
         <!-- Listar resultados dos vendas da instalação -->
@@ -432,14 +471,30 @@
     [Parameter] public EventCallback<Vendas> Carinho { get; set; }
     private List<Vendas>? _listarVendas = new List<Vendas>();
     private List<FormasPagamentos>? _listarFormasPagamentos;
+    private List<Clientes>? _listarClientes = new List<Clientes>
+    {
+        new Clientes { id = 0, nome_completo = "Todos" }
+    };
+    private List<InstalacoesColaboradores>? _listarInstalacoesColaboradores = new List<InstalacoesColaboradores>
+    {
+        new InstalacoesColaboradores { 
+            id = 0, 
+            colaborador = new Colaboradores { nome_completo = "Todos" }
+        }
+    };
     private MetaPagination? _paginacaoVendas;
     private MudTabs? tabs;
     private int _indiceMenuVenda = 0;
     private bool _carregando = true;
     private bool _exibirFiltro = false;
+    private string? _pesquisarFiltro;
     private string? _statusFiltro = "Todos";
-    private int _statusFormaPagamento = 0;
+    private int _formaPagamentoFiltro = 0;
     private DateRange _dataCriacaoFiltro = new DateRange();
+    private string? _pesquisarCliente;
+    private int _clienteFiltro = 0;
+    private string? _pesquisarColaborador;
+    private int _colaboradorFiltro = 0;
     private string _porPagina = "10";
     private int _paginaPaginacao = 1;
     private List<Estoques>? _produtosCarinho;
@@ -454,6 +509,61 @@
 
         await ListarVendas(true);
         _ = ListarFormasPagamentos();
+    }
+
+    private async Task Pesquisar(string pesquisar)
+    {
+        await Task.Delay(1500);
+
+        if (pesquisar == _pesquisarFiltro)
+        {
+            await AplicarFiltros();
+        }
+    }
+
+    private async Task<IEnumerable<Clientes>?> PesquisarClientes(string pesquisar, CancellationToken token)
+    {
+        _pesquisarCliente = pesquisar;
+        await Task.Delay(1500);
+
+        if (pesquisar == _pesquisarCliente)
+        {
+            _listarClientes = new List<Clientes>
+            {
+                new Clientes { id = 0, nome_completo = "Todos" }
+            };
+
+            _listarClientes!.AddRange(await ListarClientes(pesquisar));
+
+            return _listarClientes?.OrderBy(o => o.nome_completo == "Todos" ? 0 : 1)
+                                   .ThenBy(o => o.nome_completo);
+        }
+
+        return _listarClientes;
+    }
+
+    private async Task<IEnumerable<InstalacoesColaboradores>?> PesquisarInstalacoesColaboradores(string pesquisar, CancellationToken token)
+    {
+        _pesquisarColaborador = pesquisar;
+        await Task.Delay(1500);
+
+        if (pesquisar == _pesquisarColaborador)
+        {
+            _listarInstalacoesColaboradores = new List<InstalacoesColaboradores>
+            {
+                new InstalacoesColaboradores { 
+                    id = 0, 
+                    colaborador = new Colaboradores { nome_completo = "Todos" }
+                }
+            };
+
+            _listarInstalacoesColaboradores!.AddRange(await ListarInstalacoesColaboradores(pesquisar));
+
+            return _listarInstalacoesColaboradores?.OrderBy(o => o.colaborador?.nome_completo == "Todos" ? 0 : 1)
+                                                   .ThenBy(o => o.colaborador?.nome_completo);
+        }
+
+        return _listarInstalacoesColaboradores;
     }
 
     public async Task CarregarMais(bool vendasInstalacao)
@@ -471,6 +581,10 @@
     {
         string filtros = $"?page={_paginaPaginacao}&por_pagina={_porPagina}";
 
+        if (!string.IsNullOrEmpty(_pesquisarFiltro))
+        {
+            filtros += $"&pesquisar={_pesquisarFiltro}";
+        }
         if (vendasInstalacao)
         {
             filtros += $"&instalacoes_id={Instalacao!.id}";
@@ -479,13 +593,21 @@
         {
             filtros += $"&status={_statusFiltro}";
         }
-        if (_statusFormaPagamento > 0)
+        if (_formaPagamentoFiltro > 0)
         {
-            filtros += $"&formas_pagamentos_id={_statusFormaPagamento}";
+            filtros += $"&formas_pagamentos_id={_formaPagamentoFiltro}";
         }
         if (_dataCriacaoFiltro.Start != null && _dataCriacaoFiltro.End != null)
         {
             filtros += $"&criado_de={_dataCriacaoFiltro.Start?.ToString("yyyy-MM-dd")}&criado_ate={_dataCriacaoFiltro.End?.ToString("yyyy-MM-dd")}";
+        }
+        if (_clienteFiltro > 0)
+        {
+            filtros += $"&clientes_id={_clienteFiltro}";
+        }
+        if (_colaboradorFiltro > 0)
+        {
+            filtros += $"&colaboradores_id={_colaboradorFiltro}";
         }
 
         return filtros;
@@ -531,6 +653,80 @@
         catch (Exception e)
         {
             Snack.Add("Tivemos um problema ao tentar listar as formas de pagamento!", Severity.Warning);
+        }
+    }
+
+    private async Task<List<InstalacoesColaboradores>?> ListarInstalacoesColaboradores(string? pesquisar = null)
+    {
+        try
+        {
+            string filtros = $"?instalacoes_id={Instalacao!.id}&por_pagina=20&status=Ativo";
+
+            if (!string.IsNullOrEmpty(pesquisar))
+            {
+                filtros += $"&pesquisar={pesquisar}";
+            }
+
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.InstalacoesColaboradoresListar(Auth!.token!, filtros);
+
+            List<InstalacoesColaboradores>? listarInstalacoesColaboradores = new List<InstalacoesColaboradores>();
+
+            if (response!.status)
+            {
+                listarInstalacoesColaboradores = response!.data!;
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+            }
+
+            return listarInstalacoesColaboradores;
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar listar os colaboradores!", Severity.Warning);
+            return new List<InstalacoesColaboradores>();
+        }
+    }
+
+    private async Task<List<Clientes>?> ListarClientes(string? pesquisar = null)
+    {
+        try
+        {
+            string filtros = $"?por_pagina=20&status=Ativo";
+
+            if (!string.IsNullOrEmpty(pesquisar))
+            {
+                filtros += $"&pesquisar={pesquisar}";
+            }
+
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.ClientesListar(Auth!.token!, filtros);
+
+            List<Clientes>? listarClientes = new List<Clientes>();
+
+            if (response!.status)
+            {
+                listarClientes = response!.data!;
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+            }
+
+            return listarClientes;
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar listar os clientes!", Severity.Warning);
+            return new List<Clientes>();
         }
     }
 

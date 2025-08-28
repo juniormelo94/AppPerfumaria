@@ -30,5 +30,7 @@ namespace AppPerfumaria.Models.Resources
         public List<string>? status { get; set; }
         public List<string>? created_at { get; set; }
         public List<string>? updated_at { get; set; }
+        public List<string>? divulgacao_existe { get; set; }
+
     }
 }

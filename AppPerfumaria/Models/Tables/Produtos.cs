@@ -28,6 +28,7 @@ namespace AppPerfumaria.Models.Tables
         public string status { get; set; }
         public DateTime created_at { get; set; }
         public DateTime updated_at { get; set; }
+        public bool divulgacao_existe { get; set; }
         public Marcas? marca { get; set; }
         public Estoques? estoque { get; set; }
         public List<InstalacoesProdutos>? instalacao_produtos { get; set; }

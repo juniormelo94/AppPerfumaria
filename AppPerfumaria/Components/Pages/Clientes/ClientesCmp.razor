@@ -91,10 +91,10 @@
                                      Icon="@(instalacaoCliente.status == "Ativo" ? Icons.Material.Filled.ThumbUp : @Icons.Material.Filled.ThumbDown)" />
                             <MudCardMedia Image="@($"data:image/png;base64,{instalacaoCliente!.cliente!.img}")" Height="200" />
                             <MudCardContent Class="py-2">
-                                <MudText Class="fw-bold" Typo="Typo.body1">
-                                    @if (instalacaoCliente!.cliente!.nome_completo.Length > 35)
+                                <MudText Class="fw-bold" Typo="Typo.caption">
+                                    @if (instalacaoCliente!.cliente!.nome_completo.Length > 48)
                                     {
-                                        @($"{instalacaoCliente!.cliente!.nome_completo.Substring(0, 35).ToUpper()}...")
+                                        @($"{instalacaoCliente!.cliente!.nome_completo.Substring(0, 48).ToUpper()}...")
                                     }
                                     else
                                     {
@@ -154,10 +154,10 @@
                                      Icon="@(cliente.status == "Ativo" ? Icons.Material.Filled.ThumbUp : Icons.Material.Filled.ThumbDown)" />
                             <MudCardMedia Image="@($"data:image/png;base64,{cliente.img}")" Height="200" />
                             <MudCardContent Class="py-2">
-                                <MudText Class="fw-bold" Typo="Typo.body1">
-                                    @if (cliente.nome_completo.Length > 35)
+                                <MudText Class="fw-bold" Typo="Typo.caption">
+                                    @if (cliente.nome_completo.Length > 48)
                                     {
-                                        @($"{cliente.nome_completo.Substring(0, 35).ToUpper()}...")
+                                        @($"{cliente.nome_completo.Substring(0, 48).ToUpper()}...")
                                     }
                                     else
                                     {

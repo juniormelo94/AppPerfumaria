@@ -94,10 +94,10 @@
                     <MudCard Style="height:350px;" @onclick="(() => VisualizarCombo(combo))">
                         <MudCardMedia Image="@($"data:image/png;base64,{combo.img_1}")" Height="200" />
                         <MudCardContent Class="py-2">
-                            <MudText Class="fw-bold" Typo="Typo.body1">
-                                @if (combo.nome.Length > 35)
+                            <MudText Class="fw-bold" Typo="Typo.caption">
+                                @if (combo.nome.Length > 48)
                                 {
-                                    @($"{combo.nome.Substring(0, 35).ToUpper()}...")
+                                    @($"{combo.nome.Substring(0, 48).ToUpper()}...")
                                 }
                                 else
                                 {
