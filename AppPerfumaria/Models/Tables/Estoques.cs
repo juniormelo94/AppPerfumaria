@@ -34,5 +34,6 @@ namespace AppPerfumaria.Models.Tables
         public DateTime created_at { get; set; }
         public DateTime updated_at { get; set; }
         public Produtos? produto { get; set; }
+        public VendasEstoques? venda_estoque { get; set; }
     }
 }

@@ -62,9 +62,11 @@
                 <MudSelect @bind-Value="_ordenarColunaFiltro" Variant="Variant.Outlined"
                            Label="Ordenar Por" Margin="Margin.Dense">
                     <MudSelectItem Value="@("")">Padrão</MudSelectItem>
-                    <MudSelectItem Value="@("id")">Número Ref.</MudSelectItem>
+                    <MudSelectItem Value="@("desconto_compra")">Desconto na Compra</MudSelectItem>
+                    <MudSelectItem Value="@("desconto_venda")">Desconto na Venda</MudSelectItem>
+                    <MudSelectItem Value="@("desconto_pagamento_avista")">Desconto Pagamento à Vista</MudSelectItem>
+                    <MudSelectItem Value="@("id")">Número Referência</MudSelectItem>
                     <MudSelectItem Value="@("vencimento")">Vencimento</MudSelectItem>
-                    <MudSelectItem Value="@("desconto_pagamento_avista")">Desc. Pag. à Vista</MudSelectItem>
                 </MudSelect>
             </MudItem>
             <MudItem xs="6">
@@ -134,13 +136,13 @@
                                 <MudItem xs="10">
                                     <MudGrid Spacing="2" Justify="Justify.Center">
                                         <MudItem xs="10">
-                                            <MudText Typo="Typo.body2" Class="fw-bold">
+                                            <MudText Typo="Typo.caption" Class="fw-bold">
                                                 @context.produto.nome.ToUpper()
                                             </MudText>
                                         </MudItem>
                                         <MudItem xs="2" Class="d-flex align-items-center justify-content-lg-center">
                                             <div>
-                                                <MudText Typo="Typo.body2" Class="d-flex text-center">
+                                                <MudText Typo="Typo.caption" Class="d-flex text-center">
                                                     @context!.id
                                                 </MudText>
                                             </div>
@@ -153,13 +155,13 @@
 
                                                 @if (context.vencimento != null)
                                                 {
-                                                    <MudText Class="ml-2" Typo="Typo.body2">
+                                                    <MudText Class="ml-2" Typo="Typo.caption">
                                                         @((MarkupString)$"{context.vencimento?.ToString("dd/MM/yyyy")} <b>({Vencimento(context.vencimento).Value.Days} dias)</b>")
                                                     </MudText>
                                                 }
                                                 else
                                                 {
-                                                    <MudText Class="fw-bold ml-2" Color="Color.Warning" Typo="Typo.body2">
+                                                    <MudText Class="fw-bold ml-2" Color="Color.Warning" Typo="Typo.caption">
                                                         ? dias
                                                     </MudText>
                                                 }
@@ -177,7 +179,7 @@
 
 @*                         <MudTd DataLabel="Id">@context.id</MudTd>
                         <MudTd DataLabel="Produto">
-                            <MudText Typo="Typo.body2" Class="fw-bold">
+                    <MudText Typo="Typo.caption" Class="fw-bold">
                                 @context.produto.nome.ToUpper()
                             </MudText>
                         </MudTd> *@
@@ -436,24 +438,4 @@
             _carregando = false;
         }
     }
-
-    // private void VisualizarCombo(Combos combo)
-    // {
-    //     try
-    //     {
-    //         var options = new DialogOptions
-    //             {
-    //                 MaxWidth = MaxWidth.ExtraExtraLarge,
-    //                 FullWidth = true,
-    //                 FullScreen = true,
-    //                 CloseButton = false,
-    //             };
-    //         var param = new DialogParameters { ["_combo"] = combo };
-    //         Dialog.Show<VisualizarComboCmp>("Visualizar Combo", param, options);
-    //     }
-    //     catch (Exception e)
-    //     {
-    //         Snack.Add("Tivemos um problema ao tentar exibir o combo!", Severity.Warning);
-    //     }
-    // }
 }

@@ -714,6 +714,16 @@ namespace AppPerfumaria.Api.ReinoCompany
             string responseString = await response.Content.ReadAsStringAsync();
             return JsonConvert.DeserializeObject<EstoquesResource>(responseString);
         }
+
+        public async Task<EstoquesCollection?> EstoquesVendidosListar(string token, string? filtros = null)
+        {
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+            var response = await client.GetAsync($"{_baseUrl}/api/estoques/getAllSolds{filtros}");
+
+            string responseString = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<EstoquesCollection>(responseString);
+        }
         #endregion
 
         #region Combos

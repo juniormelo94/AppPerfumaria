@@ -1,5 +1,6 @@
 ﻿@using AppPerfumaria.Api.ReinoCompany
 @using AppPerfumaria.Components.CmpsGerais
+@using AppPerfumaria.Components.Pages.Vendas.Cmp
 @using AppPerfumaria.Models.Auth
 @using AppPerfumaria.Models.Pagination
 @using AppPerfumaria.Models.Tables
@@ -457,6 +458,9 @@
                                     <div class="d-flex px-3">
                                         <MudIconButton Size="Size.Medium" OnClick="(() => CopiarEstoque(value))"
                                                        Icon="@Icons.Material.Filled.ContentCopy" />
+                                        <MudSpacer />
+                                        <MudIconButton Size="Size.Medium" OnClick="(() => VisualizarVenda(value.venda_estoque!.vendas_id))"
+                                                       Icon="@Icons.Material.Filled.Receipt" />
                                     </div>
                                 </MudExpansionPanel>
                             </MudExpansionPanels>
@@ -560,10 +564,10 @@
         {
             _carregando = true;
             StateHasChanged();
-            string? filtros = $"?instalacoes_id={_instalacao!.id}&produtos_id={_instalacaoProduto!.produtos_id}&vendido=1&page={_paginaPaginacao}&por_pagina={_porPagina}&ordenar_coluna=id&ordenar_ordem=desc";
+            string? filtros = $"?instalacoes_id={_instalacao!.id}&produtos_id={_instalacaoProduto!.produtos_id}&page={_paginaPaginacao}&por_pagina={_porPagina}";
 
             var reinoCompany = new ReinoCompany();
-            var response = await reinoCompany.EstoquesListar(_auth!.token!, filtros);
+            var response = await reinoCompany.EstoquesVendidosListar(_auth!.token!, filtros);
 
             if (response!.status)
             {
@@ -585,6 +589,29 @@
         {
             Snack.Add("Tivemos um problema ao tentar listar os produtos!", Severity.Warning);
             _carregando = false;
+        }
+    }
+
+    private void VisualizarVenda(int id)
+    {
+        try
+        {
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullWidth = true,
+                    FullScreen = true,
+                    CloseButton = false,
+                };
+            var param = new DialogParameters
+                {
+                    ["_venda_id"] = id
+                };
+            Dialog.Show<VisualizarVendaCmp>("Visualizar Venda", param, options);
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar exibir a venda!", Severity.Warning);
         }
     }
 

@@ -401,7 +401,10 @@
                     FullScreen = true,
                     CloseButton = false,
                 };
-            var param = new DialogParameters { ["_instalacaoCliente"] = instalacaoCliente };
+            var param = new DialogParameters { 
+                ["Auth"] = Auth,
+                ["_instalacaoCliente"] = instalacaoCliente 
+            };
             Dialog.Show<VisualizarInstalacaoClienteCmp>("Visualizar Associação", param, options);
         }
         catch (Exception e)
