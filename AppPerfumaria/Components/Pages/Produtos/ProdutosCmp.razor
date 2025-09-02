@@ -209,7 +209,7 @@
                                 <div class="d-flex mt-1 px-3">
                                     <MudIconButton Size="Size.Medium" OnClick="(() => AtualizarProduto(produto))"
                                                    Icon="@Icons.Material.Filled.Edit" />
-                                    @if(produto.divulgacao_existe)
+                                    @if(produto.divulgacao_existe == true)
                                     {
                                         <MudSpacer />
                                         <MudIconButton Size="Size.Medium" OnClick="(() => VisualizarProduto(produto))"
