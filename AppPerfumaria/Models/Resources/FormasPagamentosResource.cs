@@ -20,6 +20,7 @@ namespace AppPerfumaria.Models.Resources
     {
         public List<string>? id { get; set; }
         public List<string>? nome { get; set; }
+        public List<string>? tipo_pagamento { get; set; }
         public List<string>? status { get; set; }
         public List<string>? created_at { get; set; }
         public List<string>? updated_at { get; set; }
