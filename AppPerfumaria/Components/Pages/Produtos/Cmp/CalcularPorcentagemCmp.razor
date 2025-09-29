@@ -1,0 +1,100 @@
+﻿@using AppPerfumaria.Models.Tables
+@using System.Globalization
+
+@inject IDialogService Dialog
+@inject ISnackbar Snack
+
+<MudDialog Style="max-height: 70%;">
+    <DialogContent>
+        <MudNumericField Immediate="true" Label="Porcentagem" HideSpinButtons="true" 
+                         Value="_porcentagem" ValueChanged="@((double? p) => { CalcularValor(p); } )" Margin="Margin.Dense"
+                         T="double?" Variant="Variant.Outlined" Min="0.0"
+                         AdornmentText="%" Adornment="Adornment.Start" Placeholder="0" />
+
+        <MudNumericField Immediate="true" Label="@(_campo == "À Vista" ? "Preço Venda à Vista" : "Preço Venda Desconto")" Format="N2" HideSpinButtons="true"
+                         @bind-Value="_valor" Margin="Margin.Dense" Disabled="@(_porcentagem == null)"
+                         T="double?" Culture="_convercaoMoeda" Variant="Variant.Outlined" Min="0.0"
+                         AdornmentText="R$" Adornment="Adornment.Start" Placeholder="0,00" />
+    </DialogContent>
+    <DialogActions>
+        <div class="d-block w-100 px-2">
+            @if (_carregando)
+            {
+                <MudProgressLinear Color="Color.Secondary" Rounded="true" Striped="true"
+                                   Size="Size.Medium" Value="100" Class="mb-2" />
+            }
+            <MudFab Class="w-100" Label="Salvar" Size="Size.Medium"
+                    OnClick="Salvar" Disabled="_verificando" />
+            <MudFab Class="w-100 mt-2 mb-5" Label="Fechar" OnClick="(() => _mudDialog!.Cancel())"
+                    Size="Size.Medium" Disabled="_verificando" />
+        </div>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance? _mudDialog { get; set; }
+    [Parameter]
+    public Estoques? _estoque { get; set; }
+    [Parameter]
+    public string _campo { get; set; }
+    private CultureInfo _convercaoMoeda = CultureInfo.GetCultureInfo("de-DE");
+    private bool _carregando = false;
+    private bool _verificando = false;
+    private double? _porcentagem;
+    private double? _valor;
+
+    private void CalcularValor(double? porcentagem)
+    {
+        _porcentagem = porcentagem;
+
+        double? precoCompra = _estoque.preco_compra_original;
+        if (_estoque.preco_compra_desconto != null)
+        {
+            precoCompra = _estoque.preco_compra_desconto;
+        }
+
+        if (_campo == "À Vista")
+        {
+            _valor = (precoCompra / (100 - porcentagem)) * 100;
+        }
+        else
+        {
+            if (_estoque.preco_venda_avista == null)
+            {
+                Snack.Add("Para calcular o valor é preciso preencher o campo de Preço Venda à Vista!", Severity.Warning);
+                return;
+            }
+            _valor = (_estoque.preco_venda_avista / (100 - porcentagem)) * 100;
+        }
+
+        StateHasChanged();
+    }
+
+    public async Task Salvar()
+    {
+        try
+        {
+            if (_valor != null)
+            {
+                if (_campo == "À Vista")
+                {
+                    _estoque.preco_venda_avista = _valor;
+                }
+                else
+                {
+                    _estoque.preco_venda_desconto = _valor;
+                }
+            }
+
+            _mudDialog!.Close(DialogResult.Ok<Estoques>(_estoque!));
+
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar salvar!", Severity.Warning);
+            _verificando = false;
+            _carregando = false;
+        }
+    }
+}

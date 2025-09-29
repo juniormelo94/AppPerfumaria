@@ -40,7 +40,7 @@
                                      AdornmentText="R$" Adornment="Adornment.Start" />
                     <div>
                         <MudIconButton Icon="@Icons.Material.Filled.Percent" Variant="Variant.Filled"
-                                       Size="Size.Medium" Style="margin-top: 9px; margin-left: 6px;" />
+                                       OnClick="@(() => CalcularValor("A Prazo"))"  Size="Size.Medium" Style="margin-top: 9px; margin-left: 6px;" />
                     </div>
                 </div>
                 <ValidationMessage For="() => _estoqueForm!.preco_venda_desconto" />
@@ -52,7 +52,7 @@
                                      AdornmentText="R$" Adornment="Adornment.Start" />
                     <div>
                         <MudIconButton Icon="@Icons.Material.Filled.Percent" Variant="Variant.Filled"
-                                       Size="Size.Medium" Style="margin-top: 9px; margin-left: 6px;" />
+                                       OnClick="@(() => CalcularValor("À Vista"))" Size="Size.Medium" Style="margin-top: 9px; margin-left: 6px;" />
                     </div>
                 </div>
                 <ValidationMessage For="() => _estoqueForm!.preco_venda_avista" />
@@ -124,6 +124,38 @@
         catch (Exception e)
         {
             Snack.Add("Tivemos um problema ao tentar validar dados!", Severity.Warning);
+        }
+    }
+
+    private async Task CalcularValor(string campo)
+    {
+        try
+        {
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.Large,
+                    FullWidth = true,
+                    BackdropClick = false,
+                    CloseButton = true,
+                    Position = DialogPosition.TopCenter
+                };
+            var param = new DialogParameters 
+            { 
+                    ["_estoque"] = _estoqueForm.Clone(),
+                    ["_campo"] = campo
+            };
+            var dialog = Dialog.Show<CalcularPorcentagemCmp>("Calcular Valor", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled)
+            {
+                var estoque = (Estoques)result.Data!;
+                _estoqueForm = estoque;
+                StateHasChanged();
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar exibir campo de calcular valor!", Severity.Warning);
         }
     }
 
