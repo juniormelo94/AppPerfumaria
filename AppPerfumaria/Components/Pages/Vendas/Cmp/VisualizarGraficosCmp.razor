@@ -394,7 +394,12 @@
                 }
 
                 valorVenda = vendaEstoque.estoque.preco_venda_original;
-                if (vendaEstoque.estoque.preco_venda_desconto != null)
+                if (vendaEstoque.estoque.preco_venda_avista != null 
+                && venda!.forma_pagamento!.tipo_pagamento == "À Vista")
+                {
+                    valorVenda = vendaEstoque.estoque.preco_venda_avista;
+                }
+                else if (vendaEstoque.estoque.preco_venda_desconto != null)
                 {
                     valorVenda = vendaEstoque.estoque.preco_venda_desconto;
                 }
@@ -406,16 +411,6 @@
                     // Descontar taxa da maquina do lucro total
                     valorTaxa = valorVenda * (venda.taxa_juros / 100);
                     valorLucro = valorLucro - valorTaxa;
-                }
-                else if(venda.taxa_juros != null && venda.taxa_juros < 0) {
-                    if (vendaEstoque.estoque.desconto_pagamento_avista)
-                    {
-                        // Desconto no preço total(Pagamento Dinheiro ou Pix)
-                        double? desconto = valorVenda * (Math.Abs(venda.taxa_juros.GetValueOrDefault()) / 100);
-                        valorVenda = valorVenda - desconto;
-                    }
-                    // Descontar taxa da maquina do lucro total
-                    valorLucro = valorVenda - valorCompra;
                 }
 
                 dadosMarcas?.Add(new ChartModelo { Nome = marca, Valor1 = valorCompra, Valor2 = valorLucro, Valor3 = valorTaxa });

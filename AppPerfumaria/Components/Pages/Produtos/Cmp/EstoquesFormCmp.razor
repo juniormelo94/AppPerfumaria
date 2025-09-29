@@ -33,22 +33,29 @@
                                  AdornmentText="R$" Adornment="Adornment.Start" Placeholder="0,00" />
                 <ValidationMessage For="() => _estoqueForm!.preco_venda_original" />
 
-                <MudNumericField Immediate="false" Label="Preço Venda Desconto" Format="N2" HideSpinButtons="true"
-                                 @bind-Value="_estoqueForm!.preco_venda_desconto" Margin="Margin.Dense"
-                                 T="double?" Culture="_convercaoMoeda" Variant="Variant.Outlined" Min="0.0"
-                                 AdornmentText="R$" Adornment="Adornment.Start" />
+                <div class="d-flex">
+                    <MudNumericField Immediate="false" Label="Preço Venda Desconto" Format="N2" HideSpinButtons="true"
+                                     @bind-Value="_estoqueForm!.preco_venda_desconto" Margin="Margin.Dense"
+                                     T="double?" Culture="_convercaoMoeda" Variant="Variant.Outlined" Min="0.0"
+                                     AdornmentText="R$" Adornment="Adornment.Start" />
+                    <div>
+                        <MudIconButton Icon="@Icons.Material.Filled.Percent" Variant="Variant.Filled"
+                                       Size="Size.Medium" Style="margin-top: 9px; margin-left: 6px;" />
+                    </div>
+                </div>
                 <ValidationMessage For="() => _estoqueForm!.preco_venda_desconto" />
 
-                <MudNumericField Immediate="false" Label="Preço Venda à Vista" Format="N2" HideSpinButtons="true"
-                                 @bind-Value="_estoqueForm!.preco_venda_avista" Margin="Margin.Dense"
-                                 T="double?" Culture="_convercaoMoeda" Variant="Variant.Outlined" Min="0.0"
-                                 AdornmentText="R$" Adornment="Adornment.Start" />
+                <div class="d-flex">
+                    <MudNumericField Immediate="false" Label="Preço Venda à Vista" Format="N2" HideSpinButtons="true"
+                                     @bind-Value="_estoqueForm!.preco_venda_avista" Margin="Margin.Dense"
+                                     T="double?" Culture="_convercaoMoeda" Variant="Variant.Outlined" Min="0.0"
+                                     AdornmentText="R$" Adornment="Adornment.Start" />
+                    <div>
+                        <MudIconButton Icon="@Icons.Material.Filled.Percent" Variant="Variant.Filled"
+                                       Size="Size.Medium" Style="margin-top: 9px; margin-left: 6px;" />
+                    </div>
+                </div>
                 <ValidationMessage For="() => _estoqueForm!.preco_venda_avista" />
-
-                <MudCheckBox @bind-Value="_estoqueForm!.desconto_pagamento_avista">
-                    Desconto Pagamento à Vista
-                </MudCheckBox>
-                <ValidationMessage For="() => _estoqueForm!.desconto_pagamento_avista" />
 
                 <MudDatePicker Label="Data Vencimento" Margin="Margin.Dense" DateFormat="dd/MM/yyyy"
                                Variant="Variant.Outlined" @bind-Date="_estoqueForm!.vencimento" />

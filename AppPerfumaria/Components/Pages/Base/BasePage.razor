@@ -88,7 +88,7 @@
                             </MudText>
                             <MudSpacer />
                             <MudText Class="fw-bold" Typo="Typo.body1">
-                                @string.Format(new CultureInfo("pt-BR"), "{0:C}", CalcularPagamentoDinheiroPix())
+                                @string.Format(new CultureInfo("pt-BR"), "{0:C}", CalcularPagamentoAvista())
                             </MudText>
                         </div>
                         @if (_produtosCarinho != null && _produtosCarinho?.Count() > 0)
@@ -448,41 +448,30 @@
         return totalDesconto!;
     }
 
-    private double? CalcularPagamentoDinheiroPix()
+    private double? CalcularPagamentoAvista()
     {
-        double? totalDesconto = 0.0;
-        double? totalSemDesconto = 0.0;
+        double? totalAvista = 0.0;
 
         if (_produtosCarinho != null)
         {
             foreach (var item in _produtosCarinho)
             {
-                if (item.desconto_pagamento_avista)
+                if (item.preco_venda_avista != null)
                 {
-                    if (item.preco_venda_desconto != null)
-                    {
-                        totalDesconto += item.preco_venda_desconto;
-                    }
-                    else
-                    {
-                        totalDesconto += item.preco_venda_original;
-                    }
+                    totalAvista += item.preco_venda_avista;
+                }
+                else if(item.preco_venda_desconto != null)
+                {
+                    totalAvista += item.preco_venda_desconto;
                 }
                 else
                 {
-                    if (item.preco_venda_desconto != null)
-                    {
-                        totalSemDesconto += item.preco_venda_desconto;
-                    }
-                    else
-                    {
-                        totalSemDesconto += item.preco_venda_original;
-                    }
+                    totalAvista += item.preco_venda_original;
                 }
             }
         }
 
-        return totalSemDesconto + (totalDesconto * (1 - 0.05));
+        return totalAvista;
     }
 
     public async Task CriarVenda()

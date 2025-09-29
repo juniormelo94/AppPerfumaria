@@ -83,7 +83,7 @@
                     </MudText>
                     <MudSpacer />
                     <MudText Class="fw-bold" Typo="Typo.body1">
-                        @string.Format(new CultureInfo("pt-BR"), "{0:C}", CalcularPagamentoDinheiroPix())
+                        @string.Format(new CultureInfo("pt-BR"), "{0:C}", CalcularPagamentoAvista())
                     </MudText>
                 </div>
             </MudPaper>
@@ -248,44 +248,33 @@
         return totalDesconto!;
     }
 
-    private double? CalcularPagamentoDinheiroPix()
+    private double? CalcularPagamentoAvista()
     {
-        double? totalDesconto = 0.0;
-        double? totalSemDesconto = 0.0;
+        double? totalAvista = 0.0;
 
         if (_combo != null)
         {
             foreach (var item in _combo.combo_produtos)
             {
                 if (item.produto?.estoque != null)
-                {                   
-                    if (item.produto.estoque.desconto_pagamento_avista)
+                {    
+                    if (item.produto.estoque.preco_venda_avista != null)
                     {
-                        if (item.produto.estoque.preco_venda_desconto != null)
-                        {
-                            totalDesconto += item.produto.estoque.preco_venda_desconto;
-                        }
-                        else
-                        {
-                            totalDesconto += item.produto.estoque.preco_venda_original;
-                        }
+                        totalAvista += item.produto.estoque.preco_venda_avista;
+                    }
+                    else if (item.produto.estoque.preco_venda_desconto != null)
+                    {
+                        totalAvista += item.produto.estoque.preco_venda_desconto;
                     }
                     else
                     {
-                        if (item.produto.estoque.preco_venda_desconto != null)
-                        {
-                            totalSemDesconto += item.produto.estoque.preco_venda_desconto;
-                        }
-                        else
-                        {
-                            totalSemDesconto += item.produto.estoque.preco_venda_original;
-                        }
+                        totalAvista += item.produto.estoque.preco_venda_original;
                     }
                 }
             }
         }
 
-        return totalSemDesconto + (totalDesconto * (1 - 0.05));
+        return totalAvista;
     }
 
     public async Task AdicionarOuRemoverCarinho(Combos combos)

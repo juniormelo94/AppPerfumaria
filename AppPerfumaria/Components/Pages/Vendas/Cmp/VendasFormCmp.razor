@@ -34,7 +34,7 @@
                 <ValidationMessage For="() => _vendaForm!.formas_pagamentos_id" />
 
                 <!-- Crédito ou Débito -->
-                @if (_vendaForm!.formas_pagamentos_id == 2 || _vendaForm!.formas_pagamentos_id == 3)
+                @if (new[] { 2, 3 }.Contains(_vendaForm!.formas_pagamentos_id))
                 {
                     if(_listarMaquinasCartao != null)
                     {
@@ -216,7 +216,7 @@
     public void SelecionarParcela(string? qtdParcelas = null)
     {
         _quantidadeParcelas = qtdParcelas;
-        _vendaForm!.quantidade_parcelas = Convert.ToInt32(qtdParcelas) > 0 ? Convert.ToInt32(qtdParcelas) : null ;
+        _vendaForm!.quantidade_parcelas = Convert.ToInt32(qtdParcelas) > 0 ? Convert.ToInt32(qtdParcelas) : null;
         _vendaForm!.taxa_juros = null;
         var maquinaCartao = _listarMaquinasCartao!.FirstOrDefault(w => w.modelo == _vendaForm!.maquina_cartao);
         if (maquinaCartao != null && qtdParcelas is not null)
@@ -545,10 +545,10 @@
             }
 
             // Dinheiro ou Pix
-            if (new[] { 1, 4 }.Contains(_vendaForm!.formas_pagamentos_id))
-            {
-                _vendaForm!.taxa_juros = -5.0;
-            }
+            // if (new[] { 1, 4 }.Contains(_vendaForm!.formas_pagamentos_id))
+            // {
+            //     _vendaForm!.taxa_juros = -5.0;
+            // }
             _vendaForm!.status = "Ativo";
             _vendaForm!.colaboradores_id = _auth!.data!.colaborador_user!.colaboradores_id!;
             VendasResource? responseVenda;

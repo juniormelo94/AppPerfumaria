@@ -104,20 +104,13 @@
                 };
 
             // Adicionando valor à vista
-            if (_estoque.desconto_pagamento_avista)
+            if (_estoque.preco_venda_avista != null)
             {
                 string precoDesconto = _estoque.preco_venda_desconto?.ToString("N2", new CultureInfo("pt-BR"));
                 string textoPorCartao = $"Por: {precoDesconto}";
                 canvas.DrawText(textoPorCartao, 610, 1330, paint);
 
-                double? valorAvista = (_estoque.preco_venda_original * (1 - 0.05));
-                if (_estoque.preco_venda_desconto != null)
-                {
-                    valorAvista = (_estoque.preco_venda_desconto * (1 - 0.05));
-                }
-
-                string precoAvista = valorAvista?.ToString("N2", new CultureInfo("pt-BR")); ;
-
+                string precoAvista = _estoque.preco_venda_avista?.ToString("N2", new CultureInfo("pt-BR")); ;
                 string textoPorAvista = $"        {precoAvista}";
                 canvas.DrawText(textoPorAvista, 610, 1390, paint);
             }
@@ -131,7 +124,7 @@
             paint.Color = SKColors.Black;
             paint.TextSize = 40;
 
-            if (_estoque.desconto_pagamento_avista)
+            if (_estoque.preco_venda_avista != null)
             {
                 string textoCartao = "(cartão)";
                 canvas.DrawText(textoCartao, 851, 1330, paint);
@@ -148,7 +141,7 @@
 
             string precoSemDesconto = string.Empty;
             float deX = 0;
-            if (_estoque.desconto_pagamento_avista)
+            if (_estoque.preco_venda_avista != null)
             {
                 precoSemDesconto = _estoque.preco_venda_original?.ToString("N2", new CultureInfo("pt-BR"));
                 string textoDe = $"De: {precoSemDesconto}";
