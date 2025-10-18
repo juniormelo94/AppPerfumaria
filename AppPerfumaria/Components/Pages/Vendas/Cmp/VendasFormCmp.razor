@@ -57,7 +57,7 @@
                                        Label="Quantidade Parcelas*" Margin="Margin.Dense" Disabled="_verificando">
                                 @foreach (var item in _listarTaxasParcelas.Select((value, index) => new { value, index }))
                                 {
-                                    <MudSelectItem Value="@item.value.Key" Disabled="(item.index > 3)">
+                                    <MudSelectItem Value="@item.value.Key" Disabled="(item.index > 8)">
                                         <span class="d-flex">
                                             <span class="pa-0">
                                                 @item.value.Key x @string.Format(new CultureInfo("pt-BR"), "{0:C}", (_precoPaga / int.Parse(item.value.Key)))
@@ -73,7 +73,6 @@
                             <ValidationMessage For="() => _vendaForm!.quantidade_parcelas" />
                         }
                     }
-
                 }
 
                 <MudAutocomplete T="Clientes" Label="Cliente*" Disabled="_verificando" @ref="_autoCompleteClienteRef"
