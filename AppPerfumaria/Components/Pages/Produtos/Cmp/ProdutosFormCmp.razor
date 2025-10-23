@@ -359,7 +359,8 @@
 
             if (response!.status)
             {
-                _mudDialog!.Close(DialogResult.Ok<bool>(true));
+                _produtoForm = response.data!;
+                _mudDialog!.Close(DialogResult.Ok<Produtos>(_produtoForm));
             }
             else
             {

@@ -635,14 +635,10 @@
             var param = new DialogParameters { ["_produtoForm"] = new Produtos() };
             var dialog = Dialog.Show<ProdutosFormCmp>("Adicionar Produto", param, options);
             var result = await dialog.Result;
-            if (!result.Canceled && (bool)result.Data == true)
+            if (!result.Canceled)
             {
                 Snack.Add("Produto criado com sucesso!", Severity.Success);
                 tabs.ActivatePanel(1);
-            }
-            else if (!result.Canceled && (bool)result.Data == false)
-            {
-                Snack.Add("Tivemos um problema ao tentar criar o produto!", Severity.Warning);
             }
         }
         catch (Exception e)
@@ -699,14 +695,16 @@
             var param = new DialogParameters { ["_produtoForm"] = produto.Clone() };
             var dialog = Dialog.Show<ProdutosFormCmp>("Atualizar Produto", param, options);
             var result = await dialog.Result;
-            if (!result.Canceled && (bool)result.Data == true)
+            if (!result.Canceled)
             {
+                produto = (Produtos)result.Data;
+                var index = _listarProdutos.FindIndex(p => p.id == produto.id);
+                if (index != -1)
+                {
+                    _listarProdutos[index] = produto;
+                }
                 Snack.Add("Produto atualizado com sucesso!", Severity.Success);
-                await LimparEListarProdutos();
-            }
-            else if (!result.Canceled && (bool)result.Data == false)
-            {
-                Snack.Add("Tivemos um problema ao tentar atualizar o produto!", Severity.Warning);
+                StateHasChanged();
             }
         }
         catch (Exception e)
@@ -735,7 +733,7 @@
 
                 if (response!.status)
                 {
-                    Snack.Add("Marca associada deletada com sucesso!", Severity.Success);
+                    Snack.Add("Produto associado deletado com sucesso!", Severity.Success);
                     await LimparEListarInstalacaoProdutos();
                 }
                 else
