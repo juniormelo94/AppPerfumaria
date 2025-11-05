@@ -174,7 +174,11 @@
                 _estoqueForm!.desconto_compra = ((_estoqueForm!.preco_compra_original - _estoqueForm!.preco_compra_desconto) / _estoqueForm!.preco_compra_original) * 100;
             }
 
-            if (_estoqueForm!.preco_venda_desconto != null)
+            if (_estoqueForm!.preco_venda_avista != null)
+            {
+                _estoqueForm!.desconto_venda = ((_estoqueForm!.preco_venda_original - _estoqueForm!.preco_venda_avista) / _estoqueForm!.preco_venda_original) * 100;
+            }
+            else if (_estoqueForm!.preco_venda_desconto != null)
             {
                 _estoqueForm!.desconto_venda = ((_estoqueForm!.preco_venda_original - _estoqueForm!.preco_venda_desconto) / _estoqueForm!.preco_venda_original) * 100;
             }

@@ -277,7 +277,7 @@
 
             if (response!.status)
             {
-                _mudDialog!.Close(DialogResult.Ok<bool>(true));
+                _mudDialog!.Close(DialogResult.Ok<MaquinasCartao>(_maquinaCartaoForm));
             }
             else
             {

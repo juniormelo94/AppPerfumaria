@@ -164,6 +164,18 @@
                                                         </MudText>
                                                     </div>
                                                 }
+                                                @if (item.preco_venda_avista != null)
+                                                {
+                                                    <div class="d-flex">
+                                                        <MudText Typo="Typo.body2">
+                                                            Preço à Vista:
+                                                        </MudText>
+                                                        <MudSpacer />
+                                                        <MudText Class="fw-bold" Typo="Typo.body2">
+                                                            @string.Format(new CultureInfo("pt-BR"), "{0:C}", item.preco_venda_avista)
+                                                        </MudText>
+                                                    </div>
+                                                }
                                             </MudItem>
                                             <MudItem xs="2" Class="d-flex align-items-center justify-content-center">
                                                 <MudIconButton Icon="@Icons.Material.Filled.RemoveShoppingCart"

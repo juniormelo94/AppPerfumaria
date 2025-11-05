@@ -78,7 +78,7 @@
     <!-- Barra de card e botão criar -->
     <div class="d-flex">
         <MudSpacer />
-        <MudIconButton Icon="@Icons.Material.Filled.Add" OnClick="CriarProduto"
+        <MudIconButton Icon="@Icons.Material.Filled.Add" OnClick="CriarCombo"
         Color="Color.Inherit" Size="Size.Medium" />
     </div>
 </MudPaper>
@@ -311,7 +311,7 @@
         }
     }
 
-    public async Task CriarProduto()
+    public async Task CriarCombo()
     {
         try
         {
@@ -329,14 +329,10 @@
             var param = new DialogParameters { ["_comboForm"] = combo };
             var dialog = Dialog.Show<CombosFormCmp>("Adicionar Combo", param, options);
             var result = await dialog.Result;
-            if (!result.Canceled && (bool)result.Data == true)
+            if (!result.Canceled)
             {
                 Snack.Add("Combo criado com sucesso!", Severity.Success);
                 await LimparEListarCombos();
-            }
-            else if (!result.Canceled && (bool)result.Data == false)
-            {
-                Snack.Add("Tivemos um problema ao tentar criar o combo!", Severity.Warning);
             }
         }
         catch (Exception e)
@@ -361,14 +357,16 @@
             var param = new DialogParameters { ["_comboForm"] = combo.Clone() };
             var dialog = Dialog.Show<CombosFormCmp>("Atualizar Combo", param, options);
             var result = await dialog.Result;
-            if (!result.Canceled && (bool)result.Data == true)
+            if (!result.Canceled)
             {
+                combo = (Combos)result.Data;
+                var index = _listarCombos.FindIndex(c => c.id == combo!.id);
+                if (index != -1)
+                {
+                    _listarCombos[index] = combo!;
+                }
                 Snack.Add("Combo atualizado com sucesso!", Severity.Success);
-                await LimparEListarCombos();
-            }
-            else if (!result.Canceled && (bool)result.Data == false)
-            {
-                Snack.Add("Tivemos um problema ao tentar atualizar o combo!", Severity.Warning);
+                StateHasChanged();
             }
         }
         catch (Exception e)
