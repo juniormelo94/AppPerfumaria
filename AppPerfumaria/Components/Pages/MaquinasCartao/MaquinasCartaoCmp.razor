@@ -288,14 +288,10 @@
             var param = new DialogParameters { ["_maquinaCartaoForm"] = maquinaCartao };
             var dialog = Dialog.Show<MaquinaCartaoFormCmp>("Adicionar Máquina", param, options);
             var result = await dialog.Result;
-            if (!result.Canceled && (bool)result.Data == true)
+            if (!result.Canceled)
             {
                 Snack.Add("Máquina de cartão criada com sucesso!", Severity.Success);
                 await LimparEListarMaquinasCartao();
-            }
-            else if (!result.Canceled && (bool)result.Data == false)
-            {
-                Snack.Add("Tivemos um problema ao tentar criar a máquina de cartão!", Severity.Warning);
             }
         }
         catch (Exception e)
@@ -320,14 +316,16 @@
             var param = new DialogParameters { ["_maquinaCartaoForm"] = maquinaCartao.Clone() };
             var dialog = Dialog.Show<MaquinaCartaoFormCmp>("Atualizar Máquina", param, options);
             var result = await dialog.Result;
-            if (!result.Canceled && (bool)result.Data == true)
+            if (!result.Canceled)
             {
+                maquinaCartao = (MaquinasCartao)result.Data;
+                var index = _listarMaquinasCartao.FindIndex(p => p.id == maquinaCartao.id);
+                if (index != -1)
+                {
+                    _listarMaquinasCartao[index] = maquinaCartao;
+                }
                 Snack.Add("Máquina de cartão atualizada com sucesso!", Severity.Success);
-                await LimparEListarMaquinasCartao();
-            }
-            else if (!result.Canceled && (bool)result.Data == false)
-            {
-                Snack.Add("Tivemos um problema ao tentar atualizar a máquina de cartão!", Severity.Warning);
+                StateHasChanged();
             }
         }
         catch (Exception e)

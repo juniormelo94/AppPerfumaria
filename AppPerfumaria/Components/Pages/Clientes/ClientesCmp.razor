@@ -500,14 +500,10 @@
             var param = new DialogParameters { ["_clienteForm"] = new Clientes() };
             var dialog = Dialog.Show<ClientesFormCmp>("Adicionar Cliente", param, options);
             var result = await dialog.Result;
-            if (!result.Canceled && (bool)result.Data == true)
+            if (!result.Canceled)
             {
                 Snack.Add("Cliente criado com sucesso!", Severity.Success);
                 tabs.ActivatePanel(1);
-            }
-            else if (!result.Canceled && (bool)result.Data == false)
-            {
-                Snack.Add("Tivemos um problema ao tentar criar o cliente!", Severity.Warning);
             }
         }
         catch (Exception e)
@@ -532,14 +528,16 @@
             var param = new DialogParameters { ["_instalacaoClienteForm"] = instalacaoCliente.Clone() };
             var dialog = Dialog.Show<InstalacoesClientesFormCmp>("Atualizar Associação", param, options);
             var result = await dialog.Result;
-            if (!result.Canceled && (bool)result.Data == true)
+            if (!result.Canceled)
             {
+                instalacaoCliente = (InstalacoesClientes)result.Data;
+                var index = _listarInstalacoesClientes.FindIndex(ic => ic.id == instalacaoCliente!.id);
+                if (index != -1)
+                {
+                    _listarInstalacoesClientes[index] = instalacaoCliente!;
+                }
                 Snack.Add("Cliente associado atualizado com sucesso!", Severity.Success);
-                await LimparEListarInstalacaoClientes();
-            }
-            else if (!result.Canceled && (bool)result.Data == false)
-            {
-                Snack.Add("Tivemos um problema ao tentar atualizar associação do cliente!", Severity.Warning);
+                StateHasChanged();
             }
         }
         catch (Exception e)
@@ -564,14 +562,16 @@
             var param = new DialogParameters { ["_clienteForm"] = cliente.Clone() };
             var dialog = Dialog.Show<ClientesFormCmp>("Atualizar Cliente", param, options);
             var result = await dialog.Result;
-            if (!result.Canceled && (bool)result.Data == true)
+            if (!result.Canceled)
             {
+                cliente = (Clientes)result.Data;
+                var index = _listarClientes.FindIndex(c => c.id == cliente!.id);
+                if (index != -1)
+                {
+                    _listarClientes[index] = cliente!;
+                }
                 Snack.Add("Cliente atualizado com sucesso!", Severity.Success);
-                await LimparEListarClientes();
-            }
-            else if (!result.Canceled && (bool)result.Data == false)
-            {
-                Snack.Add("Tivemos um problema ao tentar atualizar o cliente!", Severity.Warning);
+                StateHasChanged();
             }
         }
         catch (Exception e)

@@ -663,14 +663,16 @@
             var param = new DialogParameters { ["_instalacaoProdutoForm"] = instalacaoProduto.Clone() };
             var dialog = Dialog.Show<InstalacoesProdutosFormCmp>("Atualizar Associação", param, options);
             var result = await dialog.Result;
-            if (!result.Canceled && (bool)result.Data == true)
+            if (!result.Canceled)
             {
+                instalacaoProduto = (InstalacoesProdutos)result.Data;
+                var index = _listarInstalacoesProdutos.FindIndex(ip => ip.id == instalacaoProduto!.id);
+                if (index != -1)
+                {
+                    _listarInstalacoesProdutos[index] = instalacaoProduto!;
+                }
                 Snack.Add("Produto associado atualizado com sucesso!", Severity.Success);
-                await LimparEListarInstalacaoProdutos();
-            }
-            else if (!result.Canceled && (bool)result.Data == false)
-            {
-                Snack.Add("Tivemos um problema ao tentar atualizar associação do produto!", Severity.Warning);
+                StateHasChanged();
             }
         }
         catch (Exception e)

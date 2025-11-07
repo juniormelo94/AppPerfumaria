@@ -147,6 +147,18 @@
                                         </MudText>
                                     </div>
                                 }
+                                @if (item!.produto!.estoque?.preco_venda_avista != null)
+                                {
+                                    <div class="d-flex">
+                                        <MudText Typo="Typo.body2">
+                                            Preço à Vista:
+                                        </MudText>
+                                        <MudSpacer />
+                                        <MudText Class="fw-bold" Typo="Typo.body2">
+                                            @string.Format(new CultureInfo("pt-BR"), "{0:C}", item!.produto!.estoque?.preco_venda_avista)
+                                        </MudText>
+                                    </div>
+                                }
                             </MudItem>
                         </MudGrid>
                     </MudPaper>

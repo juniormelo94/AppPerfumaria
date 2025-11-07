@@ -497,14 +497,10 @@
             var param = new DialogParameters { ["_colaboradorForm"] = new Colaboradores() };
             var dialog = Dialog.Show<ColaboradoresFormCmp>("Adicionar Colaborador", param, options);
             var result = await dialog.Result;
-            if (!result.Canceled && (bool)result.Data == true)
+            if (!result.Canceled)
             {
                 Snack.Add("Colaborador criado com sucesso!", Severity.Success);
                 tabs.ActivatePanel(1);
-            }
-            else if (!result.Canceled && (bool)result.Data == false)
-            {
-                Snack.Add("Tivemos um problema ao tentar criar o colaborador!", Severity.Warning);
             }
         }
         catch (Exception e)
@@ -529,14 +525,16 @@
             var param = new DialogParameters { ["_instalacaoColaboradorForm"] = instalacaoColaborador.Clone() };
             var dialog = Dialog.Show<InstalacoesColaboradoresFormCmp>("Atualizar Associação", param, options);
             var result = await dialog.Result;
-            if (!result.Canceled && (bool)result.Data == true)
+            if (!result.Canceled)
             {
+                instalacaoColaborador = (InstalacoesColaboradores)result.Data;
+                var index = _listarInstalacoesColaboradores.FindIndex(ic => ic.id == instalacaoColaborador!.id);
+                if (index != -1)
+                {
+                    _listarInstalacoesColaboradores[index] = instalacaoColaborador!;
+                }
                 Snack.Add("Colaborador associado atualizado com sucesso!", Severity.Success);
-                await LimparEListarInstalacaoColaborador();
-            }
-            else if (!result.Canceled && (bool)result.Data == false)
-            {
-                Snack.Add("Tivemos um problema ao tentar atualizar associação do colaborador!", Severity.Warning);
+                StateHasChanged();
             }
         }
         catch (Exception e)
@@ -561,14 +559,16 @@
             var param = new DialogParameters { ["_colaboradorForm"] = colaborador.Clone() };
             var dialog = Dialog.Show<ColaboradoresFormCmp>("Atualizar Colaborador", param, options);
             var result = await dialog.Result;
-            if (!result.Canceled && (bool)result.Data == true)
+            if (!result.Canceled)
             {
+                colaborador = (Colaboradores)result.Data;
+                var index = _listarColaboradores.FindIndex(c => c.id == colaborador!.id);
+                if (index != -1)
+                {
+                    _listarColaboradores[index] = colaborador!;
+                }
                 Snack.Add("Colaborador atualizada com sucesso!", Severity.Success);
-                await LimparEListarColaboradores();
-            }
-            else if (!result.Canceled && (bool)result.Data == false)
-            {
-                Snack.Add("Tivemos um problema ao tentar atualizar o colaborador!", Severity.Warning);
+                StateHasChanged();
             }
         }
         catch (Exception e)

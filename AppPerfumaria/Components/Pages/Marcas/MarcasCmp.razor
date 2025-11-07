@@ -496,14 +496,10 @@
             var param = new DialogParameters { ["_marcaForm"] = new Marcas() };
             var dialog = Dialog.Show<MarcasFormCmp>("Adicionar Marca", param, options);
             var result = await dialog.Result;
-            if (!result.Canceled && (bool)result.Data == true)
+            if (!result.Canceled)
             {
                 Snack.Add("Marca criada com sucesso!", Severity.Success);
                 tabs.ActivatePanel(1);
-            }
-            else if (!result.Canceled && (bool)result.Data == false)
-            {
-                Snack.Add("Tivemos um problema ao tentar criar a marca!", Severity.Warning);
             }
         }
         catch (Exception e)
@@ -528,14 +524,16 @@
             var param = new DialogParameters { ["_instalacaoMarcaForm"] = instalacaoMarca.Clone() };
             var dialog = Dialog.Show<InstalacoesMarcasFormCmp>("Atualizar Associação", param, options);
             var result = await dialog.Result;
-            if (!result.Canceled && (bool)result.Data == true)
+            if (!result.Canceled)
             {
+                instalacaoMarca = (InstalacoesMarcas)result.Data;
+                var index = _listarInstalacoesMarcas.FindIndex(im => im.id == instalacaoMarca!.id);
+                if (index != -1)
+                {
+                    _listarInstalacoesMarcas[index] = instalacaoMarca!;
+                }
                 Snack.Add("Marca associada atualizada com sucesso!", Severity.Success);
-                await LimparEListarInstalacaoMarcas();
-            }
-            else if (!result.Canceled && (bool)result.Data == false)
-            {
-                Snack.Add("Tivemos um problema ao tentar atualizar associação da marca!", Severity.Warning);
+                StateHasChanged();
             }
         }
         catch (Exception e)
@@ -560,14 +558,16 @@
             var param = new DialogParameters { ["_marcaForm"] = marca.Clone() };
             var dialog = Dialog.Show<MarcasFormCmp>("Atualizar Marca", param, options);
             var result = await dialog.Result;
-            if (!result.Canceled && (bool)result.Data == true)
+            if (!result.Canceled)
             {
+                marca = (Marcas)result.Data;
+                var index = _listarMarcas.FindIndex(ip => ip.id == marca!.id);
+                if (index != -1)
+                {
+                    _listarMarcas[index] = marca!;
+                }
                 Snack.Add("Marca atualizada com sucesso!", Severity.Success);
-                await LimparEListarMarcas();
-            }
-            else if (!result.Canceled && (bool)result.Data == false)
-            {
-                Snack.Add("Tivemos um problema ao tentar atualizar a marca!", Severity.Warning);
+                StateHasChanged();
             }
         }
         catch (Exception e)
