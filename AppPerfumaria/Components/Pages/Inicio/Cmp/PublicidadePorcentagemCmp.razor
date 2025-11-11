@@ -1,0 +1,280 @@
+﻿@using AppPerfumaria.Api.ReinoCompany
+@using AppPerfumaria.Models.Auth
+@using AppPerfumaria.Models.Tables
+@using SkiaSharp
+@using System.Globalization
+
+@inject IJSRuntime JS
+@inject IDialogService Dialog
+@inject ISnackbar Snack
+
+<MudDialog>
+    <DialogContent>
+        @if (!string.IsNullOrEmpty(_imagemMontadaBase64))
+        {
+            <div>
+                <MudIconButton Style="position:absolute;"
+                Variant="Variant.Filled" Color="Color.Secondary" Size="Size.Small"
+                Icon="@Icons.Material.Filled.Share" @onclick="CompartilharImagem" />
+                <MudImage Class="rounded-lg w-100" Src="@($"data:image/png;base64,{_imagemMontadaBase64}")" />
+            </div>
+        }
+        else
+        {
+            <div class="d-flex flex-column align-items-center justify-content-center py-2">
+                <MudProgressCircular Indeterminate="true" Color="Color.Default" />
+            </div>
+        }
+    </DialogContent>
+    <DialogActions>
+
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance? _mudDialog { get; set; }
+    [Parameter]
+    public Auth? _auth { get; set; }
+    [Parameter]
+    public Estoques? _estoque { get; set; }
+    public ProdutosDivulgacoes? _produtoDivulgacao;
+    private string _imagemMontadaBase64 = string.Empty;
+    private string _caminhoImagemGerada = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await BuscarColunaProdutoDivulgacao();
+        await GerarImagemComPreco();
+        StateHasChanged();
+    }
+
+    private async Task BuscarColunaProdutoDivulgacao()
+    {
+        try
+        {
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.ProdutosDivulagacoesBuscarColuna(_auth!.token!, _estoque!.produtos_id, "img_padrao_1");
+
+            if (response!.status)
+            {
+                _produtoDivulgacao = response!.data!;
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+            }
+
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar buscar a divulgação do produto!", Severity.Warning);
+        }
+    }
+
+    private async Task GerarImagemComPreco()
+    {
+        try
+        {
+            var base64 = _produtoDivulgacao.img_padrao_1;
+            var imageBytes = Convert.FromBase64String(base64);
+
+            using var originalImage = SKBitmap.Decode(imageBytes);
+            int largura = originalImage.Width;
+            int altura = originalImage.Height;
+
+            using var bitmap = new SKBitmap(largura, altura);
+            using var canvas = new SKCanvas(bitmap);
+
+            canvas.DrawBitmap(originalImage, 0, 0);
+
+            // Caminho absoluto para o arquivo dentro do wwwroot
+            var caminhoBlackFirday = Path.Combine(FileSystem.Current.AppDataDirectory, "wwwroot/img/divulgacoes/black_friday.png");
+            if (!File.Exists(caminhoBlackFirday))
+            {
+                // Carrega imagem da Black Friday
+                using var stream = await FileSystem.OpenAppPackageFileAsync("wwwroot/img/divulgacoes/black_friday.png");
+                using var mem = new MemoryStream();
+                await stream.CopyToAsync(mem);
+                var bytes = mem.ToArray();
+                using var etiquetaBitmap = SKBitmap.Decode(bytes);
+
+                // Define tamanho e posição
+                float larguraEtiqueta = 500;
+                float alturaEtiqueta = 500;
+                float left = 620;
+                float right = left + larguraEtiqueta;
+                float top = 1100;
+                float bottom = top + alturaEtiqueta;
+
+                var destino = new SKRect(left, top, right, bottom);
+                canvas.DrawBitmap(etiquetaBitmap, destino);
+            }
+
+            // Caminho absoluto para o arquivo dentro do wwwroot
+            var caminhoEtiqueta = Path.Combine(FileSystem.Current.AppDataDirectory, "wwwroot/img/divulgacoes/etiqueta_promocao.png");
+            if (!File.Exists(caminhoEtiqueta))
+            {
+                // Carrega imagem da etiqueta de promoção
+                using var stream = await FileSystem.OpenAppPackageFileAsync("wwwroot/img/divulgacoes/etiqueta_promocao.png");
+                using var mem = new MemoryStream();
+                await stream.CopyToAsync(mem);
+                var bytes = mem.ToArray();
+                using var etiquetaBitmap = SKBitmap.Decode(bytes);
+
+                // Define tamanho e posição
+                float larguraEtiqueta = 400;
+                float alturaEtiqueta = 400;
+                float left = 580;
+                float right = left + larguraEtiqueta;
+                float top = 1230;
+                float bottom = top + alturaEtiqueta;
+
+                // Salva o estado atual do canvas
+                canvas.Save();
+
+                // Rotaciona em torno do centro da etiqueta
+                canvas.RotateDegrees(14);
+
+                var destino = new SKRect(left, top, right, bottom);
+                canvas.DrawBitmap(etiquetaBitmap, destino);
+
+                // Restaura o estado original do canvas
+                canvas.Restore();
+            }
+
+            canvas.RotateDegrees(9);
+
+            // Configurar o estilo do texto
+            using var paint = new SKPaint
+                {
+                    Color = SKColors.DarkRed,
+                    TextSize = 58,
+                    IsAntialias = true,
+                    TextAlign = SKTextAlign.Center,
+                    Typeface = SKTypeface.FromFamilyName("Arial", SKFontStyle.Bold)
+                };
+
+            // Adicionando valor à vista
+            if (_estoque.preco_venda_avista != null)
+            {
+                string precoDesconto = _estoque.preco_venda_desconto?.ToString("N2", new CultureInfo("pt-BR"));
+                string textoPorCartao = $"Por: {precoDesconto}";
+                canvas.DrawText(textoPorCartao, 610, 1330, paint);
+
+                string precoAvista = _estoque.preco_venda_avista?.ToString("N2", new CultureInfo("pt-BR")); ;
+                string textoPorAvista = $"        {precoAvista}";
+                canvas.DrawText(textoPorAvista, 610, 1390, paint);
+            }
+            else
+            {
+                string precoDesconto = _estoque.preco_venda_desconto?.ToString("N2", new CultureInfo("pt-BR"));
+                string textoPorCartao = $"Por: {precoDesconto}";
+                canvas.DrawText(textoPorCartao, 640, 1330, paint);
+            }
+
+            // Adicionando porcentagem de desconto
+            if (_estoque.preco_venda_avista != null)
+            {
+                paint.Color = SKColors.White;
+                paint.TextSize = 100;
+                string descontoVenda = _estoque.desconto_venda?.ToString("F0");
+                string textoPorcentagemDesconto = $"{descontoVenda}%";
+                canvas.DrawText(textoPorcentagemDesconto, 650, 1545, paint);
+            }
+
+            paint.Color = SKColors.Black;
+            paint.TextSize = 40;
+
+            if (_estoque.preco_venda_avista != null)
+            {
+                string textoCartao = "(cartão)";
+                canvas.DrawText(textoCartao, 851, 1330, paint);
+                string textoAvista = "(à vista)";
+                canvas.DrawText(textoAvista, 851, 1390, paint);
+            }
+            else
+            {
+                string textoCartaoAvista = "(cartão ou à vista)";
+                canvas.DrawText(textoCartaoAvista, 650, 1390, paint);
+            }
+
+            paint.TextSize = 50;
+
+            string precoSemDesconto = string.Empty;
+            float deX = 0;
+            if (_estoque.preco_venda_avista != null)
+            {
+                precoSemDesconto = _estoque.preco_venda_original?.ToString("N2", new CultureInfo("pt-BR"));
+                string textoDe = $"De: {precoSemDesconto}";
+                deX = 610;
+                canvas.DrawText(textoDe, deX, 1260, paint);
+            }
+            else
+            {
+                precoSemDesconto = _estoque.preco_venda_original?.ToString("N2", new CultureInfo("pt-BR"));
+                string textoDe = $"De: {precoSemDesconto}";
+                deX = 650;
+                canvas.DrawText(textoDe, deX, 1260, paint);
+            }
+
+            using var linhaPaint = new SKPaint
+            {
+                Color = SKColors.Black,
+                StrokeWidth = 4,
+                IsAntialias = true
+            };
+
+            float xInicio = deX - 35;
+            float larguraTexto = (paint.MeasureText(precoSemDesconto) + 50);
+            float xFim = (xInicio + larguraTexto) - 35;
+            float yLinha = 1260 - paint.TextSize / 3;
+
+            canvas.DrawLine(xInicio, yLinha, xFim, yLinha, linhaPaint);
+
+            using var imagemFinal = SKImage.FromBitmap(bitmap);
+            using var dados = imagemFinal.Encode(SKEncodedImageFormat.Png, 100);
+            var caminho = Path.Combine(FileSystem.CacheDirectory, "oferta_produto.png");
+
+            if (File.Exists(caminho))
+                File.Delete(caminho);
+
+            using (var stream = File.OpenWrite(caminho))
+                dados.SaveTo(stream);
+
+            _imagemMontadaBase64 = Convert.ToBase64String(dados.ToArray());
+            _caminhoImagemGerada = caminho;
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar gerar a imagem!", Severity.Warning);
+        }
+    }
+
+    private async Task CompartilharImagem()
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(_caminhoImagemGerada) || !File.Exists(_caminhoImagemGerada))
+            {
+                Snack.Add("Imagem ainda não foi gerada para compartilhamento.", Severity.Warning);
+                return;
+            }
+
+            await Share.RequestAsync(new ShareFileRequest
+                {
+                    Title = $"{_estoque!.produto!.nome}",
+                    File = new ShareFile(_caminhoImagemGerada)
+                });
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar compartilhar a imagem!", Severity.Warning);
+        }
+    }
+}

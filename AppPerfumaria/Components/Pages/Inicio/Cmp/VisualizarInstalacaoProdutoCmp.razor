@@ -104,9 +104,9 @@
                     <MudDivider Class="mt-2" />
                     <MudGrid Spacing="2" Justify="Justify.Center" Class="mb-1">
                         @foreach (var (index, value) in _instalacaoProduto!.estoque.Where(w => w.status != "Inativo")
-                                                                              .Select((value, index) => (index, value))
-                                                                              .OrderBy(o => o.value.vencimento != null ? 0 : 1)
-                                                                              .ThenBy(o => o.value.vencimento))
+                                                                           .Select((value, index) => (index, value))
+                                                                           .OrderBy(o => o.value.vencimento != null ? 0 : 1)
+                                                                           .ThenBy(o => o.value.vencimento))
                         {
                             <MudItem xs="12">
                                 <MudPaper Class="pa-2 mt-1" Elevation="1" Style="@($"background:{Colors.BlueGray.Lighten5};")">
@@ -119,11 +119,18 @@
                                             </div>
                                         }
                                         <MudSpacer />
-                                        @if (_existeImagemDivulgacao != null && _existeImagemDivulgacao == true)
+                                        @if (_existeDivulgacaoPromocional != null && _existeDivulgacaoPromocional == true)
                                         {                                  
                                             <MudIconButton Icon="@Icons.Material.Filled.Share"
                                                            Variant="Variant.Filled" Color="Color.Default" Size="Size.Small"
-                                                           OnClick="(() => CompartilharProduto(value))" />
+                                                           OnClick="(() => CompartilharDivulgacaoPromocional(value))" />
+                                        }
+                                        <MudSpacer />
+                                        @if (_existeDivulgacaoPorcentagem != null && _existeDivulgacaoPorcentagem == true)
+                                        {
+                                            <MudIconButton Icon="@Icons.Material.Filled.Share"
+                                                           Variant="Variant.Filled" Color="Color.Default" Size="Size.Small"
+                                                           OnClick="(() => CompartilharDivulgacaoPorcentagem(value))" />
                                         }
                                         <MudSpacer />
                                         <MudIconButton Icon="@(_produtosCarinho?.FirstOrDefault(w => w.id == value!.id) != null ? Icons.Material.Filled.RemoveShoppingCart : Icons.Material.Filled.AddShoppingCart)"
@@ -210,7 +217,8 @@
     private Instalacoes? _instalacao;
     private List<Estoques>? _produtosCarinho;
     private bool _carregando = true;
-    private bool? _existeImagemDivulgacao = false;
+    private bool? _existeDivulgacaoPromocional = false;
+    private bool? _existeDivulgacaoPorcentagem = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -229,7 +237,9 @@
         }
         while (_auth == null || _instalacao == null || _produtosCarinho == null);
 
-        await existeImagemDivulgacao();
+        await existeDivulgacaoPromocional();
+        await existeDivulgacaoPorcentagem();
+
         _carregando = false;
         StateHasChanged();
     }
@@ -265,7 +275,7 @@
         }
     }
 
-    private async Task existeImagemDivulgacao()
+    private async Task existeDivulgacaoPromocional()
     {
         try
         {
@@ -274,7 +284,7 @@
 
             if (response!.status)
             {
-                _existeImagemDivulgacao = response!.data!.exists;
+                _existeDivulgacaoPromocional = response!.data!.exists;
             }
             else
             {
@@ -292,7 +302,34 @@
         }
     }
 
-    public async Task CompartilharProduto(Estoques item)
+    private async Task existeDivulgacaoPorcentagem()
+    {
+        try
+        {
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.ProdutosDivulagacoesExisteValorColuna(_auth!.token!, _instalacaoProduto!.produtos_id, "img_padrao_1");
+
+            if (response!.status)
+            {
+                _existeDivulgacaoPorcentagem = response!.data!.exists;
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+            }
+
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar buscar a divulgação do produto!", Severity.Warning);
+        }
+    }
+
+    public async Task CompartilharDivulgacaoPromocional(Estoques item)
     {
         var itemProduto = item.Clone();
         itemProduto!.produto = _instalacaoProduto!.produto;
@@ -310,23 +347,39 @@
                 ["_auth"] = _auth,
                 ["_estoque"] = itemProduto
             };
-        var dialog = Dialog.Show<PublicidadeProdutoCmp>("Compartilhar Produto", param, options);
+        var dialog = Dialog.Show<PublicidadePromocionalCmp>("Divulgação Promocional", param, options);
         var result = await dialog.Result;
         if (!result.Canceled && (bool)result.Data == true)
         {
-            Snack.Add("Item criado no estoque com sucesso!", Severity.Success);
+            Snack.Add("Produto compartilhado com sucesso!", Severity.Success);
         }
-        else if (!result.Canceled && (bool)result.Data == false)
+    }
+
+    public async Task CompartilharDivulgacaoPorcentagem(Estoques item)
+    {
+        var itemProduto = item.Clone();
+        itemProduto!.produto = _instalacaoProduto!.produto;
+
+        var options = new DialogOptions
+            {
+                MaxWidth = MaxWidth.ExtraExtraLarge,
+                FullWidth = true,
+                BackdropClick = false,
+                CloseButton = true,
+                Position = DialogPosition.TopCenter
+            };
+        var param = new DialogParameters
+            {
+                ["_auth"] = _auth,
+                ["_estoque"] = itemProduto
+            };
+        var dialog = Dialog.Show<PublicidadePorcentagemCmp>("Divulgação Porcentagem", param, options);
+        var result = await dialog.Result;
+        if (!result.Canceled && (bool)result.Data == true)
         {
-            Snack.Add("Tivemos um problema ao tentar criar item no estoque!", Severity.Warning);
+            Snack.Add("Produto compartilhado com sucesso!", Severity.Success);
         }
-    // }
-    // catch (Exception e)
-    // {
-    //     Snack.Add("Tivemos um problema ao tentar criar item no estoque!", Severity.Warning);
-    //     _carregando = false;
-    // }
-}
+    }
 
     public async Task AdicionarOuRemoverCarinho(Estoques item)
     {
