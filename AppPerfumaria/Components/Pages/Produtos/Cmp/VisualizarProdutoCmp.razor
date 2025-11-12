@@ -1,9 +1,11 @@
 ﻿@using AppPerfumaria.Api.ReinoCompany
 @using AppPerfumaria.Components.CmpsGerais
+@using AppPerfumaria.Exceptions
 @using AppPerfumaria.Models.Auth
 @using AppPerfumaria.Models.Tables
 
 @inject IDialogService Dialog
+@inject ExceptionService ExceptionService
 @inject ISnackbar Snack
 
 <MudDialog ContentClass="bg-gray py-5" TitleClass="d-flex pb-0 pt-2">

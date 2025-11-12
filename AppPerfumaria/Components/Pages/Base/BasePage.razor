@@ -2,12 +2,14 @@
 @using AppPerfumaria.Api.ReinoCompany
 @using AppPerfumaria.Components.CmpsGerais
 @using AppPerfumaria.Components.Pages.Base.Cmp
+@using AppPerfumaria.Exceptions
 @using AppPerfumaria.Models.Auth
 @using AppPerfumaria.Models.Tables
 @using System.Globalization
 @using AppPerfumaria.Services
 
 @inject IDialogService Dialog
+@inject ExceptionService ExceptionService
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 @inject NavigationManager Nav
 @inject ISnackbar Snack
@@ -637,8 +639,7 @@
             var reinoCompany = new ReinoCompany();
             var response = await reinoCompany.Deslogar(_auth!.token!);
 
-            if (response!.status ||
-            !response.status && response.message == "Token de autenticação inválido.")
+            if (response!.status)
             {
                 await LocalStorage.RemoveItemAsync("auth");
                 await LocalStorage.RemoveItemAsync("instalacao");
@@ -655,7 +656,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar deslogar!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar deslogar!");
             _carregando = false;
         }
     }

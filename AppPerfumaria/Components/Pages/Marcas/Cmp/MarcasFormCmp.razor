@@ -1,10 +1,12 @@
 ﻿@using AppPerfumaria.Api.ReinoCompany
 @using AppPerfumaria.Components.CmpsGerais
+@using AppPerfumaria.Exceptions
 @using AppPerfumaria.Models.Auth
 @using AppPerfumaria.Models.Resources
 @using AppPerfumaria.Models.Tables
 
 @inject IDialogService Dialog
+@inject ExceptionService ExceptionService
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 @inject ISnackbar Snack
 
@@ -250,7 +252,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar salvar!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar salvar!");
             _verificando = false;
             _carregando = false;
         }

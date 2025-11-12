@@ -1,6 +1,7 @@
 ﻿@using AppPerfumaria.Api.ReinoCompany
 @using AppPerfumaria.Components.CmpsGerais
 @using AppPerfumaria.Components.Pages.Vendas.Cmp
+@using AppPerfumaria.Exceptions
 @using AppPerfumaria.Models.Auth
 @using System.Text.Json.Serialization
 @using AppPerfumaria.Models.Collections
@@ -9,6 +10,7 @@
 @using System.Globalization
 
 @inject IDialogService Dialog
+@inject ExceptionService ExceptionService
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 @inject ISnackbar Snack
 
@@ -652,7 +654,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar listar as formas de pagamento!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar listar as formas de pagamento!");
         }
     }
 
@@ -688,7 +690,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar listar os colaboradores!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar listar os colaboradores!");
             return new List<InstalacoesColaboradores>();
         }
     }
@@ -725,7 +727,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar listar os clientes!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar listar os clientes!");
             return new List<Clientes>();
         }
     }
@@ -774,7 +776,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar listar as vendas!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar listar as vendas!");
             _carregando = false;
         }
     }
@@ -925,7 +927,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar buscar a venda!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar buscar a venda!");
             _carregando = false;
         }
     }
@@ -964,7 +966,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar deletar a venda!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar deletar a venda!");
             _carregando = false;
         }
     }

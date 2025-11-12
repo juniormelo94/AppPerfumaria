@@ -1,6 +1,7 @@
 ﻿@using AppPerfumaria.Api.ReinoCompany
 @using AppPerfumaria.Components.CmpsGerais
 @using AppPerfumaria.Components.Pages.MaquinasCartao.Cmp
+@using AppPerfumaria.Exceptions
 @using AppPerfumaria.Models.Auth
 @using System.Text.Json.Serialization
 @using AppPerfumaria.Models.Collections
@@ -8,6 +9,7 @@
 @using AppPerfumaria.Models.Tables
 
 @inject IDialogService Dialog
+@inject ExceptionService ExceptionService
 @inject ISnackbar Snack
 
 <MudOverlay DarkBackground Visible="_carregando" ZIndex="10">
@@ -244,7 +246,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar listar as máquinas de cartão dessa instalação!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar listar as máquinas de cartão dessa instalação!");
             _carregando = false;
         }
     }
@@ -369,7 +371,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar deletar a máquina de cartão!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar deletar a máquina de cartão!");
             _carregando = false;
         }
     }

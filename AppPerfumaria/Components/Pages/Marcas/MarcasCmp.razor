@@ -1,6 +1,7 @@
 ﻿@using AppPerfumaria.Api.ReinoCompany
 @using AppPerfumaria.Components.CmpsGerais
 @using AppPerfumaria.Components.Pages.Marcas.Cmp
+@using AppPerfumaria.Exceptions
 @using AppPerfumaria.Models.Auth
 @using System.Text.Json.Serialization
 @using AppPerfumaria.Models.Collections
@@ -8,6 +9,7 @@
 @using AppPerfumaria.Models.Tables
 
 @inject IDialogService Dialog
+@inject ExceptionService ExceptionService
 @inject ISnackbar Snack
 
 <MudOverlay DarkBackground Visible="_carregando" ZIndex="10">
@@ -343,7 +345,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar listar as marcas dessa instalação!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar listar as marcas dessa instalação!");
             _carregando = false;
         }
     }
@@ -385,7 +387,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar listar as marcas!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar listar as marcas!");
             _carregando = false;
         }
     }
@@ -477,7 +479,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar associar a marca!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar associar a marca!");
             _carregando = false;
         }
     }
@@ -611,7 +613,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar deletar associação a marca!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar deletar associação a marca!");
             _carregando = false;
         }
     }
@@ -650,7 +652,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar deletar a marca!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar deletar a marca!");
             _carregando = false;
         }
     }

@@ -1,6 +1,7 @@
 ﻿@using AppPerfumaria.Api.ReinoCompany
 @using AppPerfumaria.Components.CmpsGerais
 @using AppPerfumaria.Components.Pages.Produtos.Cmp
+@using AppPerfumaria.Exceptions
 @using AppPerfumaria.Models.Auth
 @using System.Text.Json.Serialization
 @using AppPerfumaria.Models.Collections
@@ -9,6 +10,7 @@
 @using ZXing.Net.Maui
 
 @inject IDialogService Dialog
+@inject ExceptionService ExceptionService
 @inject ISnackbar Snack
 
 <MudOverlay DarkBackground Visible="_carregando" ZIndex="10">
@@ -429,7 +431,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar listar as marcas!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar listar as marcas!");
         }
     }
 
@@ -470,7 +472,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar listar os produtos dessa instalação!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar listar os produtos dessa instalação!");
             _carregando = false;
         }
     }
@@ -512,7 +514,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar listar os produtos!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar listar os produtos!");
             _carregando = false;
         }
     }
@@ -615,7 +617,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar associar o produto!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar associar o produto!");
             _carregando = false;
         }
     }
@@ -750,7 +752,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar deletar associação ao produto!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar deletar associação ao produto!");
             _carregando = false;
         }
     }
@@ -789,7 +791,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar deletar o produto!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar deletar o produto!");
             _carregando = false;
         }
     }

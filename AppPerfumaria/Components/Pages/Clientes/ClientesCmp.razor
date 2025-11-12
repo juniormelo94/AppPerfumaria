@@ -1,6 +1,7 @@
 ﻿@using AppPerfumaria.Api.ReinoCompany
 @using AppPerfumaria.Components.CmpsGerais
 @using AppPerfumaria.Components.Pages.Clientes.Cmp
+@using AppPerfumaria.Exceptions
 @using AppPerfumaria.Models.Auth
 @using System.Text.Json.Serialization
 @using AppPerfumaria.Models.Collections
@@ -8,6 +9,7 @@
 @using AppPerfumaria.Models.Tables
 
 @inject IDialogService Dialog
+@inject ExceptionService ExceptionService
 @inject ISnackbar Snack
 
 <MudOverlay DarkBackground Visible="_carregando" ZIndex="10">
@@ -343,7 +345,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar listar os clientes dessa instalação!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar listar os clientes dessa instalação!");
             _carregando = false;
         }
     }
@@ -385,7 +387,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar listar os clientes!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar listar os clientes!");
             _carregando = false;
         }
     }
@@ -480,7 +482,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar associar o cliente!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar associar o cliente!");
             _carregando = false;
         }
     }
@@ -615,7 +617,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar deletar associação o cliente!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar deletar associação o cliente!");
             _carregando = false;
         }
     }
@@ -654,7 +656,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar deletar o cliente!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar deletar o cliente!");
             _carregando = false;
         }
     }

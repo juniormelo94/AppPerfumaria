@@ -1,11 +1,13 @@
 ﻿@using AppPerfumaria.Api.ReinoCompany
+@using AppPerfumaria.Exceptions
 @using AppPerfumaria.Models.Auth
 @using AppPerfumaria.Models.Tables
 @using SkiaSharp
 @using System.Globalization
 
-@inject IJSRuntime JS
+@inject ExceptionService ExceptionService
 @inject IDialogService Dialog
+@inject IJSRuntime JS
 @inject ISnackbar Snack
 
 <MudDialog>
@@ -72,7 +74,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar buscar a divulgação do produto!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar buscar a divulgação do produto!");
         }
     }
 

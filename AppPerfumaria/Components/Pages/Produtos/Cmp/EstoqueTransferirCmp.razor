@@ -1,10 +1,12 @@
 ﻿@using AppPerfumaria.Api.ReinoCompany
 @using AppPerfumaria.Components.CmpsGerais
+@using AppPerfumaria.Exceptions
 @using AppPerfumaria.Models.Auth
 @using AppPerfumaria.Models.Resources
 @using AppPerfumaria.Models.Tables
 
 @inject IDialogService Dialog
+@inject ExceptionService ExceptionService
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 @inject ISnackbar Snack
 
@@ -61,29 +63,38 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _auth = await LocalStorage.GetItemAsync<Auth>("auth");
-        _instalacao = await LocalStorage.GetItemAsync<Instalacoes>("instalacao");
-
-        List<string>? instalacoes_ids = _auth?.data?.colaborador_user?.instalacoes_ids;
-        var reinoCompany = new ReinoCompany();
-        string filtros = $"?status=ativo&divisoes_id={_instalacao.divisoes_id}";
-        var response = await reinoCompany.InstalacoesListar(_auth!.token!, filtros);
-
-        if (response!.status)
+        try
         {
-            _instalacoes = response!.data!.Where(instalacao => instalacoes_ids.Contains(instalacao.id.ToString()))
-                                          .ToList();
-        }
-        else
-        {
-            if (!string.IsNullOrEmpty(response.message))
+            _auth = await LocalStorage.GetItemAsync<Auth>("auth");
+            _instalacao = await LocalStorage.GetItemAsync<Instalacoes>("instalacao");
+
+            List<string>? instalacoes_ids = _auth?.data?.colaborador_user?.instalacoes_ids;
+            var reinoCompany = new ReinoCompany();
+            string filtros = $"?status=ativo&divisoes_id={_instalacao.divisoes_id}";
+            var response = await reinoCompany.InstalacoesListar(_auth!.token!, filtros);
+
+            if (response!.status)
             {
-                Snack.Add(response.message, Severity.Warning);
+                _instalacoes = response!.data!.Where(instalacao => instalacoes_ids.Contains(instalacao.id.ToString()))
+                                              .ToList();
             }
-        }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+            }
 
-        _carregando = false;
-        StateHasChanged();
+            _carregando = false;
+            StateHasChanged();
+        }
+        catch(Exception e)
+        {
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar listar instalações!");
+            _carregando = false;
+            StateHasChanged();
+        }
     }
 
     private async Task ValidarDadosForm()
@@ -205,7 +216,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar salvar!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar salvar!");
             _verificando = false;
             _carregando = false;
         }

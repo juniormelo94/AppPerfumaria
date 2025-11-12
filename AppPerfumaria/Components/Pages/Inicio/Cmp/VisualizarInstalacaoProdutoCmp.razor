@@ -1,11 +1,13 @@
 ﻿@using AppPerfumaria.Api.ReinoCompany
 @using AppPerfumaria.Components.CmpsGerais
+@using AppPerfumaria.Exceptions
 @using AppPerfumaria.Models.Auth
 @using AppPerfumaria.Models.Tables
 @using System.Globalization
 @using AppPerfumaria.Services
 
 @inject IDialogService Dialog
+@inject ExceptionService ExceptionService
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 @inject ISnackbar Snack
 @inject Carrinho Carrinho
@@ -270,7 +272,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar atualizar o produto!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar atualizar o produto!");
             _carregando = false;
         }
     }
@@ -298,7 +300,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar buscar a divulgação do produto!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar buscar a divulgação do produto!");
         }
     }
 
@@ -325,7 +327,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar buscar a divulgação do produto!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar buscar a divulgação do produto!");
         }
     }
 

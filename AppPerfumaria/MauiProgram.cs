@@ -1,4 +1,5 @@
-﻿using AppPerfumaria.Services;
+﻿using AppPerfumaria.Exceptions;
+using AppPerfumaria.Services;
 using Blazored.LocalStorage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Controls.Compatibility.Hosting;
@@ -26,6 +27,7 @@ namespace AppPerfumaria
             builder.Services.AddMauiBlazorWebView();
             builder.Services.AddBlazoredLocalStorage();
             builder.Services.AddSingleton<Carrinho>();
+            builder.Services.AddScoped<ExceptionService>();
 
 
             // Registre MainPage como um serviço singleton ou transitório

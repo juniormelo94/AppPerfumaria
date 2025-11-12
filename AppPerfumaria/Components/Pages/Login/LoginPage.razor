@@ -3,12 +3,14 @@
 @using AppPerfumaria.Api.ReinoCompany
 @using AppPerfumaria.Components.CmpsGerais
 @using System.ComponentModel.DataAnnotations
+@using AppPerfumaria.Exceptions
 @using AppPerfumaria.Models.Auth
 @using AppPerfumaria.Models.Collections
 @using AppPerfumaria.Models.Forms
 @using AppPerfumaria.Models.Resources
 @using AppPerfumaria.Models.Tables
 
+@inject ExceptionService ExceptionService
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 @inject NavigationManager Nav
 @inject ISnackbar Snack
@@ -171,7 +173,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar logar!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar logar!");
             _verificando = false;
             _carregando = false;
         }
@@ -236,7 +238,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar validar acesso!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar validar acesso!");
             _verificando = false;
             _carregando = false;
         }
@@ -270,7 +272,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar voltar!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar voltar!");
             _verificando = false;
             _carregando = false;
         }
