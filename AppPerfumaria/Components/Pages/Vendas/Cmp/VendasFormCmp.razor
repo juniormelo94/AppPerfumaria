@@ -104,19 +104,22 @@
                 </MudAutocomplete>
                 <ValidationMessage For="() => _vendaForm.clientes_id" />
 
-@*                 <MudAutocomplete T="InstalacoesColaboradores" Label="Colaborador*" Disabled="_verificando"
-                                 Value="@(_listarInstalacoesColaboradores?.FirstOrDefault(ic => ic.colaborador!.id == _vendaForm!.colaboradores_id))"
-                                 SearchFunc="@PesquisarInstalacoesColaboradores" ToStringFunc="@(ic => ic?.colaborador!.nome_completo.ToUpper())"
-                                 ValueChanged="@((InstalacoesColaboradores ic) => { _vendaForm!.colaboradores_id = ic.colaborador!.id; })"
-                                 CloseIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Default" Variant="Variant.Outlined"
-                                 Strict="false" Margin="Margin.Dense" ShowProgressIndicator="true" ClearIcon="@Icons.Material.Filled.Clear" Clearable="true">
-                    <NoItemsTemplate>
-                        <MudText Align="Align.Center" Class="px-4 py-1">
-                            Nenhum resultado encontrado!
-                        </MudText>
-                    </NoItemsTemplate>
-                </MudAutocomplete>
-                <ValidationMessage For="() => _vendaForm.colaboradores_id" /> *@
+                @if (_vendaForm!.id > 0)
+                {
+                    <MudAutocomplete T="InstalacoesColaboradores" Label="Colaborador*" Disabled="_verificando"
+                                     Value="@(_listarInstalacoesColaboradores?.FirstOrDefault(ic => ic.colaborador!.id == _vendaForm!.colaboradores_id))"
+                                     SearchFunc="@PesquisarInstalacoesColaboradores" ToStringFunc="@(ic => ic?.colaborador!.nome_completo.ToUpper())"
+                                     ValueChanged="@((InstalacoesColaboradores ic) => { _vendaForm!.colaboradores_id = ic.colaborador!.id; })"
+                                     CloseIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Default" Variant="Variant.Outlined"
+                                     Strict="false" Margin="Margin.Dense" ShowProgressIndicator="true" ClearIcon="@Icons.Material.Filled.Clear" Clearable="true">
+                        <NoItemsTemplate>
+                            <MudText Align="Align.Center" Class="px-4 py-1">
+                                Nenhum resultado encontrado!
+                            </MudText>
+                        </NoItemsTemplate>
+                    </MudAutocomplete>
+                    <ValidationMessage For="() => _vendaForm.colaboradores_id" />
+                }
             </MudFocusTrap>
         </EditForm>
     </DialogContent>
@@ -170,7 +173,7 @@
         if (_vendaForm!.id > 0)
         {
             _pesquisarCliente = await BuscarCliente(_vendaForm!.clientes_id);
-            // _pesquisarColaborador = await BuscarColaborador(_vendaForm!.colaboradores_id);
+            _pesquisarColaborador = await BuscarColaborador(_vendaForm!.colaboradores_id);
         }
         else
         {
@@ -178,9 +181,9 @@
             _vendaForm!.instalacoes_id = _instalacao!.id;
         }
 
-        _listarFormasPagamentos = await ListarFormasPagamentos(_pesquisarColaborador!);
+        _listarFormasPagamentos = await ListarFormasPagamentos(_formaPagamento!);
         _listarClientes = await ListarClientes(_pesquisarCliente!);
-        // _listarInstalacoesColaboradores = await ListarInstalacoesColaboradores(_pesquisarColaborador!);
+        _listarInstalacoesColaboradores = await ListarInstalacoesColaboradores(_pesquisarColaborador!);
 
         _carregando = false;
         _verificando = false;
@@ -398,33 +401,33 @@
         }
     }
 
-    // private async Task<string?> BuscarColaborador(int colaboradorId)
-    // {
-    //     try
-    //     {
-    //         var reinoCompany = new ReinoCompany();
-    //         var response = await reinoCompany.ColaboradoresBuscar(_auth!.token!, colaboradorId);
+    private async Task<string?> BuscarColaborador(int colaboradorId)
+    {
+        try
+        {
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.ColaboradoresBuscar(_auth!.token!, colaboradorId);
 
-    //         if (response!.status)
-    //         {
-    //             return response!.data!.nome_completo;
-    //         }
-    //         else
-    //         {
-    //             if (!string.IsNullOrEmpty(response.message))
-    //             {
-    //                 Snack.Add(response.message, Severity.Warning);
-    //             }
-    //         }
+            if (response!.status)
+            {
+                return response!.data!.nome_completo;
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+            }
 
-    //         return "";
-    //     }
-    //     catch (Exception e)
-    //     {
-    //         ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar buscar colaborador!");
-    //         return "";
-    //     }
-    // }
+            return "";
+        }
+        catch (Exception e)
+        {
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar buscar colaborador!");
+            return "";
+        }
+    }
 
     private async Task<List<FormasPagamentos>?> ListarFormasPagamentos(string? pesquisar = null)
     {
@@ -550,8 +553,10 @@
             // {
             //     _vendaForm!.taxa_juros = -5.0;
             // }
-            _vendaForm!.status = "Ativo";
-            _vendaForm!.colaboradores_id = _auth!.data!.colaborador_user!.colaboradores_id!;
+
+
+            // _vendaForm!.status = "Ativo";
+            // _vendaForm!.colaboradores_id = _auth!.data!.colaborador_user!.colaboradores_id!;
             VendasResource? responseVenda;
 
             if (_vendaForm.id > 0)
@@ -560,6 +565,8 @@
             }
             else
             {
+                _vendaForm!.status = "Ativo";
+                _vendaForm!.colaboradores_id = _auth!.data!.colaborador_user!.colaboradores_id!;
                 responseVenda = await reinoCompany.VendasCriar(_auth!.token!, _vendaForm!);
             }
 

@@ -94,7 +94,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Components\Pages\Base\Cmp\" />
       <Folder Include="Components\Pages\Estoques\Cmp\" />
     </ItemGroup>
 
