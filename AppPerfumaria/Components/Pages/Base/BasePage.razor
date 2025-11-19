@@ -250,6 +250,11 @@
         <AppPerfumaria.Components.Pages.Estoques.EstoquesCmp 
         Auth="_auth" Instalacao="_instalacao" />
     }
+    else if (_nomePagina == "TiposUsuarios")
+    {
+        <AppPerfumaria.Components.Pages.TiposUsuarios.TiposUsuariosCmp 
+        Auth="_auth" Instalacao="_instalacao" />
+    }
 
     <MudLayout>
         @* Barra de menu inferior *@
@@ -332,6 +337,12 @@
                         <div class="d-flex">
                             <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.ListAlt" Color="Color.Surface" />
                             <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Estoques</MudText>
+                        </div>
+                    </MudNavLink>
+                    <MudNavLink OnClick="@(() => CarregarOpcaoMenu("TiposUsuarios"))">
+                        <div class="d-flex">
+                            <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.LockPerson" Color="Color.Surface" />
+                            <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Tipos de Usuários</MudText>
                         </div>
                     </MudNavLink>
 

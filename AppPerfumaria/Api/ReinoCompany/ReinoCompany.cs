@@ -18,6 +18,7 @@ namespace AppPerfumaria.Api.ReinoCompany
     {
         const string _baseUrl = "https://api.reinocompany.com.br";
 
+        #region Auth
         public async Task<AuthResource?> Logar(LoginForm loginForm)
         {
             var requestBody = new
@@ -37,6 +38,7 @@ namespace AppPerfumaria.Api.ReinoCompany
             string responseString = await request.PostAsync($"{_baseUrl}/api/deslogar", authorization: $"Bearer {token}");
             return JsonConvert.DeserializeObject<AuthResource>(responseString);
         }
+        #endregion
 
         #region Instalações
         public async Task<InstalacoesCollection?> InstalacoesListar(string token, string? filtros = null)
@@ -576,6 +578,80 @@ namespace AppPerfumaria.Api.ReinoCompany
             var request = new Request();
             string responseString = await request.GetAsync($"{_baseUrl}/api/produtosdivulgacoes/exists/{produtoId}", authorization: $"Bearer {token}");
             return JsonConvert.DeserializeObject<ProdutosDivulgacoesResource>(responseString);
+        }
+        #endregion
+
+        #region Permissões
+        public async Task<PermissoesCollection?> PermissoesListar(string token, string? filtros = null)
+        {
+            var request = new Request();
+            string responseString = await request.GetAsync($"{_baseUrl}/api/permissoes{filtros}", authorization: $"Bearer {token}");
+            return JsonConvert.DeserializeObject<PermissoesCollection>(responseString);
+        }
+
+        public async Task<PermissoesResource?> PermissoesCriar(string token, Permissoes permissao)
+        {
+            var request = new Request();
+            string responseString = await request.PostAsync($"{_baseUrl}/api/permissoes", authorization: $"Bearer {token}", data: permissao);
+            return JsonConvert.DeserializeObject<PermissoesResource>(responseString);
+        }
+
+        public async Task<PermissoesResource?> PermissoesBuscar(string token, int id)
+        {
+            var request = new Request();
+            string responseString = await request.GetAsync($"{_baseUrl}/api/permissoes/{id}", authorization: $"Bearer {token}");
+            return JsonConvert.DeserializeObject<PermissoesResource>(responseString);
+        }
+
+        public async Task<PermissoesResource?> PermissoesAtualizar(string token, Permissoes permissao)
+        {
+            var request = new Request();
+            string responseString = await request.PutAsync($"{_baseUrl}/api/permissoes/{permissao.id}", authorization: $"Bearer {token}", data: permissao);
+            return JsonConvert.DeserializeObject<PermissoesResource>(responseString);
+        }
+
+        public async Task<PermissoesResource?> PermissoesDeletar(string token, Permissoes permissao)
+        {
+            var request = new Request();
+            string responseString = await request.DeleteAsync($"{_baseUrl}/api/permissoes/{permissao.id}", authorization: $"Bearer {token}");
+            return JsonConvert.DeserializeObject<PermissoesResource>(responseString);
+        }
+        #endregion
+
+        #region Tipos Usuários
+        public async Task<TiposUsersCollection?> TiposUsersListar(string token, string? filtros = null)
+        {
+            var request = new Request();
+            string responseString = await request.GetAsync($"{_baseUrl}/api/tiposusers{filtros}", authorization: $"Bearer {token}");
+            return JsonConvert.DeserializeObject<TiposUsersCollection>(responseString);
+        }
+
+        public async Task<TiposUsersResource?> TiposUsersCriar(string token, TiposUsers tipoUser)
+        {
+            var request = new Request();
+            string responseString = await request.PostAsync($"{_baseUrl}/api/tiposusers", authorization: $"Bearer {token}", data: tipoUser);
+            return JsonConvert.DeserializeObject<TiposUsersResource>(responseString);
+        }
+
+        public async Task<TiposUsersResource?> TiposUsersBuscar(string token, int id)
+        {
+            var request = new Request();
+            string responseString = await request.GetAsync($"{_baseUrl}/api/tiposusers/{id}", authorization: $"Bearer {token}");
+            return JsonConvert.DeserializeObject<TiposUsersResource>(responseString);
+        }
+
+        public async Task<TiposUsersResource?> TiposUsersAtualizar(string token, TiposUsers tipoUser)
+        {
+            var request = new Request();
+            string responseString = await request.PutAsync($"{_baseUrl}/api/tiposusers/{tipoUser.id}", authorization: $"Bearer {token}", data: tipoUser);
+            return JsonConvert.DeserializeObject<TiposUsersResource>(responseString);
+        }
+
+        public async Task<TiposUsersResource?> TiposUsersDeletar(string token, TiposUsers tipoUser)
+        {
+            var request = new Request();
+            string responseString = await request.DeleteAsync($"{_baseUrl}/api/tiposusers/{tipoUser.id}", authorization: $"Bearer {token}");
+            return JsonConvert.DeserializeObject<TiposUsersResource>(responseString);
         }
         #endregion
     }
