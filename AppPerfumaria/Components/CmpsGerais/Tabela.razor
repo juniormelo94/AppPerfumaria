@@ -1,0 +1,79 @@
+﻿@using AppPerfumaria.Models.Pagination
+@typeparam TypeItem
+
+@if (ListItens != null && ListItens.Count() > 0)
+{
+    <MudPaper class="table-responsive">
+        <table class="table table-bordered table-hover bg-white mb-0">
+            <thead style="@StyleHead" class="@("table-light" + ClassHead)">
+                <tr>
+                    @Head
+                </tr>
+            </thead>
+            <tbody style="@StyleBody" class="@ClassBody">
+                @foreach (var item in ListItens)
+                {
+                    <tr @onclick="@(() => { OnClickBody.InvokeAsync(item); })">
+                        @Body(item)
+                    </tr>
+                }
+            </tbody>
+            <tfoot style="@StyleFoot" class="@("table-light fw-bold " + ClassFoot)">
+                <tr>
+                    @Footer
+                </tr>
+            </tfoot>
+        </table>
+    </MudPaper>
+
+    @if (Pagination != null)
+    {
+        <div class="pb-2">
+            <MudPagination Selected="_page" BoundaryCount="1" MiddleCount="3"
+                           SelectedChanged="(async(int p) => { _page = p; await OnClickPage.InvokeAsync(p); })"
+                            Count="@(Pagination!.last_page)" Class="pa-4"
+                            Rectangular="true" Variant="Variant.Filled" Size="Size.Small" />
+
+            <MudText Align="Align.Center" Typo="Typo.body2" Class="w-100">
+                @((MarkupString)$"<b>Total:</b> {Pagination!.total} | <b>Exibidos:</b> {Pagination!.from} à {Pagination!.to}")
+            </MudText>
+        </div>
+    }
+}
+else
+{
+    @if (!Carregando)
+    {
+        <MudItem Class="py-5" xs="12">
+            <Animate class="w-100" Animation="Animations.FadeDown" Duration="TimeSpan.FromSeconds(0.5)" Delay="TimeSpan.FromSeconds(0.4)">
+                <MudText Class="mt-5" Align="Align.Center" Typo="Typo.body1">Nenhum resultado foi encontrado!</MudText>
+            </Animate>
+        </MudItem>
+    }
+}
+
+@code {
+    [Parameter] public RenderFragment? Head { get; set; }
+    [Parameter] public RenderFragment<TypeItem>? Body { get; set; }
+    [Parameter] public RenderFragment? Footer { get; set; }
+    [Parameter] public List<TypeItem>? ListItens { get; set; }
+    [Parameter] public EventCallback<TypeItem> OnClickBody { get; set; }
+    [Parameter] public EventCallback<int> OnClickPage { get; set; }
+    [Parameter] public MetaPagination? Pagination { get; set; }
+    [Parameter] public string StyleHead { get; set; } = "";
+    [Parameter] public string StyleBody { get; set; } = "";
+    [Parameter] public string StyleFoot { get; set; } = "";
+    [Parameter] public string ClassHead { get; set; } = "";
+    [Parameter] public string ClassBody { get; set; } = "";
+    [Parameter] public string ClassFoot { get; set; } = "";
+    [Parameter] public bool Carregando { get; set; } = true;
+    private int _page = 1;
+
+    protected override void OnParametersSet()
+    {
+        if (ListItens == null)
+        {
+            ListItens = new List<TypeItem>();
+        }
+    }
+}
