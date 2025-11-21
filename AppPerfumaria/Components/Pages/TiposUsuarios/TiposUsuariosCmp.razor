@@ -1,6 +1,6 @@
 ﻿@using AppPerfumaria.Api.ReinoCompany
 @using AppPerfumaria.Components.CmpsGerais
-@using AppPerfumaria.Components.Pages.Marcas.Cmp
+@using AppPerfumaria.Components.Pages.TiposUsuarios.Cmp
 @using AppPerfumaria.Exceptions
 @using AppPerfumaria.Models.Auth
 @using System.Text.Json.Serialization
@@ -60,80 +60,57 @@
     <!-- Barra de card e botão criar -->
     <div class="d-flex">
         <MudTabs Elevation="4" Rounded="true" Centered="true" @ref="tabs">
-            <MudTabPanel Text="Tipos Usuários" OnClick="LimparEListarInstalacaoMarcas" />
-            <MudTabPanel Text="Permissões" OnClick="LimparEListarMarcas" />
+            <MudTabPanel Text="Tipos Usuários" OnClick="LimparEListarTiposUsers" />
+            <MudTabPanel Text="Permissões" OnClick="LimparEListarPermissoes" />
         </MudTabs>
         <MudSpacer />
-        <MudIconButton Icon="@Icons.Material.Filled.Add" OnClick="CriarMarca"
+        <MudIconButton Icon="@Icons.Material.Filled.Add" OnClick="CriarTipoUsuario"
                        Color="Color.Inherit" Size="Size.Medium" />
     </div>
 </MudPaper>
 
 <div class="pa-2" style="margin-top: 100px;">
-    @if (_indiceMenuMarca == 0)
+    @if (_indiceMenu == 0)
     {
-        <!-- Listar resultados das marcas associadas -->
-        <MudGrid Spacing="2" Justify="Justify.Center">
-            @if (_listarInstalacoesMarcas != null && _listarInstalacoesMarcas.Count() > 0)
-            {
-                @foreach (var instalacaoMarca in _listarInstalacoesMarcas)
-                {
-                    <MudItem xs="6">
-                        <MudCard Style="height: 350px;" @onclick="(() => VisualizarInstalacaoMarca(instalacaoMarca))">
-                            <MudIcon Style="position:absolute;" Class="mt-2 ml-2" Color="@(instalacaoMarca.status == "Ativo" ? Color.Dark : Color.Default)"
-                                     Icon="@(instalacaoMarca.status == "Ativo" ? Icons.Material.Filled.ThumbUp : @Icons.Material.Filled.ThumbDown)" />
-                            <MudCardMedia Image="@($"data:image/png;base64,{instalacaoMarca!.marca.logo_img}")" Height="200" />
-                            <MudCardContent Class="py-2">
-                                <MudText Class="fw-bold" Typo="Typo.caption">
-                                    @if (instalacaoMarca.marca.nome.Length > 48)
-                                    {
-                                        @($"{instalacaoMarca.marca.nome.Substring(0, 48).ToUpper()}...")
-                                    }
-                                    else
-                                    {
-                                        @instalacaoMarca.marca.nome.ToUpper()
-                                    }
-                                </MudText>
-                            </MudCardContent>
-                            <MudCardActions Class="d-block py-0 pb-1">
-                                <div class="d-flex mt-1 px-3">
-                                    <MudIconButton Size="Size.Medium" OnClick="(() => AtualizarInstalacaoMarca(instalacaoMarca))"
-                                                   Icon="@Icons.Material.Filled.Edit" />
-                                    <MudSpacer />
-                                    <MudIconButton Size="Size.Medium" OnClick="(() => DeletarInstalacaoMarca(instalacaoMarca))"
-                                                   Icon="@Icons.Material.Filled.Delete" />
-                                </div>
-                            </MudCardActions>
-                        </MudCard>
-                    </MudItem>
-                }
-
-                <MudItem Class="py-5" xs="12">
-                    @if (_paginacaoInstalacoesMarcas!.current_page != _paginacaoInstalacoesMarcas!.last_page)
+        <!-- Listar resultados dos tipos de usuários -->
+        <MudPaper Class="table-responsive">
+            <table class="table table-striped table-bordered table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Tipo</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (_listarTiposUsers != null && _listarTiposUsers.Count() > 0)
                     {
-                            <MudFab Class="w-100" Label="Carregar Mais" OnClick="CarregarMais"
-                                    Disabled="false" Size="Size.Small" />
+                        @foreach (var item in _listarTiposUsers)
+                        {
+                            <tr>
+                                <td>@item.tipo</td>
+                                <td>@item.status</td>
+                            </tr>
+                        }
                     }
+                </tbody>
+            </table>
 
-                    <MudText Align="Align.Center" Typo="Typo.body2" Class="mt-2 w-100">
-                        @($"Total: {_paginacaoInstalacoesMarcas!.total} | Exibidos: {_paginacaoInstalacoesMarcas!.to}")
-                    </MudText>
-                </MudItem>
+            @if (_paginacaoTiposUsers != null && 
+            _paginacaoTiposUsers!.current_page != _paginacaoTiposUsers!.last_page)
+            {         
+                <MudPagination Selected="_paginaPaginacao" BoundaryCount="1" MiddleCount="3"
+                               SelectedChanged="(async(int p) => { _paginaPaginacao = p; await CarregarMais(); })"
+                               Count="@(_paginacaoTiposUsers!.last_page)" Class="pa-4"
+                               Rectangular="true" Variant="Variant.Filled" Size="Size.Small" />
+
+                <MudText Align="Align.Center" Typo="Typo.body2" Class="w-100">
+                    @($"Total: {_paginacaoTiposUsers!.total} | Exibidos: {_paginacaoTiposUsers!.from} à {_paginacaoTiposUsers!.to}")
+                </MudText>
             }
-            else
-            {
-                @if (!_carregando)
-                {
-                    <MudItem Class="py-5" xs="12">
-                        <Animate class="w-100" Animation="Animations.FadeDown" Duration="TimeSpan.FromSeconds(0.5)" Delay="TimeSpan.FromSeconds(0.4)">
-                            <MudText Class="mt-5" Align="Align.Center" Typo="Typo.body1">Nenhum resultado foi encontrado!</MudText>
-                        </Animate>
-                    </MudItem>
-                }
-            }
-        </MudGrid>
+        </MudPaper>
+
     }
-    else if (_indiceMenuMarca == 1)
+    @* else if (_indiceMenu == 1)
     {
         <!-- Listar resultados das marcas -->
         <MudGrid Spacing="2" Justify="Justify.Center">
@@ -205,18 +182,18 @@
                 }
             }
         </MudGrid>
-    }
+    } *@
 </div>
 
 @code {
     [Parameter] public Auth? Auth { get; set; }
     [Parameter] public Instalacoes? Instalacao { get; set; }
-    private List<Marcas>? _listarMarcas = new List<Marcas>();
-    private List<InstalacoesMarcas>? _listarInstalacoesMarcas = new List<InstalacoesMarcas>();
-    private MetaPagination? _paginacaoMarcas;
-    private MetaPagination? _paginacaoInstalacoesMarcas;
+    private List<TiposUsers>? _listarTiposUsers = new List<TiposUsers>();
+    private List<Permissoes>? _listarPermissoes = new List<Permissoes>();
+    private MetaPagination? _paginacaoTiposUsers;
+    private MetaPagination? _paginacaoPermissoes;
     private MudTabs? tabs;
-    private int _indiceMenuMarca = 0;
+    private int _indiceMenu = 0;
     private bool _carregando = true;
     private bool _exibirFiltro = false;
     private string? _pesquisarFiltro;
@@ -233,7 +210,7 @@
         }
         while (Auth == null || Instalacao == null);
 
-        await ListarInstalacaoMarcas();
+        await ListarTiposUsers();
     }
 
     private async Task Pesquisar(string pesquisar)
@@ -248,15 +225,15 @@
 
     public async Task CarregarMais()
     {
-        if (_indiceMenuMarca == 0)
+        if (_indiceMenu == 0)
         {
             _paginaPaginacao++;
-            await ListarInstalacaoMarcas();
+            await ListarTiposUsers();
         }
         else
         {
             _paginaPaginacao++;
-            await ListarMarcas();
+            await ListarPermissoes();
         }
     }
 
@@ -267,7 +244,7 @@
 
     public string? PegarFiltros()
     {
-        string filtros = $"?instalacoes_id={Instalacao!.id}&page={_paginaPaginacao}&por_pagina={_porPagina}";
+        string filtros = $"?page={_paginaPaginacao}&por_pagina={_porPagina}";
 
         if (!string.IsNullOrEmpty(_pesquisarFiltro))
         {
@@ -277,10 +254,6 @@
         {
             filtros += $"&status={_statusFiltro}";
         }
-        if (_dataCriacaoFiltro.Start != null && _dataCriacaoFiltro.End != null)
-        {
-            filtros += $"&criado_de={_dataCriacaoFiltro.Start?.ToString("yyyy-MM-dd")}&criado_ate={_dataCriacaoFiltro.End?.ToString("yyyy-MM-dd")}";
-        }
 
         return filtros;
     }
@@ -289,24 +262,24 @@
     {
         _exibirFiltro = false;
 
-        if (_indiceMenuMarca == 0)
+        if (_indiceMenu == 0)
         {
-            await LimparEListarInstalacaoMarcas();
+            await LimparEListarTiposUsers();
         }
         else
         {
-            await LimparEListarMarcas();
+            await LimparEListarPermissoes();
         }
     }
 
-    public async Task LimparEListarInstalacaoMarcas()
+    public async Task LimparEListarTiposUsers()
     {
         _paginaPaginacao = 1;
-        _listarInstalacoesMarcas = new List<InstalacoesMarcas>();
-        await ListarInstalacaoMarcas();
+        _listarTiposUsers = new List<TiposUsers>();
+        await ListarTiposUsers();
     }
 
-    public async Task ListarInstalacaoMarcas()
+    public async Task ListarTiposUsers()
     {
         try
         {
@@ -315,12 +288,12 @@
             string? filtros = PegarFiltros();
 
             var reinoCompany = new ReinoCompany();
-            var response = await reinoCompany.InstalacoesMarcasListar(Auth!.token!, filtros);
+            var response = await reinoCompany.TiposUsersListar(Auth!.token!, filtros);
 
             if (response!.status)
             {
-                _paginacaoInstalacoesMarcas = response.meta;
-                _listarInstalacoesMarcas!.AddRange(response!.data!);
+                _paginacaoTiposUsers = response.meta;
+                _listarTiposUsers!.AddRange(response!.data!);
             }
             else
             {
@@ -330,25 +303,25 @@
                 }
             }
 
-            _indiceMenuMarca = 0;
+            _indiceMenu = 0;
             _carregando = false;
             StateHasChanged();
         }
         catch (Exception e)
         {
-            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar listar as marcas dessa instalação!");
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar listar os tipos de usuários!");
             _carregando = false;
         }
     }
 
-    public async Task LimparEListarMarcas()
+    public async Task LimparEListarPermissoes()
     {
         _paginaPaginacao = 1;
-        _listarMarcas = new List<Marcas>();
-        await ListarMarcas();
+        _listarPermissoes = new List<Permissoes>();
+        await ListarPermissoes();
     }
 
-    public async Task ListarMarcas()
+    public async Task ListarPermissoes()
     {
         try
         {
@@ -357,12 +330,12 @@
             string? filtros = PegarFiltros();
 
             var reinoCompany = new ReinoCompany();
-            var response = await reinoCompany.MarcasListar(Auth!.token!, filtros);
+            var response = await reinoCompany.PermissoesListar(Auth!.token!, filtros);
 
             if (response!.status)
             {
-                _paginacaoMarcas = response.meta;
-                _listarMarcas!.AddRange(response!.data!);
+                _paginacaoPermissoes = response.meta;
+                _listarPermissoes!.AddRange(response!.data!);
             }
             else
             {
@@ -372,7 +345,7 @@
                 }
             }
 
-            _indiceMenuMarca = 1;
+            _indiceMenu = 1;
             _carregando = false;
             StateHasChanged();
         }
@@ -385,97 +358,97 @@
 
     private void VisualizarInstalacaoMarca(InstalacoesMarcas instalacaoMarca)
     {
-        try
-        {
-            var options = new DialogOptions
-                {
-                    MaxWidth = MaxWidth.ExtraExtraLarge,
-                    FullWidth = true,
-                    FullScreen = true,
-                    CloseButton = false,
-                };
-            var param = new DialogParameters { ["_instalacaoMarca"] = instalacaoMarca };
-            Dialog.Show<VisualizarInstalacaoMarcaCmp>("Visualizar Associação", param, options);
-        }
-        catch (Exception e)
-        {
-            Snack.Add("Tivemos um problema ao tentar exibir a marca associada!", Severity.Warning);
-        }
+        // try
+        // {
+        //     var options = new DialogOptions
+        //         {
+        //             MaxWidth = MaxWidth.ExtraExtraLarge,
+        //             FullWidth = true,
+        //             FullScreen = true,
+        //             CloseButton = false,
+        //         };
+        //     var param = new DialogParameters { ["_instalacaoMarca"] = instalacaoMarca };
+        //     Dialog.Show<VisualizarInstalacaoMarcaCmp>("Visualizar Associação", param, options);
+        // }
+        // catch (Exception e)
+        // {
+        //     Snack.Add("Tivemos um problema ao tentar exibir a marca associada!", Severity.Warning);
+        // }
     }
 
     private void VisualizarMarca(Marcas marca)
     {
-        try
-        {
-            var options = new DialogOptions
-                {
-                    MaxWidth = MaxWidth.ExtraExtraLarge,
-                    FullWidth = true,
-                    FullScreen = true,
-                    CloseButton = false,
-                };
-            var param = new DialogParameters { ["_marca"] = marca };
-            Dialog.Show<VisualizarMarcaCmp>("Visualizar Marca", param, options);
-        }
-        catch (Exception e)
-        {
-            Snack.Add("Tivemos um problema ao tentar exibir a marca!", Severity.Warning);
-        }
+        // try
+        // {
+        //     var options = new DialogOptions
+        //         {
+        //             MaxWidth = MaxWidth.ExtraExtraLarge,
+        //             FullWidth = true,
+        //             FullScreen = true,
+        //             CloseButton = false,
+        //         };
+        //     var param = new DialogParameters { ["_marca"] = marca };
+        //     Dialog.Show<VisualizarMarcaCmp>("Visualizar Marca", param, options);
+        // }
+        // catch (Exception e)
+        // {
+        //     Snack.Add("Tivemos um problema ao tentar exibir a marca!", Severity.Warning);
+        // }
     }
 
     public async Task CriarInstalacaoMarca(Marcas marca)
     {
-        try
-        {
-            if (marca.status == "Inativo")
-            {
-                Snack.Add("Tivemos um problema ao tentar associar, pois a marca está inativa!", Severity.Warning);
-                return;
-            }
+        // try
+        // {
+        //     if (marca.status == "Inativo")
+        //     {
+        //         Snack.Add("Tivemos um problema ao tentar associar, pois a marca está inativa!", Severity.Warning);
+        //         return;
+        //     }
 
-            var param = new DialogParameters<AlertaComPergunta>
-            {
-                { x => x.ContentText, "Deseja associar essa <b>MARCA</b> a instalação?" }
-            };
-            var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
-            var dialog = Dialog.Show<AlertaComPergunta>("Associar Marca", param, options);
-            var result = await dialog.Result;
-            if (!result.Canceled)
-            {
-                _carregando = true;
+        //     var param = new DialogParameters<AlertaComPergunta>
+        //     {
+        //         { x => x.ContentText, "Deseja associar essa <b>MARCA</b> a instalação?" }
+        //     };
+        //     var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+        //     var dialog = Dialog.Show<AlertaComPergunta>("Associar Marca", param, options);
+        //     var result = await dialog.Result;
+        //     if (!result.Canceled)
+        //     {
+        //         _carregando = true;
 
-                var instalacaoMarca = new InstalacoesMarcas
-                    {
-                        instalacoes_id = Instalacao!.id,
-                        marcas_id = marca.id,
-                        status = "Ativo",
-                    };
-                var reinoCompany = new ReinoCompany();
-                var response = await reinoCompany.InstalacoesMarcasCriar(Auth!.token!, instalacaoMarca);
+        //         var instalacaoMarca = new InstalacoesMarcas
+        //             {
+        //                 instalacoes_id = Instalacao!.id,
+        //                 marcas_id = marca.id,
+        //                 status = "Ativo",
+        //             };
+        //         var reinoCompany = new ReinoCompany();
+        //         var response = await reinoCompany.InstalacoesMarcasCriar(Auth!.token!, instalacaoMarca);
 
-                if (response!.status)
-                {
-                    Snack.Add("Marca associada com sucesso!", Severity.Success);
-                    await LimparEListarMarcas();
-                }
-                else
-                {
-                    if (!string.IsNullOrEmpty(response.message))
-                    {
-                        Snack.Add(response.message, Severity.Warning);
-                    }
-                    _carregando = false;
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar associar a marca!");
-            _carregando = false;
-        }
+        //         if (response!.status)
+        //         {
+        //             Snack.Add("Marca associada com sucesso!", Severity.Success);
+        //             await LimparEListarMarcas();
+        //         }
+        //         else
+        //         {
+        //             if (!string.IsNullOrEmpty(response.message))
+        //             {
+        //                 Snack.Add(response.message, Severity.Warning);
+        //             }
+        //             _carregando = false;
+        //         }
+        //     }
+        // }
+        // catch (Exception e)
+        // {
+        //     ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar associar a marca!");
+        //     _carregando = false;
+        // }
     }
 
-    public async Task CriarMarca()
+    public async Task CriarTipoUsuario()
     {
         try
         {
@@ -486,13 +459,13 @@
                     CloseButton = true, 
                     Position = DialogPosition.TopCenter 
             };
-            var param = new DialogParameters { ["_marcaForm"] = new Marcas() };
-            var dialog = Dialog.Show<MarcasFormCmp>("Adicionar Marca", param, options);
+            var param = new DialogParameters { ["_tipoUserForm"] = new TiposUsers() };
+            var dialog = Dialog.Show<TiposUsuariosFormCmp>("Adicionar Tipo Usuário", param, options);
             var result = await dialog.Result;
             if (!result.Canceled)
             {
                 Snack.Add("Marca criada com sucesso!", Severity.Success);
-                tabs.ActivatePanel(1);
+                tabs.ActivatePanel(0);
             }
         }
         catch (Exception e)
@@ -504,147 +477,147 @@
 
     public async Task AtualizarInstalacaoMarca(InstalacoesMarcas instalacaoMarca)
     {
-        try
-        {
-            var options = new DialogOptions
-                {
-                    MaxWidth = MaxWidth.ExtraExtraLarge,
-                    FullWidth = true,
-                    BackdropClick = false,
-                    CloseButton = true,
-                    Position = DialogPosition.TopCenter
-                };
-            var param = new DialogParameters { ["_instalacaoMarcaForm"] = instalacaoMarca.Clone() };
-            var dialog = Dialog.Show<InstalacoesMarcasFormCmp>("Atualizar Associação", param, options);
-            var result = await dialog.Result;
-            if (!result.Canceled)
-            {
-                instalacaoMarca = (InstalacoesMarcas)result.Data;
-                var index = _listarInstalacoesMarcas.FindIndex(im => im.id == instalacaoMarca!.id);
-                if (index != -1)
-                {
-                    _listarInstalacoesMarcas[index] = instalacaoMarca!;
-                }
-                Snack.Add("Marca associada atualizada com sucesso!", Severity.Success);
-                StateHasChanged();
-            }
-        }
-        catch (Exception e)
-        {
-            Snack.Add("Tivemos um problema ao tentar atualizar associação da marca!", Severity.Warning);
-            _carregando = false;
-        }
+        // try
+        // {
+        //     var options = new DialogOptions
+        //         {
+        //             MaxWidth = MaxWidth.ExtraExtraLarge,
+        //             FullWidth = true,
+        //             BackdropClick = false,
+        //             CloseButton = true,
+        //             Position = DialogPosition.TopCenter
+        //         };
+        //     var param = new DialogParameters { ["_instalacaoMarcaForm"] = instalacaoMarca.Clone() };
+        //     var dialog = Dialog.Show<InstalacoesMarcasFormCmp>("Atualizar Associação", param, options);
+        //     var result = await dialog.Result;
+        //     if (!result.Canceled)
+        //     {
+        //         instalacaoMarca = (InstalacoesMarcas)result.Data;
+        //         var index = _listarInstalacoesMarcas.FindIndex(im => im.id == instalacaoMarca!.id);
+        //         if (index != -1)
+        //         {
+        //             _listarInstalacoesMarcas[index] = instalacaoMarca!;
+        //         }
+        //         Snack.Add("Marca associada atualizada com sucesso!", Severity.Success);
+        //         StateHasChanged();
+        //     }
+        // }
+        // catch (Exception e)
+        // {
+        //     Snack.Add("Tivemos um problema ao tentar atualizar associação da marca!", Severity.Warning);
+        //     _carregando = false;
+        // }
     }
 
     public async Task AtualizarMarca(Marcas marca)
     {
-        try
-        {
-            var options = new DialogOptions
-                {
-                    MaxWidth = MaxWidth.ExtraExtraLarge,
-                    FullWidth = true,
-                    BackdropClick = false,
-                    CloseButton = true,
-                    Position = DialogPosition.TopCenter
-                };
-            var param = new DialogParameters { ["_marcaForm"] = marca.Clone() };
-            var dialog = Dialog.Show<MarcasFormCmp>("Atualizar Marca", param, options);
-            var result = await dialog.Result;
-            if (!result.Canceled)
-            {
-                marca = (Marcas)result.Data;
-                var index = _listarMarcas.FindIndex(ip => ip.id == marca!.id);
-                if (index != -1)
-                {
-                    _listarMarcas[index] = marca!;
-                }
-                Snack.Add("Marca atualizada com sucesso!", Severity.Success);
-                StateHasChanged();
-            }
-        }
-        catch (Exception e)
-        {
-            Snack.Add("Tivemos um problema ao tentar atualizar a marca!", Severity.Warning);
-            _carregando = false;
-        }
+        // try
+        // {
+        //     var options = new DialogOptions
+        //         {
+        //             MaxWidth = MaxWidth.ExtraExtraLarge,
+        //             FullWidth = true,
+        //             BackdropClick = false,
+        //             CloseButton = true,
+        //             Position = DialogPosition.TopCenter
+        //         };
+        //     var param = new DialogParameters { ["_marcaForm"] = marca.Clone() };
+        //     var dialog = Dialog.Show<MarcasFormCmp>("Atualizar Marca", param, options);
+        //     var result = await dialog.Result;
+        //     if (!result.Canceled)
+        //     {
+        //         marca = (Marcas)result.Data;
+        //         var index = _listarMarcas.FindIndex(ip => ip.id == marca!.id);
+        //         if (index != -1)
+        //         {
+        //             _listarMarcas[index] = marca!;
+        //         }
+        //         Snack.Add("Marca atualizada com sucesso!", Severity.Success);
+        //         StateHasChanged();
+        //     }
+        // }
+        // catch (Exception e)
+        // {
+        //     Snack.Add("Tivemos um problema ao tentar atualizar a marca!", Severity.Warning);
+        //     _carregando = false;
+        // }
     }
 
     public async Task DeletarInstalacaoMarca(InstalacoesMarcas instalacaoMarca)
     {
-        try
-        {
-            var param = new DialogParameters<AlertaDelete>
-            {
-                { x => x.ContentText, "Tem certeza que deseja deletar essa <b>ASSOCIAÇÃO</b> a <b>MARCA</b> e todos os dados a ela ligados?" }
-            };
-            var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
-            var dialog = Dialog.Show<AlertaDelete>("Deletar Associação", param, options);
-            var result = await dialog.Result;
-            if (!result.Canceled)
-            {
-                _carregando = true;
-                var reinoCompany = new ReinoCompany();
-                var response = await reinoCompany.InstalacoesMarcasDeletar(Auth!.token!, instalacaoMarca);
+        // try
+        // {
+        //     var param = new DialogParameters<AlertaDelete>
+        //     {
+        //         { x => x.ContentText, "Tem certeza que deseja deletar essa <b>ASSOCIAÇÃO</b> a <b>MARCA</b> e todos os dados a ela ligados?" }
+        //     };
+        //     var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+        //     var dialog = Dialog.Show<AlertaDelete>("Deletar Associação", param, options);
+        //     var result = await dialog.Result;
+        //     if (!result.Canceled)
+        //     {
+        //         _carregando = true;
+        //         var reinoCompany = new ReinoCompany();
+        //         var response = await reinoCompany.InstalacoesMarcasDeletar(Auth!.token!, instalacaoMarca);
 
-                if (response!.status)
-                {
-                    Snack.Add("Marca associada deletada com sucesso!", Severity.Success);
-                    await LimparEListarInstalacaoMarcas();
-                }
-                else
-                {
-                    if (!string.IsNullOrEmpty(response.message))
-                    {
-                        Snack.Add(response.message, Severity.Warning);
-                    }
-                    _carregando = false;
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar deletar associação a marca!");
-            _carregando = false;
-        }
+        //         if (response!.status)
+        //         {
+        //             Snack.Add("Marca associada deletada com sucesso!", Severity.Success);
+        //             await LimparEListarInstalacaoMarcas();
+        //         }
+        //         else
+        //         {
+        //             if (!string.IsNullOrEmpty(response.message))
+        //             {
+        //                 Snack.Add(response.message, Severity.Warning);
+        //             }
+        //             _carregando = false;
+        //         }
+        //     }
+        // }
+        // catch (Exception e)
+        // {
+        //     ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar deletar associação a marca!");
+        //     _carregando = false;
+        // }
     }
 
     public async Task DeletarMarca(Marcas marca)
     {
-        try
-        {
-            var param = new DialogParameters<AlertaDelete>
-            {
-                { x => x.ContentText, "Tem certeza que deseja deletar essa <b>MARCA</b> e todos os dados a ela ligados?" }
-            };
-            var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
-            var dialog = Dialog.Show<AlertaDelete>("Deletar Marca", param, options);
-            var result = await dialog.Result;
-            if (!result.Canceled)
-            {
-                _carregando = true;
-                var reinoCompany = new ReinoCompany();
-                var response = await reinoCompany.MarcasDeletar(Auth!.token!, marca);
+        // try
+        // {
+        //     var param = new DialogParameters<AlertaDelete>
+        //     {
+        //         { x => x.ContentText, "Tem certeza que deseja deletar essa <b>MARCA</b> e todos os dados a ela ligados?" }
+        //     };
+        //     var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+        //     var dialog = Dialog.Show<AlertaDelete>("Deletar Marca", param, options);
+        //     var result = await dialog.Result;
+        //     if (!result.Canceled)
+        //     {
+        //         _carregando = true;
+        //         var reinoCompany = new ReinoCompany();
+        //         var response = await reinoCompany.MarcasDeletar(Auth!.token!, marca);
 
-                if (response!.status)
-                {
-                    Snack.Add("Marca deletada com sucesso!", Severity.Success);
-                    await LimparEListarMarcas();
-                }
-                else
-                {
-                    if (!string.IsNullOrEmpty(response.message))
-                    {
-                        Snack.Add(response.message, Severity.Warning);
-                    }
-                    _carregando = false;
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar deletar a marca!");
-            _carregando = false;
-        }
+        //         if (response!.status)
+        //         {
+        //             Snack.Add("Marca deletada com sucesso!", Severity.Success);
+        //             await LimparEListarMarcas();
+        //         }
+        //         else
+        //         {
+        //             if (!string.IsNullOrEmpty(response.message))
+        //             {
+        //                 Snack.Add(response.message, Severity.Warning);
+        //             }
+        //             _carregando = false;
+        //         }
+        //     }
+        // }
+        // catch (Exception e)
+        // {
+        //     ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar deletar a marca!");
+        //     _carregando = false;
+        // }
     }
 }

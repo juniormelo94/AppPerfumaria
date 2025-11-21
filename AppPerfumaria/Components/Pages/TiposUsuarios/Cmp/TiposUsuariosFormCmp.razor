@@ -1,0 +1,141 @@
+﻿@using AppPerfumaria.Api.ReinoCompany
+@using AppPerfumaria.Components.CmpsGerais
+@using AppPerfumaria.Exceptions
+@using AppPerfumaria.Models.Auth
+@using AppPerfumaria.Models.Resources
+@using AppPerfumaria.Models.Tables
+
+@inject IDialogService Dialog
+@inject ExceptionService ExceptionService
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject ISnackbar Snack
+
+<MudDialog Style="max-height: 70%;">
+    <DialogContent>
+        <EditForm Model="_tipoUserForm" OnValidSubmit="Salvar" @ref="_tipoUserFormRef">
+            <DataAnnotationsValidator />
+
+            <MudFocusTrap Disabled="false" DefaultFocus="DefaultFocus.FirstChild">
+                <MudTextField T="string" @bind-Value="_tipoUserForm.tipo" Variant="Variant.Outlined"
+                              Label="Tipo*" Disabled="_verificando" Margin="Margin.Dense" />
+                <ValidationMessage For="() => _tipoUserForm.tipo" />
+
+                <MudTextField T="string" @bind-Value="_tipoUserForm.descricao" Variant="Variant.Outlined"
+                              Label="Descrição*" Disabled="_verificando" Margin="Margin.Dense" />
+                <ValidationMessage For="() => _tipoUserForm.descricao" />
+
+                <MudSelect @bind-Value="_tipoUserForm.status" Variant="Variant.Outlined"
+                           Label="Status*" Margin="Margin.Dense" >
+                    <MudSelectItem Value="@("Ativo")" />
+                    <MudSelectItem Value="@("Inativo")" />
+                </MudSelect>
+                <ValidationMessage For="() => _tipoUserForm.status" />
+            </MudFocusTrap>
+        </EditForm>
+    </DialogContent>
+    <DialogActions>
+        <div class="d-block w-100 px-2">
+            @if (_carregando)
+            {
+                <MudProgressLinear Color="Color.Secondary" Rounded="true" Striped="true"
+                                   Size="Size.Medium" Value="100" Class="mb-2" />
+            }
+            <MudFab Class="w-100" Label="Salvar" Size="Size.Medium"
+                    OnClick="ValidarDadosForm" Disabled="_verificando" />
+            <MudFab Class="w-100 mt-2 mb-5" Label="Fechar" OnClick="(() => _mudDialog!.Cancel())"
+                    Size="Size.Medium" Disabled="_verificando" />
+        </div>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance? _mudDialog { get; set; }
+    [Parameter]
+    public TiposUsers? _tipoUserForm { get; set; }
+    private Auth? _auth;
+    private EditForm? _tipoUserFormRef;
+    private IBrowserFile? _imagem;
+    private bool _carregando = false;
+    private bool _carregandoImagem = false;
+    private bool _verificando = false;
+
+    private async Task ValidarDadosForm()
+    {
+        try
+        {
+            _carregando = true;
+            _verificando = true;
+
+            if (_tipoUserFormRef!.EditContext!.Validate())
+            {
+                await Salvar();
+            }
+            else
+            {
+                Snack.Add("Por favor, verifique todos os campos!", Severity.Warning);
+                _verificando = false;
+                _carregando = false;
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar validar dados!", Severity.Warning);
+        }
+    }
+
+    public async Task Salvar()
+    {
+        try
+        {
+            _auth = await LocalStorage.GetItemAsync<Auth>("auth");
+            var reinoCompany = new ReinoCompany();
+            TiposUsersResource? response;
+
+            if (_tipoUserForm!.id > 0)
+            {
+                response = await reinoCompany.TiposUsersAtualizar(_auth!.token!, _tipoUserForm!);
+            }
+            else
+            {
+                response = await reinoCompany.TiposUsersCriar(_auth!.token!, _tipoUserForm!);
+            }
+
+            if (response!.status)
+            {
+                _mudDialog!.Close(DialogResult.Ok<TiposUsers>(_tipoUserForm));
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+
+                if (response.erros != null)
+                {
+                    var erros = response.erros;
+                    foreach (var propriedade in erros.GetType().GetProperties())
+                    {
+                        List<string>? propErros = (List<string>)erros.GetType().GetProperty(propriedade.Name).GetValue(erros, null);
+                        if (propErros != null)
+                        {
+                            foreach (var mensagem in propErros)
+                            {
+                                Snack.Add(mensagem, Severity.Warning);
+                            }
+                        }
+                    }
+                }
+                _verificando = false;
+                _carregando = false;
+            }
+        }
+        catch (Exception e)
+        {
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar salvar!");
+            _verificando = false;
+            _carregando = false;
+        }
+    }
+}
