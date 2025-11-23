@@ -34,17 +34,17 @@ namespace AppPerfumaria.Exceptions
             {
                 _ = _localStorage.RemoveItemAsync("auth");
                 _ = _localStorage.RemoveItemAsync("instalacao");
-                _snack.Add(ex.Message, Severity.Warning);
                 _nav.NavigateTo("/", true);
+                return;
             }
 
             if (!string.IsNullOrEmpty(messageDefault)) 
             {
-                _snack.Add(messageDefault, Severity.Error);
+                _snack.Add(messageDefault, Severity.Warning);
             }
             else
             {
-                _snack.Add(ex.Message, Severity.Error);
+                _snack.Add(ex.Message, Severity.Warning);
             }
         }
     }

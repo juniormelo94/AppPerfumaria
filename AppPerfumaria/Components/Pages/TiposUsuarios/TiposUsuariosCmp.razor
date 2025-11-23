@@ -64,8 +64,16 @@
             <MudTabPanel Text="Permissões" OnClick="LimparEListarPermissoes" />
         </MudTabs>
         <MudSpacer />
-        <MudIconButton Icon="@Icons.Material.Filled.Add" OnClick="CriarTipoUsuario"
-                       Color="Color.Inherit" Size="Size.Medium" />
+        @if (_indiceMenu == 0)
+        {
+            <MudIconButton Icon="@Icons.Material.Filled.Add" OnClick="CriarTipoUsuario"
+                           Color="Color.Inherit" Size="Size.Medium" />
+        }
+        else if (_indiceMenu == 1)
+        {
+            <MudIconButton Icon="@Icons.Material.Filled.Add" OnClick="CriarPermissao"
+                           Color="Color.Inherit" Size="Size.Medium" />
+        }
     </div>
 </MudPaper>
 
@@ -77,14 +85,22 @@
             <Head>
                 <th>Tipo</th>
                 <th class="text-center">Status</th>
+                <th class="text-center">Ação</th>
             </Head>
             <Body>
                 <td>@context.tipo</td>
                 <td class="text-center">@context.status</td>
+                <td class="text-center">
+                    <MudIconButton Size="Size.Small" OnClick="@(() => AtualizarTipoUsuario(context))"
+                                       Icon="@Icons.Material.Filled.Edit" />
+                    <MudIconButton Size="Size.Small" OnClick="@(() => DeletarTipoUsuario(context))"
+                                       Icon="@Icons.Material.Filled.Delete" />
+                </td>
             </Body>
             <Footer>
                 <td>Tipo</td>
                 <td class="text-center">Status</td>
+                <td class="text-center">Ação</td>
             </Footer>
         </Tabela>
 
@@ -95,15 +111,26 @@
         <Tabela TypeItem="Permissoes" ListItens="_listarPermissoes" Pagination="_paginacaoPermissoes" OnClickPage="CarregarMais" Carregando="_carregando">
             <Head>
                 <th>Permissão</th>
+                <th class="text-center">Grupo</th>
                 <th class="text-center">Status</th>
+                <th class="text-center">Ação</th>
             </Head>
             <Body>
                 <td>@context.chave</td>
+                <td class="text-center">@context.grupo</td>
                 <td class="text-center">@context.status</td>
+                <td class="text-center">
+                    <MudIconButton Size="Size.Small" OnClick="@(() => AtualizarPermissao(context))"
+                                       Icon="@Icons.Material.Filled.Edit" />
+                    <MudIconButton Size="Size.Small" OnClick="@(() => DeletarPermissao(context))"
+                                       Icon="@Icons.Material.Filled.Delete" />
+                </td>
             </Body>
             <Footer>
                 <td>Permissão</td>
+                <td class="text-center">Grupo</td>
                 <td class="text-center">Status</td>
+                <td class="text-center">Ação</td>
             </Footer>
         </Tabela>
     }
@@ -322,59 +349,35 @@
         // }
     }
 
-    public async Task CriarInstalacaoMarca(Marcas marca)
+    public async Task CriarTipoUsuario()
     {
-        // try
-        // {
-        //     if (marca.status == "Inativo")
-        //     {
-        //         Snack.Add("Tivemos um problema ao tentar associar, pois a marca está inativa!", Severity.Warning);
-        //         return;
-        //     }
-
-        //     var param = new DialogParameters<AlertaComPergunta>
-        //     {
-        //         { x => x.ContentText, "Deseja associar essa <b>MARCA</b> a instalação?" }
-        //     };
-        //     var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
-        //     var dialog = Dialog.Show<AlertaComPergunta>("Associar Marca", param, options);
-        //     var result = await dialog.Result;
-        //     if (!result.Canceled)
-        //     {
-        //         _carregando = true;
-
-        //         var instalacaoMarca = new InstalacoesMarcas
-        //             {
-        //                 instalacoes_id = Instalacao!.id,
-        //                 marcas_id = marca.id,
-        //                 status = "Ativo",
-        //             };
-        //         var reinoCompany = new ReinoCompany();
-        //         var response = await reinoCompany.InstalacoesMarcasCriar(Auth!.token!, instalacaoMarca);
-
-        //         if (response!.status)
-        //         {
-        //             Snack.Add("Marca associada com sucesso!", Severity.Success);
-        //             await LimparEListarMarcas();
-        //         }
-        //         else
-        //         {
-        //             if (!string.IsNullOrEmpty(response.message))
-        //             {
-        //                 Snack.Add(response.message, Severity.Warning);
-        //             }
-        //             _carregando = false;
-        //         }
-        //     }
-        // }
-        // catch (Exception e)
-        // {
-        //     ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar associar a marca!");
-        //     _carregando = false;
-        // }
+        try
+        {
+            var options = new DialogOptions
+            {
+                MaxWidth = MaxWidth.ExtraExtraLarge,
+                FullWidth = true,
+                BackdropClick = false,
+                CloseButton = true,
+                Position = DialogPosition.TopCenter
+            };
+            var param = new DialogParameters { ["_tipoUserForm"] = new TiposUsers() };
+            var dialog = Dialog.Show<TiposUsuariosFormCmp>("Adicionar Tipo Usuário", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled)
+            {
+                Snack.Add("Tipo de usuário criado com sucesso!", Severity.Success);
+                tabs.ActivatePanel(0);
+            }
+        }
+        catch (Exception e)
+        {
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar criar o tipo de usuário!");
+            _carregando = false;
+        }
     }
 
-    public async Task CriarTipoUsuario()
+    public async Task CriarPermissao()
     {
         try
         {
@@ -385,165 +388,165 @@
                     CloseButton = true, 
                     Position = DialogPosition.TopCenter 
             };
-            var param = new DialogParameters { ["_tipoUserForm"] = new TiposUsers() };
-            var dialog = Dialog.Show<TiposUsuariosFormCmp>("Adicionar Tipo Usuário", param, options);
+            var param = new DialogParameters { ["_permissaoForm"] = new Permissoes() };
+            var dialog = Dialog.Show<PermissoesFormCmp>("Adicionar Permissão", param, options);
             var result = await dialog.Result;
             if (!result.Canceled)
             {
-                Snack.Add("Marca criada com sucesso!", Severity.Success);
-                tabs.ActivatePanel(0);
+                Snack.Add("Permissão criada com sucesso!", Severity.Success);
+                tabs.ActivatePanel(1);
             }
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar criar a marca!", Severity.Warning);
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar criar a permissão!");
             _carregando = false;
         }
     }
 
-    public async Task AtualizarInstalacaoMarca(InstalacoesMarcas instalacaoMarca)
+    public async Task AtualizarTipoUsuario(TiposUsers tipoUser)
     {
-        // try
-        // {
-        //     var options = new DialogOptions
-        //         {
-        //             MaxWidth = MaxWidth.ExtraExtraLarge,
-        //             FullWidth = true,
-        //             BackdropClick = false,
-        //             CloseButton = true,
-        //             Position = DialogPosition.TopCenter
-        //         };
-        //     var param = new DialogParameters { ["_instalacaoMarcaForm"] = instalacaoMarca.Clone() };
-        //     var dialog = Dialog.Show<InstalacoesMarcasFormCmp>("Atualizar Associação", param, options);
-        //     var result = await dialog.Result;
-        //     if (!result.Canceled)
-        //     {
-        //         instalacaoMarca = (InstalacoesMarcas)result.Data;
-        //         var index = _listarInstalacoesMarcas.FindIndex(im => im.id == instalacaoMarca!.id);
-        //         if (index != -1)
-        //         {
-        //             _listarInstalacoesMarcas[index] = instalacaoMarca!;
-        //         }
-        //         Snack.Add("Marca associada atualizada com sucesso!", Severity.Success);
-        //         StateHasChanged();
-        //     }
-        // }
-        // catch (Exception e)
-        // {
-        //     Snack.Add("Tivemos um problema ao tentar atualizar associação da marca!", Severity.Warning);
-        //     _carregando = false;
-        // }
+        try
+        {
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullWidth = true,
+                    BackdropClick = false,
+                    CloseButton = true,
+                    Position = DialogPosition.TopCenter
+                };
+            var param = new DialogParameters { ["_tipoUserForm"] = tipoUser.Clone() };
+            var dialog = Dialog.Show<TiposUsuariosFormCmp>("Atualizar Tipo Usuário", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled)
+            {
+                tipoUser = (TiposUsers)result.Data;
+                var index = _listarTiposUsers.FindIndex(ip => ip.id == tipoUser!.id);
+                if (index != -1)
+                {
+                    _listarTiposUsers[index] = tipoUser!;
+                }
+                Snack.Add("Tipo de usuário atualizado com sucesso!", Severity.Success);
+                StateHasChanged();
+            }
+        }
+        catch (Exception e)
+        {
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar atualizar o tipo de usuário!");
+            _carregando = false;
+        }
     }
 
-    public async Task AtualizarMarca(Marcas marca)
+    public async Task AtualizarPermissao(Permissoes permissao)
     {
-        // try
-        // {
-        //     var options = new DialogOptions
-        //         {
-        //             MaxWidth = MaxWidth.ExtraExtraLarge,
-        //             FullWidth = true,
-        //             BackdropClick = false,
-        //             CloseButton = true,
-        //             Position = DialogPosition.TopCenter
-        //         };
-        //     var param = new DialogParameters { ["_marcaForm"] = marca.Clone() };
-        //     var dialog = Dialog.Show<MarcasFormCmp>("Atualizar Marca", param, options);
-        //     var result = await dialog.Result;
-        //     if (!result.Canceled)
-        //     {
-        //         marca = (Marcas)result.Data;
-        //         var index = _listarMarcas.FindIndex(ip => ip.id == marca!.id);
-        //         if (index != -1)
-        //         {
-        //             _listarMarcas[index] = marca!;
-        //         }
-        //         Snack.Add("Marca atualizada com sucesso!", Severity.Success);
-        //         StateHasChanged();
-        //     }
-        // }
-        // catch (Exception e)
-        // {
-        //     Snack.Add("Tivemos um problema ao tentar atualizar a marca!", Severity.Warning);
-        //     _carregando = false;
-        // }
+        try
+        {
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullWidth = true,
+                    BackdropClick = false,
+                    CloseButton = true,
+                    Position = DialogPosition.TopCenter
+                };
+            var param = new DialogParameters { ["_permissaoForm"] = permissao.Clone() };
+            var dialog = Dialog.Show<PermissoesFormCmp>("Atualizar Permissão", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled)
+            {
+                permissao = (Permissoes)result.Data;
+                var index = _listarPermissoes.FindIndex(ip => ip.id == permissao!.id);
+                if (index != -1)
+                {
+                    _listarPermissoes[index] = permissao!;
+                }
+                Snack.Add("Permissão atualizada com sucesso!", Severity.Success);
+                StateHasChanged();
+            }
+        }
+        catch (Exception e)
+        {
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar atualizar a permissão!");
+            _carregando = false;
+        }
     }
 
-    public async Task DeletarInstalacaoMarca(InstalacoesMarcas instalacaoMarca)
+    public async Task DeletarTipoUsuario(TiposUsers tipoUser)
     {
-        // try
-        // {
-        //     var param = new DialogParameters<AlertaDelete>
-        //     {
-        //         { x => x.ContentText, "Tem certeza que deseja deletar essa <b>ASSOCIAÇÃO</b> a <b>MARCA</b> e todos os dados a ela ligados?" }
-        //     };
-        //     var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
-        //     var dialog = Dialog.Show<AlertaDelete>("Deletar Associação", param, options);
-        //     var result = await dialog.Result;
-        //     if (!result.Canceled)
-        //     {
-        //         _carregando = true;
-        //         var reinoCompany = new ReinoCompany();
-        //         var response = await reinoCompany.InstalacoesMarcasDeletar(Auth!.token!, instalacaoMarca);
+        try
+        {
+            var param = new DialogParameters<AlertaDelete>
+            {
+                { x => x.ContentText, "Tem certeza que deseja deletar esse <b>TIPO DE USUÁRIO</b> e todos os dados a ele ligados?" }
+            };
+            var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+            var dialog = Dialog.Show<AlertaDelete>("Deletar Tipo Usuário", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled)
+            {
+                _carregando = true;
+                var reinoCompany = new ReinoCompany();
+                var response = await reinoCompany.TiposUsersDeletar(Auth!.token!, tipoUser);
 
-        //         if (response!.status)
-        //         {
-        //             Snack.Add("Marca associada deletada com sucesso!", Severity.Success);
-        //             await LimparEListarInstalacaoMarcas();
-        //         }
-        //         else
-        //         {
-        //             if (!string.IsNullOrEmpty(response.message))
-        //             {
-        //                 Snack.Add(response.message, Severity.Warning);
-        //             }
-        //             _carregando = false;
-        //         }
-        //     }
-        // }
-        // catch (Exception e)
-        // {
-        //     ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar deletar associação a marca!");
-        //     _carregando = false;
-        // }
+                if (response!.status)
+                {
+                    Snack.Add("Tipo de usuário deletado com sucesso!", Severity.Success);
+                    await LimparEListarTiposUsers();
+                }
+                else
+                {
+                    if (!string.IsNullOrEmpty(response.message))
+                    {
+                        Snack.Add(response.message, Severity.Warning);
+                    }
+                    _carregando = false;
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar deletar o tipo de usuário!");
+            _carregando = false;
+        }
     }
 
-    public async Task DeletarMarca(Marcas marca)
+    public async Task DeletarPermissao(Permissoes permissao)
     {
-        // try
-        // {
-        //     var param = new DialogParameters<AlertaDelete>
-        //     {
-        //         { x => x.ContentText, "Tem certeza que deseja deletar essa <b>MARCA</b> e todos os dados a ela ligados?" }
-        //     };
-        //     var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
-        //     var dialog = Dialog.Show<AlertaDelete>("Deletar Marca", param, options);
-        //     var result = await dialog.Result;
-        //     if (!result.Canceled)
-        //     {
-        //         _carregando = true;
-        //         var reinoCompany = new ReinoCompany();
-        //         var response = await reinoCompany.MarcasDeletar(Auth!.token!, marca);
+        try
+        {
+            var param = new DialogParameters<AlertaDelete>
+            {
+                { x => x.ContentText, "Tem certeza que deseja deletar essa <b>PERMISSÃO</b> e todos os dados a ela ligados?" }
+            };
+            var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+            var dialog = Dialog.Show<AlertaDelete>("Deletar Permissão", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled)
+            {
+                _carregando = true;
+                var reinoCompany = new ReinoCompany();
+                var response = await reinoCompany.PermissoesDeletar(Auth!.token!, permissao);
 
-        //         if (response!.status)
-        //         {
-        //             Snack.Add("Marca deletada com sucesso!", Severity.Success);
-        //             await LimparEListarMarcas();
-        //         }
-        //         else
-        //         {
-        //             if (!string.IsNullOrEmpty(response.message))
-        //             {
-        //                 Snack.Add(response.message, Severity.Warning);
-        //             }
-        //             _carregando = false;
-        //         }
-        //     }
-        // }
-        // catch (Exception e)
-        // {
-        //     ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar deletar a marca!");
-        //     _carregando = false;
-        // }
+                if (response!.status)
+                {
+                    Snack.Add("Permissão deletada com sucesso!", Severity.Success);
+                    await LimparEListarPermissoes();
+                }
+                else
+                {
+                    if (!string.IsNullOrEmpty(response.message))
+                    {
+                        Snack.Add(response.message, Severity.Warning);
+                    }
+                    _carregando = false;
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar deletar a permissão!");
+            _carregando = false;
+        }
     }
 }

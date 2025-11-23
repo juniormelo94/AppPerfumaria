@@ -28,16 +28,17 @@
 
     @if (Pagination != null)
     {
-        <div class="pb-2">
+        <div class="d-flex justify-content-center align-items-center">
             <MudPagination Selected="_page" BoundaryCount="1" MiddleCount="3"
                            SelectedChanged="(async(int p) => { _page = p; await OnClickPage.InvokeAsync(p); })"
                             Count="@(Pagination!.last_page)" Class="pa-4"
                             Rectangular="true" Variant="Variant.Filled" Size="Size.Small" />
 
-            <MudText Align="Align.Center" Typo="Typo.body2" Class="w-100">
-                @((MarkupString)$"<b>Total:</b> {Pagination!.total} | <b>Exibidos:</b> {Pagination!.from} à {Pagination!.to}")
-            </MudText>
         </div>
+
+        <MudText Align="Align.Center" Typo="Typo.body2" Class="w-100">
+            @((MarkupString)$"<b>Total:</b> {Pagination!.total} | <b>Exibidos:</b> {Pagination!.from} à {Pagination!.to}")
+        </MudText>
     }
 }
 else

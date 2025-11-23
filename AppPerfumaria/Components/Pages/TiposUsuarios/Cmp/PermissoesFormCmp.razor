@@ -12,24 +12,28 @@
 
 <MudDialog Style="max-height: 70%;">
     <DialogContent>
-        <EditForm Model="_tipoUserForm" OnValidSubmit="Salvar" @ref="_tipoUserFormRef">
+        <EditForm Model="_permissaoForm" OnValidSubmit="Salvar" @ref="_permissaoFormRef">
             <DataAnnotationsValidator />
 
             <MudFocusTrap Disabled="false" DefaultFocus="DefaultFocus.FirstChild">
-                <MudTextField T="string" @bind-Value="_tipoUserForm.tipo" Variant="Variant.Outlined"
-                              Label="Tipo*" Disabled="_verificando" Margin="Margin.Dense" />
-                <ValidationMessage For="() => _tipoUserForm.tipo" />
+                <MudTextField T="string" @bind-Value="_permissaoForm.chave" Variant="Variant.Outlined"
+                              Label="Chave*" Disabled="_verificando" Margin="Margin.Dense" />
+                <ValidationMessage For="() => _permissaoForm.chave" />
 
-                <MudTextField T="string" @bind-Value="_tipoUserForm.descricao" Variant="Variant.Outlined"
+                <MudTextField T="string" @bind-Value="_permissaoForm.grupo" Variant="Variant.Outlined"
+                              Label="Grupo" Disabled="_verificando" Margin="Margin.Dense" />
+                <ValidationMessage For="() => _permissaoForm.grupo" />
+
+                <MudTextField T="string" @bind-Value="_permissaoForm.descricao" Variant="Variant.Outlined"
                               Label="Descrição" Disabled="_verificando" Margin="Margin.Dense" />
-                <ValidationMessage For="() => _tipoUserForm.descricao" />
+                <ValidationMessage For="() => _permissaoForm.descricao" />
 
-                <MudSelect @bind-Value="_tipoUserForm.status" Variant="Variant.Outlined"
+                <MudSelect @bind-Value="_permissaoForm.status" Variant="Variant.Outlined"
                            Label="Status*" Margin="Margin.Dense" >
                     <MudSelectItem Value="@("Ativo")" />
                     <MudSelectItem Value="@("Inativo")" />
                 </MudSelect>
-                <ValidationMessage For="() => _tipoUserForm.status" />
+                <ValidationMessage For="() => _permissaoForm.status" />
             </MudFocusTrap>
         </EditForm>
     </DialogContent>
@@ -52,9 +56,9 @@
     [CascadingParameter]
     private MudDialogInstance? _mudDialog { get; set; }
     [Parameter]
-    public TiposUsers? _tipoUserForm { get; set; }
+    public Permissoes? _permissaoForm { get; set; }
     private Auth? _auth;
-    private EditForm? _tipoUserFormRef;
+    private EditForm? _permissaoFormRef;
     private bool _carregando = false;
     private bool _verificando = false;
 
@@ -65,7 +69,7 @@
             _carregando = true;
             _verificando = true;
 
-            if (_tipoUserFormRef!.EditContext!.Validate())
+            if (_permissaoFormRef!.EditContext!.Validate())
             {
                 await Salvar();
             }
@@ -88,20 +92,20 @@
         {
             _auth = await LocalStorage.GetItemAsync<Auth>("auth");
             var reinoCompany = new ReinoCompany();
-            TiposUsersResource? response;
+            PermissoesResource? response;
 
-            if (_tipoUserForm!.id > 0)
+            if (_permissaoForm!.id > 0)
             {
-                response = await reinoCompany.TiposUsersAtualizar(_auth!.token!, _tipoUserForm!);
+                response = await reinoCompany.PermissoesAtualizar(_auth!.token!, _permissaoForm!);
             }
             else
             {
-                response = await reinoCompany.TiposUsersCriar(_auth!.token!, _tipoUserForm!);
+                response = await reinoCompany.PermissoesCriar(_auth!.token!, _permissaoForm!);
             }
 
             if (response!.status)
             {
-                _mudDialog!.Close(DialogResult.Ok<TiposUsers>(_tipoUserForm));
+                _mudDialog!.Close(DialogResult.Ok<Permissoes>(_permissaoForm));
             }
             else
             {
