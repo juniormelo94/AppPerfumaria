@@ -2,6 +2,7 @@
 @using AppPerfumaria.Components.CmpsGerais
 @using AppPerfumaria.Exceptions
 @using AppPerfumaria.Models.Auth
+@using AppPerfumaria.Models.Pagination
 @using AppPerfumaria.Models.Resources
 @using AppPerfumaria.Models.Tables
 
@@ -32,6 +33,44 @@
                 <ValidationMessage For="() => _tipoUserForm.status" />
             </MudFocusTrap>
         </EditForm>
+
+        
+        <MudText Class="fw-bold text-center my-2" Typo="Typo.body1">
+            Permissões
+        </MudText>
+
+        <!-- Listar resultados das permissões -->
+        <Tabela TypeItem="Permissoes" ListItens="_listarPermissoes" Pagination="_paginacaoPermissoes" 
+                OnClickPage="CarregarMais" Carregando="_carregando" Class="mt-3" >
+            <Head>
+                <th>Permissão</th>
+                <th class="text-center">Grupo</th>
+                <th class="text-center">Status</th>
+                <th class="d-flex justify-center align-center p-0 m-0">
+                    <MudCheckBox Class="p-0 m-0" T="bool" Size="Size.Small" Value="@_selecionarTodas"
+                                 ValueChanged="@(async(bool check) => await SelecionarTodas(check))" />
+                </th>
+            </Head>
+            <Body>
+                <td>@context.chave</td>
+                <td class="text-center">@context.grupo</td>
+                <td class="text-center">@context.status</td>
+                <td class="d-flex justify-center align-center p-0 m-0">
+                    <MudCheckBox Class="p-0 m-0" T="bool" Size="Size.Small" Value="@_permissoesSelecionadas.Contains(context.id)"
+                             ValueChanged="@((bool check) => SelecionarPermisao(context.id, check))" />
+                </td>
+            </Body>
+            <Footer>
+                <td>Permissão</td>
+                <td class="text-center">Grupo</td>
+                <td class="text-center">Status</td>
+                <td class="d-flex justify-center align-center p-0 m-0">
+                    <MudCheckBox Class="p-0 m-0" T="bool" Size="Size.Small" Value="@_selecionarTodas"
+                                 ValueChanged="@(async(bool check) => await SelecionarTodas(check))" />
+                </td>
+            </Footer>
+        </Tabela>
+
     </DialogContent>
     <DialogActions>
         <div class="d-block w-100 px-2">
@@ -55,8 +94,179 @@
     public TiposUsers? _tipoUserForm { get; set; }
     private Auth? _auth;
     private EditForm? _tipoUserFormRef;
-    private bool _carregando = false;
-    private bool _verificando = false;
+    private List<Permissoes>? _listarPermissoes = new List<Permissoes>();
+    private MetaPagination? _paginacaoPermissoes;
+    private HashSet<int> _permissoesSelecionadas = new();
+    private bool _selecionarTodas { get; set; } = false;
+    private bool _carregando = true;
+    private bool _verificando = true;
+    private string? _pesquisarFiltro;
+    private string _porPagina = "10";
+    private int _paginaPaginacao = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _auth = await LocalStorage.GetItemAsync<Auth>("auth");
+        await BuscarTipoUsuario();
+        await ListarPermissoes();
+
+        if (_tipoUserForm?.id > 0)
+        {
+            _permissoesSelecionadas = _tipoUserForm?.tipos_users_permissoes?.Select(s => s.permissoes_id).ToHashSet();
+        }
+
+        _selecionarTodas = _paginacaoPermissoes?.total > 0 && _permissoesSelecionadas.Count == _paginacaoPermissoes?.total;
+
+        _verificando = false;
+        _carregando = false;
+        StateHasChanged();
+    }
+
+    public async Task BuscarTipoUsuario()
+    {
+        try
+        {
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.TiposUsersBuscar(_auth!.token!, _tipoUserForm!.id);
+
+            if (response!.status)
+            {
+                _tipoUserForm = response.data;
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar buscar o tipo de usuário!");
+        }
+    }
+
+    private async Task SelecionarTodas(bool check)
+    {
+        try
+        {
+            _carregando = true;
+            StateHasChanged();
+
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.PermissoesListar(_auth!.token!);
+
+            var listarPermissoes = new List<Permissoes>();
+
+            if (response!.status)
+            {
+                listarPermissoes!.AddRange(response!.data!);
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+            }
+
+            _selecionarTodas = check;
+
+            if (check)
+            {
+                _permissoesSelecionadas = listarPermissoes!.Select(p => p.id).ToHashSet();
+            }
+            else
+            {
+                _permissoesSelecionadas.Clear();
+            }
+
+            _carregando = false;
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            _selecionarTodas = !check;
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar selecionar todas as permissões!");
+            _carregando = false;
+        }
+    }
+
+    private void SelecionarPermisao(int permissao_id, bool check)
+    {
+        if (check)
+        {
+            _permissoesSelecionadas.Add(permissao_id);
+        }
+        else
+        {
+            _permissoesSelecionadas.Remove(permissao_id);
+        }
+
+        _selecionarTodas = _paginacaoPermissoes?.total > 0 && _permissoesSelecionadas.Count == _paginacaoPermissoes?.total;
+        StateHasChanged();
+    }
+
+    public async Task CarregarMais(int paginaPaginacao)
+    {
+        _paginaPaginacao = paginaPaginacao;
+        _listarPermissoes = new List<Permissoes>();
+        await ListarPermissoes();
+    }
+
+    public string? PegarFiltros()
+    {
+        string filtros = $"?page={_paginaPaginacao}&por_pagina={_porPagina}";
+
+        if (!string.IsNullOrEmpty(_pesquisarFiltro))
+        {
+            filtros += $"&pesquisar={_pesquisarFiltro}";
+        }
+
+        return filtros;
+    }
+
+    public async Task LimparEListarPermissoes()
+    {
+        _paginaPaginacao = 1;
+        _listarPermissoes = new List<Permissoes>();
+        await ListarPermissoes();
+    }
+
+    public async Task ListarPermissoes()
+    {
+        try
+        {
+            _carregando = true;
+            StateHasChanged();
+            string? filtros = PegarFiltros();
+
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.PermissoesListar(_auth!.token!, filtros);
+
+            if (response!.status)
+            {
+                _paginacaoPermissoes = response.meta;
+                _listarPermissoes!.AddRange(response!.data!);
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+            }
+
+            _carregando = false;
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar listar as marcas!");
+            _carregando = false;
+        }
+    }
 
     private async Task ValidarDadosForm()
     {
@@ -86,9 +296,10 @@
     {
         try
         {
-            _auth = await LocalStorage.GetItemAsync<Auth>("auth");
             var reinoCompany = new ReinoCompany();
             TiposUsersResource? response;
+
+            _tipoUserForm!.permissoes_ids = _permissoesSelecionadas.ToList();
 
             if (_tipoUserForm!.id > 0)
             {

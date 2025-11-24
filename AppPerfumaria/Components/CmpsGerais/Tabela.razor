@@ -3,9 +3,9 @@
 
 @if (ListItens != null && ListItens.Count() > 0)
 {
-    <MudPaper class="table-responsive">
+    <MudPaper style="@Style" class="@("table-responsive " + Class)">
         <table class="table table-bordered table-hover bg-white mb-0">
-            <thead style="@StyleHead" class="@("table-light" + ClassHead)">
+            <thead style="@StyleHead" class="@("table-light " + ClassHead)">
                 <tr>
                     @Head
                 </tr>
@@ -31,8 +31,8 @@
         <div class="d-flex justify-content-center align-items-center">
             <MudPagination Selected="_page" BoundaryCount="1" MiddleCount="3"
                            SelectedChanged="(async(int p) => { _page = p; await OnClickPage.InvokeAsync(p); })"
-                            Count="@(Pagination!.last_page)" Class="pa-4"
-                            Rectangular="true" Variant="Variant.Filled" Size="Size.Small" />
+                           Count="@(Pagination!.last_page)" Class="pa-4"
+                           Rectangular="true" Variant="Variant.Filled" Size="Size.Small" />
 
         </div>
 
@@ -61,9 +61,11 @@ else
     [Parameter] public EventCallback<TypeItem> OnClickBody { get; set; }
     [Parameter] public EventCallback<int> OnClickPage { get; set; }
     [Parameter] public MetaPagination? Pagination { get; set; }
+    [Parameter] public string Style { get; set; } = "";
     [Parameter] public string StyleHead { get; set; } = "";
     [Parameter] public string StyleBody { get; set; } = "";
     [Parameter] public string StyleFoot { get; set; } = "";
+    [Parameter] public string Class { get; set; } = "";
     [Parameter] public string ClassHead { get; set; } = "";
     [Parameter] public string ClassBody { get; set; } = "";
     [Parameter] public string ClassFoot { get; set; } = "";

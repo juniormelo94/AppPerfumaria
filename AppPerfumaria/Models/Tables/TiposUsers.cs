@@ -18,5 +18,7 @@ namespace AppPerfumaria.Models.Tables
         public string status { get; set; }
         public DateTime created_at { get; set; }
         public DateTime updated_at { get; set; }
+        public List<int>? permissoes_ids { get; set; }
+        public List<TiposUsersPermissoes>? tipos_users_permissoes { get; set; }
     }
 }
