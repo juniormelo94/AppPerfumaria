@@ -12,6 +12,7 @@
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 @inject NavigationManager Nav
 @inject ISnackbar Snack
+@inject UsuarioService UsuarioService
 @inject Carrinho Carrinho
 
 
@@ -291,12 +292,16 @@
                 </MudDrawerHeader>
                 <MudDivider />
                 <MudNavMenu Rounded="true" Margin="Margin.Dense" Color="Color.Primary" Style="height:100vh;">
-                    <MudNavLink OnClick="@(() => CarregarOpcaoMenu("Marcas"))">
-                        <div class="d-flex">
-                            <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.Discount" Color="Color.Surface" />
-                            <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Marcas</MudText>
-                        </div>
-                    </MudNavLink>
+                    @if (UsuarioService.CheckPermissao("marcas.listar"))
+                    {
+                        <MudNavLink OnClick="@(() => CarregarOpcaoMenu("Marcas"))">
+                            <div class="d-flex">
+                                <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.Discount" Color="Color.Surface" />
+                                <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Marcas</MudText>
+                            </div>
+                        </MudNavLink>
+                    }
+
                     <MudNavLink OnClick="@(() => CarregarOpcaoMenu("Produtos"))">
                         <div class="d-flex">
                             <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.ShoppingBag" Color="Color.Surface" />

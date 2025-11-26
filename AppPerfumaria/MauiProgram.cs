@@ -28,6 +28,7 @@ namespace AppPerfumaria
             builder.Services.AddBlazoredLocalStorage();
             builder.Services.AddSingleton<Carrinho>();
             builder.Services.AddScoped<ExceptionService>();
+            builder.Services.AddSingleton<UsuarioService>();
 
 
             // Registre MainPage como um serviço singleton ou transitório

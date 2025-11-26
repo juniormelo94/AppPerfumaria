@@ -107,7 +107,11 @@
     protected override async Task OnInitializedAsync()
     {
         _auth = await LocalStorage.GetItemAsync<Auth>("auth");
-        await BuscarTipoUsuario();
+        if (_tipoUserForm?.id > 0)
+        {
+            await BuscarTipoUsuario();
+        }
+
         await ListarPermissoes();
 
         if (_tipoUserForm?.id > 0)

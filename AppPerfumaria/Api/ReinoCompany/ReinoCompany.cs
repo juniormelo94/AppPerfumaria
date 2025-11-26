@@ -49,6 +49,43 @@ namespace AppPerfumaria.Api.ReinoCompany
         }
         #endregion
 
+        #region Usuarios
+        public async Task<UsersCollection?> UsuariosListar(string token, string? filtros = null)
+        {
+            var request = new Request();
+            string responseString = await request.GetAsync($"{_baseUrl}/api/users{filtros}", authorization: $"Bearer {token}");
+            return JsonConvert.DeserializeObject<UsersCollection>(responseString);
+        }
+
+        public async Task<UsersResource?> UsuariosCriar(string token, Users usuario)
+        {
+            var request = new Request();
+            string responseString = await request.PostAsync($"{_baseUrl}/api/users", authorization: $"Bearer {token}", data: usuario);
+            return JsonConvert.DeserializeObject<UsersResource>(responseString);
+        }
+
+        public async Task<UsersResource?> UsuariosBuscar(string token, int id)
+        {
+            var request = new Request();
+            string responseString = await request.GetAsync($"{_baseUrl}/api/users/{id}", authorization: $"Bearer {token}");
+            return JsonConvert.DeserializeObject<UsersResource>(responseString);
+        }
+
+        public async Task<UsersResource?> UsuariosAtualizar(string token, Users usuario)
+        {
+            var request = new Request();
+            string responseString = await request.PutAsync($"{_baseUrl}/api/users/{usuario.id}", authorization: $"Bearer {token}", data: usuario);
+            return JsonConvert.DeserializeObject<UsersResource>(responseString);
+        }
+
+        public async Task<UsersResource?> UsuariosDeletar(string token, Users usuario)
+        {
+            var request = new Request();
+            string responseString = await request.DeleteAsync($"{_baseUrl}/api/users/{usuario.id}", authorization: $"Bearer {token}");
+            return JsonConvert.DeserializeObject<UsersResource>(responseString);
+        }
+        #endregion
+
         #region Marcas
         public async Task<MarcasCollection?> MarcasListar(string token, string? filtros = null)
         {

@@ -9,11 +9,13 @@
 @using AppPerfumaria.Models.Forms
 @using AppPerfumaria.Models.Resources
 @using AppPerfumaria.Models.Tables
+@using AppPerfumaria.Services
 
 @inject ExceptionService ExceptionService
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 @inject NavigationManager Nav
 @inject ISnackbar Snack
+@inject UsuarioService UsuarioService
 
 @if (_carregando)
 {
@@ -116,6 +118,8 @@
 
         if (_auth != null && _instalacao != null)
         {
+            //Setando dados do usuário
+            await UsuarioService.Set(_auth!);
             Nav.NavigateTo("/base", true);
             return;
         }
@@ -159,6 +163,7 @@
             if (response!.status)
             {
                 await LocalStorage.SetItemAsync("auth", response);
+                _auth = await LocalStorage.GetItemAsync<Auth>("auth");
                 await ValidarPermissoes();
             }
             else
@@ -183,7 +188,9 @@
     {
         try
         {
-            _auth = await LocalStorage.GetItemAsync<Auth>("auth");
+            //Setando dados do usuário
+            await UsuarioService.Set(_auth!);
+
             List<string>? divisoes_ids = _auth?.data?.colaborador_user?.divisoes_ids;
             if (divisoes_ids?.Count() > 0 && divisoes_ids.Contains(_divisoes_id))
             {
@@ -291,7 +298,7 @@
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar voltar!", Severity.Warning);
+            Snack.Add("Tivemos um problema ao tentar selecionar uma instalação!", Severity.Warning);
             _verificando = false;
             _carregando = false;
         }
