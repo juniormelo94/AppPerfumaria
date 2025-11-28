@@ -111,27 +111,34 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _auth = await LocalStorage.GetItemAsync<Auth>("auth");
-        _instalacao = await LocalStorage.GetItemAsync<Instalacoes>("instalacao");
-
-        await Task.Delay(2000);
-
-        if (_auth != null && _instalacao != null)
+        try
         {
-            //Setando dados do usuário
-            await UsuarioService.Set(_auth!);
-            Nav.NavigateTo("/base", true);
-            return;
-        }
-        else if (_auth != null)
-        {
-            _pagina = 3;
-            await ValidarPermissoes();
-            return;
-        }
+            _auth = await LocalStorage.GetItemAsync<Auth>("auth");
+            _instalacao = await LocalStorage.GetItemAsync<Instalacoes>("instalacao");
 
-        _pagina = 2;
-        StateHasChanged();
+            await Task.Delay(2000);
+
+            if (_auth != null && _instalacao != null)
+            {
+                //Setando dados do usuário
+                await UsuarioService.Set(_auth!);
+                Nav.NavigateTo("/base", true);
+                return;
+            }
+            else if (_auth != null)
+            {
+                _pagina = 3;
+                await ValidarPermissoes();
+                return;
+            }
+
+            _pagina = 2;
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            ExceptionService.HandleAsync(e, "Tivemos ao tentar iniciar o aplicativo!");
+        }
     }
 
     public void ExibirSenha()

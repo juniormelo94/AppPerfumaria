@@ -241,7 +241,7 @@
         <AppPerfumaria.Components.Pages.Combos.CombosCmp 
          Auth="_auth" Instalacao="_instalacao" />
     }
-    else if (_nomePagina == "MaquinaCartao")
+    else if (_nomePagina == "MaquinasCartao")
     {
         <AppPerfumaria.Components.Pages.MaquinasCartao.MaquinasCartaoCmp 
         Auth="_auth" Instalacao="_instalacao" />
@@ -270,11 +270,14 @@
                 <MudText Typo="Typo.body1">Combos</MudText>
             </MudButton>
             <MudSpacer />
-            <MudButton Class="d-block" Color="Color.Inherit" OnClick="@(() => CarregarOpcaoBarraInferior("Vendas"))">
-                <MudIcon Icon="@Icons.Material.Filled.Receipt" Size="Size.Small" />
-                <MudText Typo="Typo.body1">Vendas</MudText>
-            </MudButton>
-            <MudSpacer />
+            @if (UsuarioService.CheckPermissoes(["vendas.listar"]))
+            {
+                <MudButton Class="d-block" Color="Color.Inherit" OnClick="@(() => CarregarOpcaoBarraInferior("Vendas"))">
+                    <MudIcon Icon="@Icons.Material.Filled.Receipt" Size="Size.Small" />
+                    <MudText Typo="Typo.body1">Vendas</MudText>
+                </MudButton>
+                <MudSpacer />
+            }
             <MudButton Class="d-block" Color="Color.Inherit" OnClick="@Menu">
                 <MudIcon Icon="@Icons.Material.Filled.Menu" Size="Size.Small" />
                 <MudText Typo="Typo.body1">Menu</MudText>
@@ -292,7 +295,7 @@
                 </MudDrawerHeader>
                 <MudDivider />
                 <MudNavMenu Rounded="true" Margin="Margin.Dense" Color="Color.Primary" Style="height:100vh;">
-                    @if (UsuarioService.CheckPermissao("marcas.listar"))
+                    @if (UsuarioService.CheckPermissoes(["marcas.listar", "marcas.listar.seus"]))
                     {
                         <MudNavLink OnClick="@(() => CarregarOpcaoMenu("Marcas"))">
                             <div class="d-flex">
@@ -301,71 +304,95 @@
                             </div>
                         </MudNavLink>
                     }
+                    @if (UsuarioService.CheckPermissoes(["produtos.listar"]))
+                    {
+                        <MudNavLink OnClick="@(() => CarregarOpcaoMenu("Produtos"))">
+                            <div class="d-flex">
+                                <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.ShoppingBag" Color="Color.Surface" />
+                                <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Produtos</MudText>
+                            </div>
+                        </MudNavLink>
+                    }
+                    @if (UsuarioService.CheckPermissoes(["colaboradores.listar"]))
+                    {
+                        <MudNavLink OnClick="@(() => CarregarOpcaoMenu("Colaboradores"))">
+                            <div class="d-flex">
+                                <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.Badge" Color="Color.Surface" />
+                                <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Colaboradores</MudText>
+                            </div>
+                        </MudNavLink>
+                    }
+                    @if (UsuarioService.CheckPermissoes(["clientes.listar"]))
+                    {
+                        <MudNavLink OnClick="@(() => CarregarOpcaoMenu("Clientes"))">
+                            <div class="d-flex">
+                                <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.People" Color="Color.Surface" />
+                                <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Clientes</MudText>
+                            </div>
+                        </MudNavLink>
+                    }
+                    @if (UsuarioService.CheckPermissoes(["vendas.listar"]))
+                    {
+                        <MudNavLink OnClick="@(() => CarregarOpcaoMenu("Vendas"))">
+                            <div class="d-flex">
+                                <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.Receipt" Color="Color.Surface" />
+                                <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Vendas</MudText>
+                            </div>
+                        </MudNavLink>
+                    }
+                    @if (UsuarioService.CheckPermissoes(["combos.listar"]))
+                    {
+                        <MudNavLink OnClick="@(() => CarregarOpcaoMenu("Combos"))">
+                            <div class="d-flex">
+                                <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.DashboardCustomize" Color="Color.Surface" />
+                                <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Combos</MudText>
+                            </div>
+                        </MudNavLink>
+                    }
+                    @if (UsuarioService.CheckPermissoes(["maquinascartao.listar"]))
+                    {
+                        <MudNavLink OnClick="@(() => CarregarOpcaoMenu("MaquinasCartao"))">
+                            <div class="d-flex">
+                                <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.CreditCard" Color="Color.Surface" />
+                                <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Maquina Cartão</MudText>
+                            </div>
+                        </MudNavLink>
+                    }
+                    @if (UsuarioService.CheckPermissoes(["estoques.listar"]))
+                    {
+                        <MudNavLink OnClick="@(() => CarregarOpcaoMenu("Estoques"))">
+                            <div class="d-flex">
+                                <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.ListAlt" Color="Color.Surface" />
+                                <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Estoques</MudText>
+                            </div>
+                        </MudNavLink>
+                    }
+                    @if (UsuarioService.CheckPermissoes(["tiposusuarios.listar"]))
+                    {
+                        <MudNavLink OnClick="@(() => CarregarOpcaoMenu("TiposUsuarios"))">
+                            <div class="d-flex">
+                                <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.LockPerson" Color="Color.Surface" />
+                                <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Tipos de Usuários</MudText>
+                            </div>
+                        </MudNavLink>
+                    }
 
-                    <MudNavLink OnClick="@(() => CarregarOpcaoMenu("Produtos"))">
-                        <div class="d-flex">
-                            <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.ShoppingBag" Color="Color.Surface" />
-                            <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Produtos</MudText>
-                        </div>
-                    </MudNavLink>
-                    <MudNavLink OnClick="@(() => CarregarOpcaoMenu("Colaboradores"))">
-                        <div class="d-flex">
-                            <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.Badge" Color="Color.Surface" />
-                            <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Colaboradores</MudText>
-                        </div>
-                    </MudNavLink>
-                    <MudNavLink OnClick="@(() => CarregarOpcaoMenu("Clientes"))">
-                        <div class="d-flex">
-                            <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.People" Color="Color.Surface" />
-                            <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Clientes</MudText>
-                        </div>
-                    </MudNavLink>
-                    <MudNavLink OnClick="@(() => CarregarOpcaoMenu("Vendas"))">
-                        <div class="d-flex">
-                            <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.Receipt" Color="Color.Surface" />
-                            <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Vendas</MudText>
-                        </div>
-                    </MudNavLink>
-                    <MudNavLink OnClick="@(() => CarregarOpcaoMenu("Combos"))">
-                        <div class="d-flex">
-                            <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.DashboardCustomize" Color="Color.Surface" />
-                            <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Combos</MudText>
-                        </div>
-                    </MudNavLink>
-                    <MudNavLink OnClick="@(() => CarregarOpcaoMenu("MaquinaCartao"))">
-                        <div class="d-flex">
-                            <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.CreditCard" Color="Color.Surface" />
-                            <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Maquina Cartão</MudText>
-                        </div>
-                    </MudNavLink>
-                    <MudNavLink OnClick="@(() => CarregarOpcaoMenu("Estoques"))">
-                        <div class="d-flex">
-                            <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.ListAlt" Color="Color.Surface" />
-                            <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Estoques</MudText>
-                        </div>
-                    </MudNavLink>
-                    <MudNavLink OnClick="@(() => CarregarOpcaoMenu("TiposUsuarios"))">
-                        <div class="d-flex">
-                            <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.LockPerson" Color="Color.Surface" />
-                            <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Tipos de Usuários</MudText>
-                        </div>
-                    </MudNavLink>
 
-                    @if (_multiplosAcessos)
+                    <MudNavLink Class="mt-5" OnClick="Sair">
+                        <div class="d-flex">
+                            <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.Logout" Color="Color.Surface" />
+                            <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Sair</MudText>
+                        </div>
+                    </MudNavLink>
+                    @if (UsuarioService.CheckPermissoes(["usuarios.gerenciar.instalacoes"]) && UsuarioService.CountInstalacoes() > 1)
                     {                     
-                        <MudNavLink Class="mt-5" OnClick="AlterarAcesso">
+                        <MudNavLink OnClick="AlterarAcesso">
                             <div class="d-flex">
                                 <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.Autorenew" Color="Color.Surface" />
                                 <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Alterar Acesso</MudText>
                             </div> 
                         </MudNavLink>
                     }
-                    <MudNavLink Class="@(_multiplosAcessos ? "" : "mt-5")" OnClick="Sair">
-                        <div class="d-flex">
-                            <MudIcon Style="margin-bottom: -2px;" Size="Size.Medium" Icon="@Icons.Material.Filled.Logout" Color="Color.Surface" />
-                            <MudText Style="margin-top: -2px;" Color="Color.Surface" Typo="Typo.h5" Class="ml-3">Sair</MudText>
-                        </div>
-                    </MudNavLink>
                 </MudNavMenu>
             </MudDrawer>
         </MudMainContent>
@@ -379,7 +406,6 @@
     private Vendas? _venda = new Vendas();
     private bool _exibirMenu, _exibirCarinho = false;
     private bool _carregando = true;
-    private bool _multiplosAcessos = false;
     private string _nomePagina = "ProdutosInicio";
 
     protected override async Task OnInitializedAsync()
@@ -395,7 +421,6 @@
             Nav.NavigateTo("/", true);
         }
 
-        _multiplosAcessos = _auth?.data?.colaborador_user?.instalacoes_ids?.Count() > 1;
         await AtualizarCarinho();
         _carregando = false;
     }

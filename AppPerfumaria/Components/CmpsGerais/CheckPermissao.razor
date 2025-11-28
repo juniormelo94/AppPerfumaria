@@ -2,12 +2,12 @@
 
 @inject UsuarioService UsuarioService
 
-@if (UsuarioService.CheckPermissao(Chave))
+@if (UsuarioService.CheckPermissoes(Chaves))
 {
     @Content
 }
 
 @code {
-    [Parameter] public string Chave { get; set; }
+    [Parameter] public List<string>? Chaves { get; set; }
     [Parameter] public RenderFragment Content { get; set; }
 }

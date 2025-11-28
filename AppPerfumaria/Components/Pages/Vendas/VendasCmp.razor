@@ -8,11 +8,13 @@
 @using AppPerfumaria.Models.Pagination
 @using AppPerfumaria.Models.Tables
 @using System.Globalization
+@using AppPerfumaria.Services
 
 @inject IDialogService Dialog
 @inject ExceptionService ExceptionService
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 @inject ISnackbar Snack
+@inject UsuarioService UsuarioService
 
 <MudOverlay DarkBackground Visible="_carregando" ZIndex="10">
     <MudProgressCircular Indeterminate="true" Color="Color.Default" />
@@ -118,13 +120,22 @@
     <!-- Barra de card e botão gráficos -->
     <div class="d-flex">
         <MudTabs Elevation="4" Rounded="true" Centered="true" @ref="tabs">
-            <MudTabPanel Icon="@Icons.Material.Filled.Storefront" Text="Vendas" 
-                         OnClick="(() => LimparEListarVendas(true))" />
-            <MudTabPanel Text="Vendas" OnClick="(() => LimparEListarVendas(false))" />
+            @if (UsuarioService.CheckPermissoes(["vendas.listar.instalacao"]))
+            {
+                <MudTabPanel Icon="@Icons.Material.Filled.Storefront" Text="Vendas"
+                             OnClick="(() => LimparEListarVendas(true))" />
+            }
+            @if (UsuarioService.CheckPermissoes(["vendas.listar"]))
+            {
+                <MudTabPanel Text="Vendas" OnClick="(() => LimparEListarVendas(false))" />
+            }
         </MudTabs>
-        <MudSpacer />
-        <MudIconButton Icon="@Icons.Material.Filled.InsertChartOutlined" OnClick="VisualizarGraficos"
-                       Color="Color.Inherit" Size="Size.Medium" />
+        @if (UsuarioService.CheckPermissoes(["vendas.graficos"]))
+        {
+            <MudSpacer />
+            <MudIconButton Icon="@Icons.Material.Filled.InsertChartOutlined" OnClick="VisualizarGraficos"
+                           Color="Color.Inherit" Size="Size.Medium" />
+        }
     </div>
 </MudPaper>
 
@@ -263,11 +274,16 @@
                             </div>
                         </MudItem>
                         <MudItem xs="2" Class="d-flex flex-column align-items-center justify-content-center">
+                            @if (UsuarioService.CheckPermissoes(["vendas.editar.instalacao"]))
+                            {
                                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Medium"
                                                OnClick="(() => AtualizarVenda(venda, true))" />
-
+                            }
+                            @if (UsuarioService.CheckPermissoes(["vendas.deletar.instalacao"]))
+                            {
                                 <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Medium"
                                                OnClick="(() => DeletarVenda(venda, true))" />
+                            }
                         </MudItem>
                     </MudGrid>
                 </MudPaper>
@@ -430,11 +446,16 @@
                             </div>
                         </MudItem>
                         <MudItem xs="2" Class="d-flex flex-column align-items-center justify-content-center">
-                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Medium"
-                                           OnClick="(() => AtualizarVenda(venda, false))" />
-
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Medium"
-                                           OnClick="(() => DeletarVenda(venda, false))" />
+                            @if (UsuarioService.CheckPermissoes(["vendas.editar"]))
+                            {
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Medium"
+                                               OnClick="(() => AtualizarVenda(venda, false))" />
+                            }
+                            @if (UsuarioService.CheckPermissoes(["vendas.deletar"]))
+                            {
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Medium"
+                                               OnClick="(() => DeletarVenda(venda, false))" />
+                            }
                         </MudItem>
                     </MudGrid>
                 </MudPaper>
