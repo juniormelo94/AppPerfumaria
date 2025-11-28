@@ -41,11 +41,10 @@
 
         <!-- Listar resultados das permissões -->
         <Tabela TypeItem="Permissoes" ListItens="_listarPermissoes" Pagination="_paginacaoPermissoes" 
-                OnClickPage="CarregarMais" Carregando="_carregando" Class="mt-3" >
+                OnClickPage="CarregarMais" Carregando="_carregando" Class="mt-3">
             <Head>
                 <th>Permissão</th>
                 <th class="text-center">Grupo</th>
-                <th class="text-center">Status</th>
                 <th class="d-flex justify-center align-center p-0 m-0">
                     <MudCheckBox Class="p-0 m-0" T="bool" Size="Size.Small" Value="@_selecionarTodas"
                                  ValueChanged="@(async(bool check) => await SelecionarTodas(check))" />
@@ -54,7 +53,6 @@
             <Body>
                 <td>@context.chave</td>
                 <td class="text-center">@context.grupo</td>
-                <td class="text-center">@context.status</td>
                 <td class="d-flex justify-center align-center p-0 m-0">
                     <MudCheckBox Class="p-0 m-0" T="bool" Size="Size.Small" Value="@_permissoesSelecionadas.Contains(context.id)"
                              ValueChanged="@((bool check) => SelecionarPermisao(context.id, check))" />
@@ -63,7 +61,6 @@
             <Footer>
                 <td>Permissão</td>
                 <td class="text-center">Grupo</td>
-                <td class="text-center">Status</td>
                 <td class="d-flex justify-center align-center p-0 m-0">
                     <MudCheckBox Class="p-0 m-0" T="bool" Size="Size.Small" Value="@_selecionarTodas"
                                  ValueChanged="@(async(bool check) => await SelecionarTodas(check))" />
@@ -221,7 +218,7 @@
 
     public string? PegarFiltros()
     {
-        string filtros = $"?page={_paginaPaginacao}&por_pagina={_porPagina}";
+        string filtros = $"?page={_paginaPaginacao}&por_pagina={_porPagina}&status=Ativo";
 
         if (!string.IsNullOrEmpty(_pesquisarFiltro))
         {

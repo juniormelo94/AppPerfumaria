@@ -84,12 +84,10 @@
         <Tabela TypeItem="TiposUsers" ListItens="_listarTiposUsers" Pagination="_paginacaoTiposUsers" OnClickPage="CarregarMais" Carregando="_carregando">
             <Head>
                 <th>Tipo</th>
-                <th class="text-center">Status</th>
                 <th class="text-center">Ação</th>
             </Head>
             <Body>
                 <td>@context.tipo</td>
-                <td class="text-center">@context.status</td>
                 <td class="text-center">
                     <MudIconButton Size="Size.Small" OnClick="@(() => AtualizarTipoUsuario(context))"
                                        Icon="@Icons.Material.Filled.Edit" />
@@ -99,7 +97,6 @@
             </Body>
             <Footer>
                 <td>Tipo</td>
-                <td class="text-center">Status</td>
                 <td class="text-center">Ação</td>
             </Footer>
         </Tabela>
@@ -112,13 +109,11 @@
             <Head>
                 <th>Permissão</th>
                 <th class="text-center">Grupo</th>
-                <th class="text-center">Status</th>
                 <th class="text-center">Ação</th>
             </Head>
             <Body>
-                <td>@context.chave</td>
+                <td class="@("fw-bold " + (context.status == "Ativo" ? "text-success" : "text-danger"))">@context.chave</td>
                 <td class="text-center">@context.grupo</td>
-                <td class="text-center">@context.status</td>
                 <td class="text-center">
                     <MudIconButton Size="Size.Small" OnClick="@(() => AtualizarPermissao(context))"
                                        Icon="@Icons.Material.Filled.Edit" />
@@ -129,7 +124,6 @@
             <Footer>
                 <td>Permissão</td>
                 <td class="text-center">Grupo</td>
-                <td class="text-center">Status</td>
                 <td class="text-center">Ação</td>
             </Footer>
         </Tabela>
