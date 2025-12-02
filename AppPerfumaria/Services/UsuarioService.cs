@@ -18,7 +18,7 @@ namespace AppPerfumaria.Services
         private List<string> _instalacoes_ids { get; set; } = new();
 
         /// <summary>
-        /// Carrega dados do usuário + permissões
+        /// Carrega dados do usuário
         /// </summary>
         public async Task Set(Auth auth)
         {
@@ -43,7 +43,7 @@ namespace AppPerfumaria.Services
             }
             else
             {
-                throw new Exception("Tivemos um problema ao tentar setar os dados do usuário!");
+                throw new Exception("Tivemos um problema ao tentar carregar os dados do usuário!");
             }
         }
 

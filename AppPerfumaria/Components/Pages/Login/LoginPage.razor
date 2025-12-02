@@ -138,6 +138,8 @@
         catch (Exception e)
         {
             ExceptionService.HandleAsync(e, "Tivemos ao tentar iniciar o aplicativo!");
+            _pagina = 2;
+            StateHasChanged();
         }
     }
 
