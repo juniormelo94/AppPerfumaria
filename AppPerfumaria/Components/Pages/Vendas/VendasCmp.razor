@@ -120,17 +120,14 @@
     <!-- Barra de card e botão gráficos -->
     <div class="d-flex">
         <MudTabs Elevation="4" Rounded="true" Centered="true" @ref="tabs">
-            @if (UsuarioService.CheckPermissoes(["vendas.listar.instalacao"]))
-            {
-                <MudTabPanel Icon="@Icons.Material.Filled.Storefront" Text="Vendas"
-                             OnClick="(() => LimparEListarVendas(true))" />
-            }
-            @if (UsuarioService.CheckPermissoes(["vendas.listar"]))
+            <MudTabPanel Icon="@Icons.Material.Filled.Storefront" Text="Vendas"
+                            OnClick="(() => LimparEListarVendas(true))" />
+            @if (UsuarioService.CheckPermissoes(["vendas.admin"]))
             {
                 <MudTabPanel Text="Vendas" OnClick="(() => LimparEListarVendas(false))" />
             }
         </MudTabs>
-        @if (UsuarioService.CheckPermissoes(["vendas.graficos"]))
+        @if (UsuarioService.CheckPermissoes(["vendas.financeiro"]))
         {
             <MudSpacer />
             <MudIconButton Icon="@Icons.Material.Filled.InsertChartOutlined" OnClick="VisualizarGraficos"
@@ -186,15 +183,18 @@
                                     @string.Format(new CultureInfo("pt-BR"), "{0:C}", venda.preco_total)
                                 </MudText>
                             </div>
-                            <div class="d-flex">
-                                <MudText Typo="Typo.body2">
-                                    Lucro Total:
-                                </MudText>
-                                <MudSpacer />
-                                <MudText Typo="Typo.body2" Class="@(venda.lucro_total_desconto > 0 ? "fw-bold text-decoration-line-through" : "fw-bold")">
-                                    @string.Format(new CultureInfo("pt-BR"), "{0:C}", venda.lucro_total_original)
-                                </MudText>
-                            </div>
+                            @if (UsuarioService.CheckPermissoes(["vendas.financeiro"]))
+                            {
+                                <div class="d-flex">
+                                    <MudText Typo="Typo.body2">
+                                        Lucro Total:
+                                    </MudText>
+                                    <MudSpacer />
+                                    <MudText Typo="Typo.body2" Class="@(venda.lucro_total_desconto > 0 ? "fw-bold text-decoration-line-through" : "fw-bold")">
+                                        @string.Format(new CultureInfo("pt-BR"), "{0:C}", venda.lucro_total_original)
+                                    </MudText>
+                                </div>
+                            }
                             @if (venda.lucro_total_desconto > 0)
                             {
                                 <div class="d-flex">
@@ -274,12 +274,12 @@
                             </div>
                         </MudItem>
                         <MudItem xs="2" Class="d-flex flex-column align-items-center justify-content-center">
-                            @if (UsuarioService.CheckPermissoes(["vendas.editar.instalacao"]))
+                            @if (UsuarioService.CheckPermissoes(["vendas.editar"]))
                             {
                                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Medium"
                                                OnClick="(() => AtualizarVenda(venda, true))" />
                             }
-                            @if (UsuarioService.CheckPermissoes(["vendas.deletar.instalacao"]))
+                            @if (UsuarioService.CheckPermissoes(["vendas.deletar"]))
                             {
                                 <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Medium"
                                                OnClick="(() => DeletarVenda(venda, true))" />
@@ -359,15 +359,18 @@
                                     @string.Format(new CultureInfo("pt-BR"), "{0:C}", venda.preco_total)
                                 </MudText>
                             </div>
-                            <div class="d-flex">
-                                <MudText Typo="Typo.body2">
-                                    Lucro Total:
-                                </MudText>
-                                <MudSpacer />
-                                <MudText Typo="Typo.body2" Class="@(venda.lucro_total_desconto > 0 ? "fw-bold text-decoration-line-through" : "fw-bold")">
-                                    @string.Format(new CultureInfo("pt-BR"), "{0:C}", venda.lucro_total_original)
-                                </MudText>
-                            </div>
+                            @if (UsuarioService.CheckPermissoes(["vendas.financeiro"]))
+                            {
+                                <div class="d-flex">
+                                    <MudText Typo="Typo.body2">
+                                        Lucro Total:
+                                    </MudText>
+                                    <MudSpacer />
+                                    <MudText Typo="Typo.body2" Class="@(venda.lucro_total_desconto > 0 ? "fw-bold text-decoration-line-through" : "fw-bold")">
+                                        @string.Format(new CultureInfo("pt-BR"), "{0:C}", venda.lucro_total_original)
+                                    </MudText>
+                                </div>
+                            }
                             @if (venda.lucro_total_desconto > 0)
                             {
                                 <div class="d-flex">
@@ -446,12 +449,12 @@
                             </div>
                         </MudItem>
                         <MudItem xs="2" Class="d-flex flex-column align-items-center justify-content-center">
-                            @if (UsuarioService.CheckPermissoes(["vendas.editar"]))
+                            @if (UsuarioService.CheckPermissoes(["vendas.editar", "vendas.admin"]))
                             {
                                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Medium"
                                                OnClick="(() => AtualizarVenda(venda, false))" />
                             }
-                            @if (UsuarioService.CheckPermissoes(["vendas.deletar"]))
+                            @if (UsuarioService.CheckPermissoes(["vendas.deletar", "vendas.admin"]))
                             {
                                 <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Medium"
                                                OnClick="(() => DeletarVenda(venda, false))" />

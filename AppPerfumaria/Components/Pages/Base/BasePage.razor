@@ -36,11 +36,14 @@
                     <MudIcon Icon="@Icons.Material.Filled.LocalGroceryStore" Color="Color.Inherit" />
                 </MudBadge>
             </MudIconButton> *@
-            <MudButton Class="h-100" Color="Color.Inherit" OnClick="(() => Carinho())">
-                <MudBadge Content="_produtosCarinho?.Count()" Overlap="true" Visible="true" Color="Color.Dark" Class="mt-2">
-                    <MudIcon Icon="@Icons.Material.Filled.LocalGroceryStore" Color="Color.Inherit" />
-                </MudBadge>
-            </MudButton>
+            @if (UsuarioService.CheckPermissoes(["vendas.criar"]))
+            {
+                <MudButton Class="h-100" Color="Color.Inherit" OnClick="(() => Carinho())">
+                    <MudBadge Content="_produtosCarinho?.Count()" Overlap="true" Visible="true" Color="Color.Dark" Class="mt-2">
+                        <MudIcon Icon="@Icons.Material.Filled.LocalGroceryStore" Color="Color.Inherit" />
+                    </MudBadge>
+                </MudButton>
+            }
         </MudAppBar>
         @* Aba do carinho *@
         <MudMainContent Class="mb-0">
@@ -295,7 +298,7 @@
                 </MudDrawerHeader>
                 <MudDivider />
                 <MudNavMenu Rounded="true" Margin="Margin.Dense" Color="Color.Primary" Style="height:100vh;">
-                    @if (UsuarioService.CheckPermissoes(["marcas.listar", "marcas.listar.seus"]))
+                    @if (UsuarioService.CheckPermissoes(["marcas.listar"]))
                     {
                         <MudNavLink OnClick="@(() => CarregarOpcaoMenu("Marcas"))">
                             <div class="d-flex">

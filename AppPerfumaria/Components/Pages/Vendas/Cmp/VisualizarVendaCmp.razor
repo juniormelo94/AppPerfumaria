@@ -4,10 +4,12 @@
 @using AppPerfumaria.Models.Auth
 @using AppPerfumaria.Models.Tables
 @using System.Globalization
+@using AppPerfumaria.Services
 
 @inject ExceptionService ExceptionService
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 @inject ISnackbar Snack
+@inject UsuarioService UsuarioService
 
 <MudDialog ContentClass="bg-gray py-5" TitleClass="d-flex pb-0 pt-2">
     <TitleContent>
@@ -66,15 +68,18 @@
                         @string.Format(new CultureInfo("pt-BR"), "{0:C}", _venda!.preco_total)
                     </MudText>
                 </div>
-                <div class="d-flex">
-                    <MudText Typo="Typo.body2">
-                        Lucro Total:
-                    </MudText>
-                    <MudSpacer />
-                    <MudText Typo="Typo.body2" Class="@(_venda!.lucro_total_desconto > 0 ? "fw-bold text-decoration-line-through" : "fw-bold")">
-                        @string.Format(new CultureInfo("pt-BR"), "{0:C}", _venda!.lucro_total_original)
-                    </MudText>
-                </div>
+                @if (UsuarioService.CheckPermissoes(["vendas.financeiro"]))
+                {
+                    <div class="d-flex">
+                        <MudText Typo="Typo.body2">
+                            Lucro Total:
+                        </MudText>
+                        <MudSpacer />
+                        <MudText Typo="Typo.body2" Class="@(_venda!.lucro_total_desconto > 0 ? "fw-bold text-decoration-line-through" : "fw-bold")">
+                            @string.Format(new CultureInfo("pt-BR"), "{0:C}", _venda!.lucro_total_original)
+                        </MudText>
+                    </div>
+                }
                 @if (_venda!.lucro_total_desconto > 0)
                 {
                     <div class="d-flex">
