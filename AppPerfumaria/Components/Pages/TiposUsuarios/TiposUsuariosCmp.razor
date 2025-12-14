@@ -60,8 +60,8 @@
     <!-- Barra de card e botão criar -->
     <div class="d-flex">
         <MudTabs Elevation="4" Rounded="true" Centered="true" @ref="tabs">
-            <MudTabPanel Text="Tipos Usuários" OnClick="LimparEListarTiposUsers" />
-            <MudTabPanel Text="Permissões" OnClick="LimparEListarPermissoes" />
+            <MudTabPanel Text="Tipos Usuários" OnClick="@(() => LimparEListarTiposUsers())" />
+            <MudTabPanel Text="Permissões" OnClick="@(() => LimparEListarPermissoes())" />
         </MudTabs>
         <MudSpacer />
         @if (_indiceMenu == 0)
@@ -219,9 +219,9 @@
         }
     }
 
-    public async Task LimparEListarTiposUsers()
+    public async Task LimparEListarTiposUsers(int pagina = 1)
     {
-        _paginaPaginacao = 1;
+        _paginaPaginacao = pagina;
         _listarTiposUsers = new List<TiposUsers>();
         await ListarTiposUsers();
     }
@@ -261,9 +261,9 @@
         }
     }
 
-    public async Task LimparEListarPermissoes()
+    public async Task LimparEListarPermissoes(int pagina = 1)
     {
-        _paginaPaginacao = 1;
+        _paginaPaginacao = pagina!;
         _listarPermissoes = new List<Permissoes>();
         await ListarPermissoes();
     }
@@ -321,7 +321,7 @@
             if (!result.Canceled)
             {
                 Snack.Add("Tipo de usuário criado com sucesso!", Severity.Success);
-                tabs.ActivatePanel(0);
+                await LimparEListarTiposUsers(_paginaPaginacao);
             }
         }
         catch (Exception e)
@@ -348,7 +348,7 @@
             if (!result.Canceled)
             {
                 Snack.Add("Permissão criada com sucesso!", Severity.Success);
-                tabs.ActivatePanel(1);
+                await LimparEListarPermissoes(_paginaPaginacao);
             }
         }
         catch (Exception e)
@@ -446,7 +446,7 @@
                 if (response!.status)
                 {
                     Snack.Add("Tipo de usuário deletado com sucesso!", Severity.Success);
-                    await LimparEListarTiposUsers();
+                    await LimparEListarTiposUsers(_paginaPaginacao);
                 }
                 else
                 {
@@ -485,7 +485,7 @@
                 if (response!.status)
                 {
                     Snack.Add("Permissão deletada com sucesso!", Severity.Success);
-                    await LimparEListarPermissoes();
+                    await LimparEListarPermissoes(_paginaPaginacao);
                 }
                 else
                 {
