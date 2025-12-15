@@ -194,18 +194,18 @@
                                         @string.Format(new CultureInfo("pt-BR"), "{0:C}", venda.lucro_total_original)
                                     </MudText>
                                 </div>
-                            }
-                            @if (venda.lucro_total_desconto > 0)
-                            {
-                                <div class="d-flex">
-                                    <MudText Typo="Typo.body2">
-                                        Lucro Desconto:
-                                    </MudText>
-                                    <MudSpacer />
-                                    <MudText Class="fw-bold" Typo="Typo.body2">
-                                        @string.Format(new CultureInfo("pt-BR"), "{0:C}", venda.lucro_total_desconto)
-                                    </MudText>
-                                </div>
+                                @if (venda.lucro_total_desconto > 0)
+                                {
+                                    <div class="d-flex">
+                                        <MudText Typo="Typo.body2">
+                                            Lucro Desconto:
+                                        </MudText>
+                                        <MudSpacer />
+                                        <MudText Class="fw-bold" Typo="Typo.body2">
+                                            @string.Format(new CultureInfo("pt-BR"), "{0:C}", venda.lucro_total_desconto)
+                                        </MudText>
+                                    </div>
+                                }
                             }
                             @if (venda!.taxa_juros != null)
                             {
