@@ -40,6 +40,15 @@ namespace AppPerfumaria.Api.ReinoCompany
         }
         #endregion
 
+        #region Divisões
+        public async Task<DivisoesCollection?> DivisoesListar(string token, string? filtros = null)
+        {
+            var request = new Request();
+            string responseString = await request.GetAsync($"{_baseUrl}/api/divisoes{filtros}", authorization: $"Bearer {token}");
+            return JsonConvert.DeserializeObject<DivisoesCollection>(responseString);
+        }
+        #endregion
+
         #region Instalações
         public async Task<InstalacoesCollection?> InstalacoesListar(string token, string? filtros = null)
         {
