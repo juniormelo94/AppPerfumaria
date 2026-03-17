@@ -135,6 +135,13 @@
                                                            OnClick="(() => CompartilharDivulgacaoPorcentagem(value))" />
                                         }
                                         <MudSpacer />
+                                        @if (_existeDivulgacaoPorcentagem != null && _existeDivulgacaoPorcentagem == true)
+                                        {
+                                            <MudIconButton Icon="@Icons.Material.Filled.Image"
+                                                           Variant="Variant.Filled" Color="Color.Error" Size="Size.Small"
+                                                           OnClick="(() => CompartilharDivulgacaoIA(value))" />
+                                        }
+                                        <MudSpacer />
                                         <MudIconButton Icon="@(_produtosCarinho?.FirstOrDefault(w => w.id == value!.id) != null ? Icons.Material.Filled.RemoveShoppingCart : Icons.Material.Filled.AddShoppingCart)"
                                                        Variant="Variant.Filled" Color="Color.Secondary" Size="Size.Small" 
                                                        OnClick="(() => AdicionarOuRemoverCarinho(value))" />
@@ -376,6 +383,32 @@
                 ["_estoque"] = itemProduto
             };
         var dialog = Dialog.Show<PublicidadePorcentagemCmp>("Divulgação Porcentagem", param, options);
+        var result = await dialog.Result;
+        if (!result.Canceled && (bool)result.Data == true)
+        {
+            Snack.Add("Produto compartilhado com sucesso!", Severity.Success);
+        }
+    }
+
+    public async Task CompartilharDivulgacaoIA(Estoques item)
+    {
+        var itemProduto = item.Clone();
+        itemProduto!.produto = _instalacaoProduto!.produto;
+
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.ExtraExtraLarge,
+            FullWidth = true,
+            BackdropClick = false,
+            CloseButton = true,
+            Position = DialogPosition.TopCenter
+        };
+        var param = new DialogParameters
+        {
+            ["_auth"] = _auth,
+            ["_estoque"] = itemProduto
+        };
+        var dialog = Dialog.Show<PublicidadeIACmp>("Divulgação IA", param, options);
         var result = await dialog.Result;
         if (!result.Canceled && (bool)result.Data == true)
         {

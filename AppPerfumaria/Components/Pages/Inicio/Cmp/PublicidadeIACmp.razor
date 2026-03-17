@@ -1,0 +1,104 @@
+﻿@using AppPerfumaria.Api.GemineAI
+@using AppPerfumaria.Api.ReinoCompany
+@using AppPerfumaria.Exceptions
+@using AppPerfumaria.Models.Auth
+@using AppPerfumaria.Models.Tables
+@using SkiaSharp
+@using System.Globalization
+
+@inject ExceptionService ExceptionService
+@inject IDialogService Dialog
+@inject IJSRuntime JS
+@inject ISnackbar Snack
+
+<MudDialog>
+    <DialogContent>
+        @if (!string.IsNullOrEmpty(_imagemMontadaBase64))
+        {
+            <div>
+                @* <MudIconButton Style="position:absolute;"
+                Variant="Variant.Filled" Color="Color.Secondary" Size="Size.Small"
+                Icon="@Icons.Material.Filled.Share" @onclick="CompartilharImagem" /> *@
+                <MudImage Class="rounded-lg w-100" Src="@($"data:image/png;base64,{_imagemMontadaBase64}")" Alt="@_imagemMontadaBase64" />
+            </div>
+        }
+        else
+        {
+            <div class="d-flex flex-column align-items-center justify-content-center py-2">
+                <MudProgressCircular Indeterminate="true" Color="Color.Default" />
+            </div>
+        }
+    </DialogContent>
+    <DialogActions>
+
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance? _mudDialog { get; set; }
+    [Parameter]
+    public Auth? _auth { get; set; }
+    [Parameter]
+    public Estoques? _estoque { get; set; }
+    public ProdutosDivulgacoes? _produtoDivulgacao;
+    private string _imagemMontadaBase64 = string.Empty;
+    private string _caminhoImagemGerada = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var stream = await FileSystem.OpenAppPackageFileAsync("wwwroot/img/divulgacoes/modelo_background.png");
+
+        byte[] imagem;
+        using (var ms = new MemoryStream())
+        {
+            await stream.CopyToAsync(ms);
+            imagem = ms.ToArray();
+        }
+
+        var modelo = Convert.ToBase64String(imagem);
+
+        var prompt = "Quero que você insira a imagem do produto nessa modura da imagem de modelo_background, detalhe sem alterar o tamanho da imagem modelo_background e também o tamanho da moldura e posição de onde ela está, preservando as informações originais e adaptando somente a imagem do produto.";
+
+        var body = new
+        {
+            contents = new[]
+            {
+                new
+                {
+                    parts = new object[]
+                    {
+                        new
+                        {
+                            text = prompt
+                        },
+                        new
+                        {
+                            inline_data = new
+                            {
+                                mime_type = "modelo_background/png",
+                                data = modelo
+                            }
+                        },
+                        new
+                        {
+                            inline_data = new
+                            {
+                                mime_type = "produto/png",
+                                data = _estoque.produto.img_1
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        var gemini = new GeminiAI();
+        var response = await gemini.GenerateContent(body);
+
+        _imagemMontadaBase64 = response;
+
+
+        StateHasChanged();
+    }
+}
