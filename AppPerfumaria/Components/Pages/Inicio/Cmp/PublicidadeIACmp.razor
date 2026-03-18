@@ -16,9 +16,8 @@
         @if (!string.IsNullOrEmpty(_imagemMontadaBase64))
         {
             <div>
-                @* <MudIconButton Style="position:absolute;"
-                Variant="Variant.Filled" Color="Color.Secondary" Size="Size.Small"
-                Icon="@Icons.Material.Filled.Share" @onclick="CompartilharImagem" /> *@
+                <MudIconButton Style="position:absolute;" Variant="Variant.Filled" Color="Color.Secondary" Size="Size.Small"
+                               Icon="@Icons.Material.Filled.Share" @onclick="CompartilharImagem" />
                 <MudImage Class="rounded-lg w-100" Src="@($"data:image/png;base64,{_imagemMontadaBase64}")" Alt="@_imagemMontadaBase64" />
             </div>
         }
@@ -47,58 +46,171 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // using var stream = await FileSystem.OpenAppPackageFileAsync("wwwroot/img/divulgacoes/modelo_background.png");
+
+        // byte[] imagem;
+        // using (var ms = new MemoryStream())
+        // {
+        //     await stream.CopyToAsync(ms);
+        //     imagem = ms.ToArray();
+        // }
+
+        // var modelo = Convert.ToBase64String(imagem);
+
+        // var prompt = "Quero que você insira a imagem do produto nessa modura da imagem de modelo_background, detalhe sem alterar o tamanho da imagem modelo_background e também o tamanho da moldura e posição de onde ela está, preservando as informações originais e adaptando somente a imagem do produto.";
+
+        // var body = new
+        // {
+        //     contents = new[]
+        //     {
+        //         new
+        //         {
+        //             parts = new object[]
+        //             {
+        //                 new
+        //                 {
+        //                     text = prompt
+        //                 },
+        //                 new
+        //                 {
+        //                     inline_data = new
+        //                     {
+        //                         mime_type = "modelo_background/png",
+        //                         data = modelo
+        //                     }
+        //                 },
+        //                 new
+        //                 {
+        //                     inline_data = new
+        //                     {
+        //                         mime_type = "produto/png",
+        //                         data = _estoque.produto.img_1
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     }
+        // };
+
+        // var gemini = new GeminiAI();
+        // var response = await gemini.GenerateContent(body);
+
+        // _imagemMontadaBase64 = response;
+
+        await MontarImagem();
+        StateHasChanged();
+    }
+
+    private async Task MontarImagem()
+    {
+    try
+    {
+        // 1️⃣ Carregar imagem de fundo (template)
         using var stream = await FileSystem.OpenAppPackageFileAsync("wwwroot/img/divulgacoes/modelo_background.png");
 
-        byte[] imagem;
-        using (var ms = new MemoryStream())
+        using var msFundo = new MemoryStream();
+        await stream.CopyToAsync(msFundo);
+        var fundoBytes = msFundo.ToArray();
+
+        using var fundoBitmap = SKBitmap.Decode(fundoBytes);
+
+        // 2️⃣ Carregar imagem do produto (base64 do banco)
+        var produtoBase64 = _estoque?.produto?.img_1;
+
+        if (string.IsNullOrEmpty(produtoBase64))
         {
-            await stream.CopyToAsync(ms);
-            imagem = ms.ToArray();
+            Snack.Add("Produto sem imagem!", Severity.Warning);
+            return;
         }
 
-        var modelo = Convert.ToBase64String(imagem);
+        byte[] produtoBytes = Convert.FromBase64String(produtoBase64);
+        using var produtoBitmap = SKBitmap.Decode(produtoBytes);
 
-        var prompt = "Quero que você insira a imagem do produto nessa modura da imagem de modelo_background, detalhe sem alterar o tamanho da imagem modelo_background e também o tamanho da moldura e posição de onde ela está, preservando as informações originais e adaptando somente a imagem do produto.";
+        // 3️⃣ Criar área de desenho
+        using var surface = SKSurface.Create(new SKImageInfo(fundoBitmap.Width, fundoBitmap.Height));
+        var canvas = surface.Canvas;
 
-        var body = new
+        canvas.Clear();
+
+        // 4️⃣ Desenhar fundo original
+        canvas.DrawBitmap(fundoBitmap, 0, 0);
+
+        // ============================
+        // 🎯 CONFIGURAÇÃO DO PRODUTO
+        // ============================
+
+        // largura baseada no fundo (ajuste aqui)
+        float porcentagemLargura = 0.70f;
+
+        float larguraDesejada = fundoBitmap.Width * porcentagemLargura;
+
+        // escala proporcional
+        float escala = larguraDesejada / produtoBitmap.Width;
+
+        float larguraFinal = produtoBitmap.Width * escala;
+        float alturaFinal = produtoBitmap.Height * escala;
+
+        // centralizar horizontalmente
+        float posX = (fundoBitmap.Width - larguraFinal) / 2;
+
+        // posição vertical (ajuste fino aqui)
+        float posY = fundoBitmap.Height * 0.35f;
+
+        var destino = new SKRect(posX, posY, posX + larguraFinal, posY + alturaFinal);
+
+        // ============================
+        // 🎨 DESENHO DO PRODUTO
+        // ============================
+
+        // sombra leve (opcional - deixa profissional)
+        using var paint = new SKPaint
         {
-            contents = new[]
-            {
-                new
-                {
-                    parts = new object[]
-                    {
-                        new
-                        {
-                            text = prompt
-                        },
-                        new
-                        {
-                            inline_data = new
-                            {
-                                mime_type = "modelo_background/png",
-                                data = modelo
-                            }
-                        },
-                        new
-                        {
-                            inline_data = new
-                            {
-                                mime_type = "produto/png",
-                                data = _estoque.produto.img_1
-                            }
-                        }
-                    }
-                }
-            }
+            ImageFilter = SKImageFilter.CreateDropShadow(0, 15, 25, 25, SKColors.Black.WithAlpha(80))
         };
 
-        var gemini = new GeminiAI();
-        var response = await gemini.GenerateContent(body);
+        canvas.DrawBitmap(produtoBitmap, destino, paint);
 
-        _imagemMontadaBase64 = response;
+        // 5️⃣ Gerar imagem final
+        using var imagemFinal = surface.Snapshot();
+        using var dados = imagemFinal.Encode(SKEncodedImageFormat.Png, 100);
 
+        var caminho = Path.Combine(FileSystem.CacheDirectory, "oferta_produto.png");
 
-        StateHasChanged();
+        if (File.Exists(caminho))
+            File.Delete(caminho);
+
+        using (var fileStream = File.OpenWrite(caminho))
+            dados.SaveTo(fileStream);
+
+        // 6️⃣ Converter para Base64 (exibir no MudImage)
+        _imagemMontadaBase64 = Convert.ToBase64String(dados.ToArray());
+        _caminhoImagemGerada = caminho;
+    }
+    catch (Exception e)
+    {
+        Snack.Add($"Erro ao montar imagem: {e.Message}", Severity.Error);
+    }
+}
+
+    private async Task CompartilharImagem()
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(_caminhoImagemGerada) || !File.Exists(_caminhoImagemGerada))
+            {
+                Snack.Add("Imagem ainda não foi gerada para compartilhamento.", Severity.Warning);
+                return;
+            }
+
+            await Share.RequestAsync(new ShareFileRequest
+            {
+                Title = $"{_estoque!.produto!.nome}",
+                File = new ShareFile(_caminhoImagemGerada)
+            });
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar compartilhar a imagem!", Severity.Warning);
+        }
     }
 }
