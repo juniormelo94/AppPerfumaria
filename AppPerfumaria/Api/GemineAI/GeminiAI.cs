@@ -10,7 +10,7 @@ namespace AppPerfumaria.Api.GemineAI
 {
     public class GeminiAI
     {
-        const string _api_key = "AIzaSyCSAPiGovtYbUac-cUdwo3lCGVoyhL0VnQ";
+        const string _api_key = "AIzaSyD-lKfSx82eKn5S0Ml_go26-JwNxgjPg1A";
 
         public async Task<string> GenerateContent(object content)
         {

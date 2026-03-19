@@ -5,6 +5,7 @@
 @using AppPerfumaria.Models.Tables
 @using SkiaSharp
 @using System.Globalization
+@using System.Text.Json
 
 @inject ExceptionService ExceptionService
 @inject IDialogService Dialog
@@ -97,100 +98,187 @@
 
         // _imagemMontadaBase64 = response;
 
-        await MontarImagem();
+        await MontarImagem2();
         StateHasChanged();
     }
 
     private async Task MontarImagem()
     {
-    try
-    {
-        // 1️⃣ Carregar imagem de fundo (template)
-        using var stream = await FileSystem.OpenAppPackageFileAsync("wwwroot/img/divulgacoes/modelo_background.png");
-
-        using var msFundo = new MemoryStream();
-        await stream.CopyToAsync(msFundo);
-        var fundoBytes = msFundo.ToArray();
-
-        using var fundoBitmap = SKBitmap.Decode(fundoBytes);
-
-        // 2️⃣ Carregar imagem do produto (base64 do banco)
-        var produtoBase64 = _estoque?.produto?.img_1;
-
-        if (string.IsNullOrEmpty(produtoBase64))
+        try
         {
-            Snack.Add("Produto sem imagem!", Severity.Warning);
-            return;
+            // 1️⃣ Carregar imagem de fundo (template)
+            using var stream = await FileSystem.OpenAppPackageFileAsync("wwwroot/img/divulgacoes/modelo_background.png");
+
+            using var msFundo = new MemoryStream();
+            await stream.CopyToAsync(msFundo);
+            var fundoBytes = msFundo.ToArray();
+
+            using var fundoBitmap = SKBitmap.Decode(fundoBytes);
+
+            // 2️⃣ Carregar imagem do produto (base64 do banco)
+            var produtoBase64 = _estoque?.produto?.img_1;
+
+            if (string.IsNullOrEmpty(produtoBase64))
+            {
+                Snack.Add("Produto sem imagem!", Severity.Warning);
+                return;
+            }
+
+            byte[] produtoBytes = Convert.FromBase64String(produtoBase64);
+            using var produtoBitmap = SKBitmap.Decode(produtoBytes);
+
+            // 3️⃣ Criar área de desenho
+            using var surface = SKSurface.Create(new SKImageInfo(fundoBitmap.Width, fundoBitmap.Height));
+            var canvas = surface.Canvas;
+
+            canvas.Clear();
+
+            // 4️⃣ Desenhar fundo original
+            canvas.DrawBitmap(fundoBitmap, 0, 0);
+
+            // ============================
+            // 🎯 CONFIGURAÇÃO DO PRODUTO
+            // ============================
+
+            // largura baseada no fundo (ajuste aqui)
+            float porcentagemLargura = 0.70f;
+
+            float larguraDesejada = fundoBitmap.Width * porcentagemLargura;
+
+            // escala proporcional
+            float escala = larguraDesejada / produtoBitmap.Width;
+
+            float larguraFinal = produtoBitmap.Width * escala;
+            float alturaFinal = produtoBitmap.Height * escala;
+
+            // centralizar horizontalmente
+            float posX = (fundoBitmap.Width - larguraFinal) / 2;
+
+            // posição vertical (ajuste fino aqui)
+            float posY = fundoBitmap.Height * 0.35f;
+
+            var destino = new SKRect(posX, posY, posX + larguraFinal, posY + alturaFinal);
+
+            // ============================
+            // 🎨 DESENHO DO PRODUTO
+            // ============================
+
+            // sombra leve (opcional - deixa profissional)
+            using var paint = new SKPaint
+            {
+                ImageFilter = SKImageFilter.CreateDropShadow(0, 15, 25, 25, SKColors.Black.WithAlpha(80))
+            };
+
+            canvas.DrawBitmap(produtoBitmap, destino, paint);
+
+            // 5️⃣ Gerar imagem final
+            using var imagemFinal = surface.Snapshot();
+            using var dados = imagemFinal.Encode(SKEncodedImageFormat.Png, 100);
+
+            var caminho = Path.Combine(FileSystem.CacheDirectory, "oferta_produto.png");
+
+            if (File.Exists(caminho))
+                File.Delete(caminho);
+
+            using (var fileStream = File.OpenWrite(caminho))
+                dados.SaveTo(fileStream);
+
+            // 6️⃣ Converter para Base64 (exibir no MudImage)
+            _imagemMontadaBase64 = Convert.ToBase64String(dados.ToArray());
+            _caminhoImagemGerada = caminho;
         }
-
-        byte[] produtoBytes = Convert.FromBase64String(produtoBase64);
-        using var produtoBitmap = SKBitmap.Decode(produtoBytes);
-
-        // 3️⃣ Criar área de desenho
-        using var surface = SKSurface.Create(new SKImageInfo(fundoBitmap.Width, fundoBitmap.Height));
-        var canvas = surface.Canvas;
-
-        canvas.Clear();
-
-        // 4️⃣ Desenhar fundo original
-        canvas.DrawBitmap(fundoBitmap, 0, 0);
-
-        // ============================
-        // 🎯 CONFIGURAÇÃO DO PRODUTO
-        // ============================
-
-        // largura baseada no fundo (ajuste aqui)
-        float porcentagemLargura = 0.70f;
-
-        float larguraDesejada = fundoBitmap.Width * porcentagemLargura;
-
-        // escala proporcional
-        float escala = larguraDesejada / produtoBitmap.Width;
-
-        float larguraFinal = produtoBitmap.Width * escala;
-        float alturaFinal = produtoBitmap.Height * escala;
-
-        // centralizar horizontalmente
-        float posX = (fundoBitmap.Width - larguraFinal) / 2;
-
-        // posição vertical (ajuste fino aqui)
-        float posY = fundoBitmap.Height * 0.35f;
-
-        var destino = new SKRect(posX, posY, posX + larguraFinal, posY + alturaFinal);
-
-        // ============================
-        // 🎨 DESENHO DO PRODUTO
-        // ============================
-
-        // sombra leve (opcional - deixa profissional)
-        using var paint = new SKPaint
+        catch (Exception e)
         {
-            ImageFilter = SKImageFilter.CreateDropShadow(0, 15, 25, 25, SKColors.Black.WithAlpha(80))
-        };
-
-        canvas.DrawBitmap(produtoBitmap, destino, paint);
-
-        // 5️⃣ Gerar imagem final
-        using var imagemFinal = surface.Snapshot();
-        using var dados = imagemFinal.Encode(SKEncodedImageFormat.Png, 100);
-
-        var caminho = Path.Combine(FileSystem.CacheDirectory, "oferta_produto.png");
-
-        if (File.Exists(caminho))
-            File.Delete(caminho);
-
-        using (var fileStream = File.OpenWrite(caminho))
-            dados.SaveTo(fileStream);
-
-        // 6️⃣ Converter para Base64 (exibir no MudImage)
-        _imagemMontadaBase64 = Convert.ToBase64String(dados.ToArray());
-        _caminhoImagemGerada = caminho;
+            Snack.Add($"Erro ao montar imagem: {e.Message}", Severity.Error);
+        }
     }
-    catch (Exception e)
+
+    private async Task MontarImagem2()
     {
-        Snack.Add($"Erro ao montar imagem: {e.Message}", Severity.Error);
+        try
+        {
+            // 1️⃣ Carregar imagem de fundo (Agora será a última camada a ser desenhada)
+            using var stream = await FileSystem.OpenAppPackageFileAsync("wwwroot/img/divulgacoes/modelo_background_sem_fundo.png");
+            using var msFundo = new MemoryStream();
+            await stream.CopyToAsync(msFundo);
+            using var fundoBitmap = SKBitmap.Decode(msFundo.ToArray());
+
+            // 2️⃣ Carregar imagem do produto
+            var produtoBase64 = _estoque?.produto?.img_1;
+            if (string.IsNullOrEmpty(produtoBase64))
+            {
+                Snack.Add("Imagem do produto não encontrada.", Severity.Warning);
+                return;
+            }
+            byte[] produtoBytes = Convert.FromBase64String(produtoBase64);
+            using var produtoBitmap = SKBitmap.Decode(produtoBytes);
+
+            // 3️⃣ Criar área de desenho
+            using var surface = SKSurface.Create(new SKImageInfo(fundoBitmap.Width, fundoBitmap.Height));
+            var canvas = surface.Canvas;
+            canvas.Clear(SKColors.Transparent);
+
+            // ============================
+            // 🎯 AJUSTES DE TAMANHO E POSIÇÃO
+            // ============================
+            float percentualLargura = 0.99f;
+            float larguraDesejadaProduto = fundoBitmap.Width * percentualLargura;
+            float escala = larguraDesejadaProduto / produtoBitmap.Width;
+            float larguraFinalProduto = produtoBitmap.Width * escala;
+            float alturaFinalProduto = produtoBitmap.Height * escala;
+
+            float posX = (fundoBitmap.Width - larguraFinalProduto) / 2;
+            float offsetVertical = 235;
+            float posY = ((fundoBitmap.Height - alturaFinalProduto) / 2) - offsetVertical;
+
+            float centroX = posX + (larguraFinalProduto / 2);
+            float centroY = posY + (alturaFinalProduto / 2);
+            float grausRotacao = -6.0f;
+
+            // ============================
+            // 🎨 DESENHO DAS CAMADAS (ORDEM INVERTIDA)
+            // ============================
+        
+            // --- CAMADA 1: PRODUTO (FICA POR BAIXO) ---
+            canvas.Save();
+            canvas.RotateDegrees(grausRotacao, centroX, centroY);
+
+            var destinoProduto = new SKRect(posX, posY, posX + larguraFinalProduto, posY + alturaFinalProduto);
+
+            using (var paintProduto = new SKPaint
+            {
+                IsAntialias = true,
+                FilterQuality = SKFilterQuality.High
+            })
+            {
+                canvas.DrawBitmap(produtoBitmap, destinoProduto, paintProduto);
+            }
+            canvas.Restore();
+
+            // --- CAMADA 2: FUNDO/MOLDURA (FICA POR CIMA) ---
+            // Agora o fundo cobre o que estiver "fora" da área transparente
+            canvas.DrawBitmap(fundoBitmap, 0, 0);
+
+            // 5️⃣ Finalização e Salvamento
+            using var imagemFinal = surface.Snapshot();
+            using var dados = imagemFinal.Encode(SKEncodedImageFormat.Png, 100);
+
+            var caminho = Path.Combine(FileSystem.CacheDirectory, "oferta_produto.png");
+            if (File.Exists(caminho)) File.Delete(caminho);
+
+            using (var fileStream = File.OpenWrite(caminho))
+                dados.SaveTo(fileStream);
+
+            _imagemMontadaBase64 = Convert.ToBase64String(dados.ToArray());
+            _caminhoImagemGerada = caminho;
+
+            Snack.Add("Montagem concluída (Produto por baixo)!", Severity.Success);
+        }
+        catch (Exception e)
+        {
+            Snack.Add($"Erro ao montar: {e.Message}", Severity.Error);
+        }
     }
-}
 
     private async Task CompartilharImagem()
     {
