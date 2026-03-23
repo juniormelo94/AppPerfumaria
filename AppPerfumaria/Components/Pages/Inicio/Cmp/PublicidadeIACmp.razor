@@ -197,19 +197,21 @@
     {
         try
         {
-            // 1️⃣ Carregar imagem de fundo (Agora será a última camada a ser desenhada)
+            // 1️⃣ Carregar imagens base
             using var stream = await FileSystem.OpenAppPackageFileAsync("wwwroot/img/divulgacoes/modelo_background_sem_fundo.png");
             using var msFundo = new MemoryStream();
             await stream.CopyToAsync(msFundo);
             using var fundoBitmap = SKBitmap.Decode(msFundo.ToArray());
 
+            using var streamEtiqueta = await FileSystem.OpenAppPackageFileAsync("wwwroot/img/divulgacoes/etiqueta_preco.png");
+            using var etiquetaBitmap = SKBitmap.Decode(streamEtiqueta);
+
+            using var streamLogo = await FileSystem.OpenAppPackageFileAsync("wwwroot/img/divulgacoes/logo_aroma_suave.png");
+            using var logoBitmap = SKBitmap.Decode(streamLogo);
+
             // 2️⃣ Carregar imagem do produto
             var produtoBase64 = _estoque?.produto?.img_1;
-            if (string.IsNullOrEmpty(produtoBase64))
-            {
-                Snack.Add("Imagem do produto não encontrada.", Severity.Warning);
-                return;
-            }
+            if (string.IsNullOrEmpty(produtoBase64)) return;
             byte[] produtoBytes = Convert.FromBase64String(produtoBase64);
             using var produtoBitmap = SKBitmap.Decode(produtoBytes);
 
@@ -218,66 +220,206 @@
             var canvas = surface.Canvas;
             canvas.Clear(SKColors.Transparent);
 
-            // ============================
-            // 🎯 AJUSTES DE TAMANHO E POSIÇÃO
-            // ============================
+            // 🎯 AJUSTES DO PRODUTO
             float percentualLargura = 0.99f;
             float larguraDesejadaProduto = fundoBitmap.Width * percentualLargura;
             float escala = larguraDesejadaProduto / produtoBitmap.Width;
             float larguraFinalProduto = produtoBitmap.Width * escala;
             float alturaFinalProduto = produtoBitmap.Height * escala;
-
             float posX = (fundoBitmap.Width - larguraFinalProduto) / 2;
             float offsetVertical = 235;
             float posY = ((fundoBitmap.Height - alturaFinalProduto) / 2) - offsetVertical;
 
-            float centroX = posX + (larguraFinalProduto / 2);
-            float centroY = posY + (alturaFinalProduto / 2);
-            float grausRotacao = -6.0f;
-
-            // ============================
-            // 🎨 DESENHO DAS CAMADAS (ORDEM INVERTIDA)
-            // ============================
-        
-            // --- CAMADA 1: PRODUTO (FICA POR BAIXO) ---
+            // --- CAMADA 1: PRODUTO ---
             canvas.Save();
-            canvas.RotateDegrees(grausRotacao, centroX, centroY);
-
-            var destinoProduto = new SKRect(posX, posY, posX + larguraFinalProduto, posY + alturaFinalProduto);
-
-            using (var paintProduto = new SKPaint
-            {
-                IsAntialias = true,
-                FilterQuality = SKFilterQuality.High
-            })
-            {
-                canvas.DrawBitmap(produtoBitmap, destinoProduto, paintProduto);
-            }
+            canvas.RotateDegrees(-6.0f, posX + (larguraFinalProduto / 2), posY + (alturaFinalProduto / 2));
+            canvas.DrawBitmap(produtoBitmap, new SKRect(posX, posY, posX + larguraFinalProduto, posY + alturaFinalProduto));
             canvas.Restore();
 
-            // --- CAMADA 2: FUNDO/MOLDURA (FICA POR CIMA) ---
-            // Agora o fundo cobre o que estiver "fora" da área transparente
+            // --- CAMADA 2: FUNDO/MOLDURA ---
             canvas.DrawBitmap(fundoBitmap, 0, 0);
 
-            // 5️⃣ Finalização e Salvamento
+            // ==============================================================================
+            // 🏷️ CAMADA 3 - TÍTULO
+            // ==============================================================================
+            string textoTitulo = FormatarNomeProduto(_estoque!.produto!.nome);
+            using var paintTexto = new SKPaint
+            {
+                Color = SKColors.Black,
+                IsAntialias = true,
+                TextSize = 50,
+                Typeface = SKTypeface.FromFamilyName("Georgia", SKFontStyleWeight.Bold, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright),
+                TextAlign = SKTextAlign.Center
+            };
+
+            var linhas = new List<string>();
+            var palavras = textoTitulo.Split(' ');
+            var linhaAtual = "";
+            foreach (var p in palavras)
+            {
+                var teste = string.IsNullOrEmpty(linhaAtual) ? p : $"{linhaAtual} {p}";
+                if (paintTexto.MeasureText(teste) > fundoBitmap.Width * 0.80f) { linhas.Add(linhaAtual); linhaAtual = p; }
+                else { linhaAtual = teste; }
+            }
+            linhas.Add(linhaAtual);
+
+            var retangulos = new List<SKRect>();
+            for (int i = 0; i < linhas.Count; i++)
+            {
+                float w = paintTexto.MeasureText(linhas[i]) + 50;
+                float h = paintTexto.TextSize + 24;
+                float y = 100 + (i * (h - 6));
+                float x = (fundoBitmap.Width - w) / 2;
+                retangulos.Add(new SKRect(x, y, x + w, y + h));
+            }
+
+            using var paintSombraDensa = new SKPaint
+            {
+                IsAntialias = true,
+                ImageFilter = SKImageFilter.CreateDropShadow(0, 8, 12, 12, SKColors.Black.WithAlpha(130))
+            };
+            using var paintBranco = new SKPaint { Color = SKColors.White, IsAntialias = true };
+
+            foreach (var rect in retangulos) canvas.DrawRoundRect(rect, 15, 15, paintSombraDensa);
+
+            // --- 4️⃣ DESENHAR ETIQUETA COM PREÇO DINÂMICO ---
+            canvas.Save();
+            float escalaEtiqueta = 0.8f;
+            float larguraEtiqueta = etiquetaBitmap.Width * escalaEtiqueta;
+            float alturaEtiqueta = etiquetaBitmap.Height * escalaEtiqueta;
+            float xEtiqueta = -100;
+            float yEtiqueta = fundoBitmap.Height - alturaEtiqueta - 125;
+
+            canvas.RotateDegrees(5.0f, xEtiqueta + (larguraEtiqueta / 2), yEtiqueta + (alturaEtiqueta / 2));
+            var rectEtiqueta = new SKRect(xEtiqueta, yEtiqueta, xEtiqueta + larguraEtiqueta, yEtiqueta + alturaEtiqueta);
+            canvas.DrawBitmap(etiquetaBitmap, rectEtiqueta, paintSombraDensa);
+
+            // 🚀 LÓGICA DE PREÇO DINÂMICO
+            var cultura = new System.Globalization.CultureInfo("pt-BR");
+            using var paintPreco = new SKPaint
+            {
+                IsAntialias = true,
+                Typeface = SKTypeface.FromFamilyName("Arial", SKFontStyleWeight.Bold, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright)
+            };
+
+            float centroX = rectEtiqueta.MidX + 100;
+            float inicioY = rectEtiqueta.Top + 420;
+
+            // --- 1. Preço Original (De: R$ ...) ---
+            paintPreco.Color = SKColors.Black;
+            paintPreco.TextSize = 35;
+            paintPreco.TextAlign = SKTextAlign.Center;
+            string precoOriginal = _estoque.preco_venda_original?.ToString("N2", cultura);
+            string textoDe = $"De: R$ {precoOriginal}";
+            canvas.DrawText(textoDe, centroX, inicioY, paintPreco);
+
+            float larguraTextoDe = paintPreco.MeasureText(textoDe);
+            canvas.DrawLine(centroX - (larguraTextoDe / 2), inicioY - 12, centroX + (larguraTextoDe / 2), inicioY - 12,
+                new SKPaint { Color = SKColors.Black, StrokeWidth = 3, IsAntialias = true });
+
+            // --- 2. Preço com Desconto (Por: R$ ... cartão) ---
+            string valorPor = $"Por: R$ {_estoque.preco_venda_desconto?.ToString("N2", cultura)}";
+            string condicaoPor = _estoque.preco_venda_avista != null ? " (cartão)" : " (cartão ou à vista)";
+
+            // Medindo larguras para centralizar o conjunto
+            paintPreco.TextSize = 50;
+            float larguraValorPor = paintPreco.MeasureText(valorPor);
+            paintPreco.TextSize = 34;
+            float larguraCondicaoPor = paintPreco.MeasureText(condicaoPor);
+            float totalPorX = larguraValorPor + larguraCondicaoPor;
+            float startXPor = centroX - (totalPorX / 2);
+
+            // Desenha Valor (Vermelho)
+            paintPreco.Color = SKColors.DarkRed;
+            paintPreco.TextSize = 50;
+            paintPreco.TextAlign = SKTextAlign.Left;
+            canvas.DrawText(valorPor, startXPor, inicioY + 80, paintPreco);
+
+            // Desenha Condição (Preto)
+            paintPreco.Color = SKColors.Black;
+            paintPreco.TextSize = 34;
+            canvas.DrawText(condicaoPor, startXPor + larguraValorPor, inicioY + 80, paintPreco);
+
+            // --- 3. Preço À Vista (Se houver) ---
+            if (_estoque.preco_venda_avista != null)
+            {
+                string valorAV = $"R$ {_estoque.preco_venda_avista?.ToString("N2", cultura)}";
+                string condicaoAV = " (à vista)";
+
+                paintPreco.TextSize = 50;
+                float larguraValorAV = paintPreco.MeasureText(valorAV);
+                paintPreco.TextSize = 34;
+                float larguraCondicaoAV = paintPreco.MeasureText(condicaoAV);
+                float totalAVX = larguraValorAV + larguraCondicaoAV;
+                float startXAV = centroX - (totalAVX / 2);
+
+                // Desenha Valor (Vermelho)
+                paintPreco.Color = SKColors.DarkRed;
+                paintPreco.TextSize = 65;
+                canvas.DrawText(valorAV, startXAV, inicioY + 170, paintPreco);
+
+                // Desenha Condição (Preto)
+                paintPreco.Color = SKColors.Black;
+                paintPreco.TextSize = 34;
+                canvas.DrawText(condicaoAV, startXAV + larguraValorAV, inicioY + 170, paintPreco);
+            }
+
+            canvas.Restore();
+
+            // --- CAMADA FINAL ---
+            paintTexto.TextAlign = SKTextAlign.Center;
+            foreach (var rect in retangulos) canvas.DrawRoundRect(rect, 15, 15, paintBranco);
+            for (int i = 0; i < linhas.Count; i++)
+            {
+                canvas.DrawText(linhas[i], retangulos[i].MidX, retangulos[i].MidY + (paintTexto.TextSize / 2) - 4, paintTexto);
+            }
+
+            float larguraLogo = fundoBitmap.Width * 0.35f;
+            float escalaLogo = larguraLogo / logoBitmap.Width;
+            float alturaLogo = logoBitmap.Height * escalaLogo;
+            float posXLogo = fundoBitmap.Width - larguraLogo - 30;
+            float posYLogo = fundoBitmap.Height - alturaLogo - 30;
+            canvas.DrawBitmap(logoBitmap, new SKRect(posXLogo, posYLogo, posXLogo + larguraLogo, posYLogo + alturaLogo), new SKPaint { IsAntialias = true });
+
+            // 6️⃣ Finalização
             using var imagemFinal = surface.Snapshot();
             using var dados = imagemFinal.Encode(SKEncodedImageFormat.Png, 100);
-
             var caminho = Path.Combine(FileSystem.CacheDirectory, "oferta_produto.png");
             if (File.Exists(caminho)) File.Delete(caminho);
-
-            using (var fileStream = File.OpenWrite(caminho))
-                dados.SaveTo(fileStream);
+            using (var fileStream = File.OpenWrite(caminho)) dados.SaveTo(fileStream);
 
             _imagemMontadaBase64 = Convert.ToBase64String(dados.ToArray());
             _caminhoImagemGerada = caminho;
+            StateHasChanged();
+            Snack.Add("Montagem concluída!", Severity.Success);
+        }
+        catch (Exception e) { Snack.Add($"Erro: {e.Message}", Severity.Error); }
+    }
 
-            Snack.Add("Montagem concluída (Produto por baixo)!", Severity.Success);
-        }
-        catch (Exception e)
+    private string FormatarNomeProduto(string nome)
+    {
+        if (string.IsNullOrWhiteSpace(nome)) return string.Empty;
+
+        // Lista de palavras que devem permanecer em minúsculo (conectivos)
+        var excecoes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        "de", "do", "da", "dos", "das", "e", "com", "a", "o", "para", "em", "g", "ml", "kg"
+    };
+
+        // Divide o nome em palavras e remove espaços extras
+        string[] palavras = nome.ToLower().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+        for (int i = 0; i < palavras.Length; i++)
         {
-            Snack.Add($"Erro ao montar: {e.Message}", Severity.Error);
+            // Regra: A primeira palavra SEMPRE começa com maiúscula.
+            // As demais só começam com maiúscula se NÃO estiverem na lista de exceções.
+            if (i == 0 || !excecoes.Contains(palavras[i]))
+            {
+                palavras[i] = char.ToUpper(palavras[i][0]) + palavras[i].Substring(1);
+            }
         }
+
+        return string.Join(" ", palavras);
     }
 
     private async Task CompartilharImagem()
