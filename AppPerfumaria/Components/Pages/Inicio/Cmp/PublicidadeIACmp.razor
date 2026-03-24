@@ -302,69 +302,70 @@
                 Typeface = SKTypeface.FromFamilyName("Arial", SKFontStyleWeight.Bold, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright)
             };
 
-            float centroX = rectEtiqueta.MidX + 100;
-            float inicioY = rectEtiqueta.Top + 420;
+            // ⚡ AJUSTE FINAL: Voltou um pouco para baixo (+20px) e para esquerda (-20px)
+            float centroX = rectEtiqueta.MidX + 130;
+            float inicioY = rectEtiqueta.Top + 400;
+
+            // --- INÍCIO DO AJUSTE DE ROTAÇÃO E POSIÇÃO DO TEXTO ---
+            canvas.Save();
+            canvas.RotateDegrees(7.5f, centroX, inicioY);
 
             // --- 1. Preço Original (De: R$ ...) ---
             paintPreco.Color = SKColors.Black;
-            paintPreco.TextSize = 35;
+            paintPreco.TextSize = 45;
             paintPreco.TextAlign = SKTextAlign.Center;
             string precoOriginal = _estoque.preco_venda_original?.ToString("N2", cultura);
-            string textoDe = $"De: R$ {precoOriginal}";
+            string textoDe = $"De: {precoOriginal}";
             canvas.DrawText(textoDe, centroX, inicioY, paintPreco);
 
             float larguraTextoDe = paintPreco.MeasureText(textoDe);
             canvas.DrawLine(centroX - (larguraTextoDe / 2), inicioY - 12, centroX + (larguraTextoDe / 2), inicioY - 12,
                 new SKPaint { Color = SKColors.Black, StrokeWidth = 3, IsAntialias = true });
 
-            // --- 2. Preço com Desconto (Por: R$ ... cartão) ---
-            string valorPor = $"Por: R$ {_estoque.preco_venda_desconto?.ToString("N2", cultura)}";
+            // --- 2. Preço com Desconto ---
+            string valorPor = $"Por: {_estoque.preco_venda_desconto?.ToString("N2", cultura)}";
             string condicaoPor = _estoque.preco_venda_avista != null ? " (cartão)" : " (cartão ou à vista)";
 
-            // Medindo larguras para centralizar o conjunto
-            paintPreco.TextSize = 50;
+            paintPreco.TextSize = 55;
             float larguraValorPor = paintPreco.MeasureText(valorPor);
-            paintPreco.TextSize = 34;
+            paintPreco.TextSize = 40;
             float larguraCondicaoPor = paintPreco.MeasureText(condicaoPor);
             float totalPorX = larguraValorPor + larguraCondicaoPor;
             float startXPor = centroX - (totalPorX / 2);
 
-            // Desenha Valor (Vermelho)
             paintPreco.Color = SKColors.DarkRed;
-            paintPreco.TextSize = 50;
+            paintPreco.TextSize = 55;
             paintPreco.TextAlign = SKTextAlign.Left;
-            canvas.DrawText(valorPor, startXPor, inicioY + 80, paintPreco);
+            canvas.DrawText(valorPor, startXPor, inicioY + 60, paintPreco);
 
-            // Desenha Condição (Preto)
             paintPreco.Color = SKColors.Black;
-            paintPreco.TextSize = 34;
-            canvas.DrawText(condicaoPor, startXPor + larguraValorPor, inicioY + 80, paintPreco);
+            paintPreco.TextSize = 40;
+            canvas.DrawText(condicaoPor, startXPor + larguraValorPor, inicioY + 60, paintPreco);
 
-            // --- 3. Preço À Vista (Se houver) ---
+            // --- 3. Preço À Vista ---
             if (_estoque.preco_venda_avista != null)
             {
-                string valorAV = $"R$ {_estoque.preco_venda_avista?.ToString("N2", cultura)}";
+                string valorAV = $"        {_estoque.preco_venda_avista?.ToString("N2", cultura)}";
                 string condicaoAV = " (à vista)";
 
-                paintPreco.TextSize = 50;
+                paintPreco.TextSize = 55;
                 float larguraValorAV = paintPreco.MeasureText(valorAV);
-                paintPreco.TextSize = 34;
+                paintPreco.TextSize = 40;
                 float larguraCondicaoAV = paintPreco.MeasureText(condicaoAV);
                 float totalAVX = larguraValorAV + larguraCondicaoAV;
                 float startXAV = centroX - (totalAVX / 2);
 
-                // Desenha Valor (Vermelho)
                 paintPreco.Color = SKColors.DarkRed;
-                paintPreco.TextSize = 65;
-                canvas.DrawText(valorAV, startXAV, inicioY + 170, paintPreco);
+                paintPreco.TextSize = 55;
+                canvas.DrawText(valorAV, startXAV, inicioY + 120, paintPreco);
 
-                // Desenha Condição (Preto)
                 paintPreco.Color = SKColors.Black;
-                paintPreco.TextSize = 34;
-                canvas.DrawText(condicaoAV, startXAV + larguraValorAV, inicioY + 170, paintPreco);
+                paintPreco.TextSize = 40;
+                canvas.DrawText(condicaoAV, startXAV + larguraValorAV, inicioY + 120, paintPreco);
             }
 
-            canvas.Restore();
+            canvas.Restore(); // Fim da rotação do texto
+            canvas.Restore(); // Fim do estado da etiqueta
 
             // --- CAMADA FINAL ---
             paintTexto.TextAlign = SKTextAlign.Center;
