@@ -110,6 +110,52 @@
                     </div>
                 }
 
+                <MudFileUpload T="IBrowserFile" FilesChanged="UploadImgPadrao2" Accept="image/*"
+                               Disabled="_verificando">
+                    <ActivatorContent>
+                        <MudButton Variant="Variant.Outlined" Size="Size.Medium" Class="w-100 mt-1"
+                                   StartIcon="@Icons.Material.Filled.FileUpload">
+                            Carregar Imagem Padrão 2
+                        </MudButton>
+                        @if (_carregandoImgPadrao2)
+                        {
+                            <MudProgressLinear Color="Color.Secondary" Rounded="true" Striped="true"
+                                               Size="Size.Medium" Value="100" />
+                        }
+                    </ActivatorContent>
+                </MudFileUpload>
+                <ValidationMessage For="() => _produtoDivulgacaoForm.img_padrao_2" />
+                @if (_imgPadrao2 != null)
+                {
+                    <div class="d-flex">
+                        <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                       OnClick="(() => VisualizarImagem(_produtoDivulgacaoForm.img_padrao_2))" Disabled="_verificando" />
+                        <div>
+                            <MudText Class="d-block">
+                                <p class="my-0">
+                                    @if (_imgPadrao2.Name.Length > 24)
+                                    {
+                                        @($"{_imgPadrao2.Name.Substring(0, 24)}...")
+                                    }
+                                    else
+                                    {
+                                        @_imgPadrao2.Name
+                                    }
+                                </p>
+                                <code class="my-0">@_imgPadrao2Size bytes</code>
+                            </MudText>
+                        </div>
+                    </div>
+                }
+                else if (_produtoDivulgacaoForm.img_padrao_2 != null)
+                {
+                    <div class="d-flex">
+                        <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                       OnClick="(() => VisualizarImagem(_produtoDivulgacaoForm.img_padrao_2))" Disabled="_verificando" />
+                        <MudText Class="mt-3">imagem_padrao.png</MudText>
+                    </div>
+                }
+
                 <MudSelect @bind-Value="_produtoDivulgacaoForm.status" Variant="Variant.Outlined"
                 Label="Status*" Margin="Margin.Dense" Disabled="_verificando" >
                     <MudSelectItem Value="@("Ativo")" />
@@ -142,11 +188,14 @@
     private Auth? _auth;
     private EditForm? _produtoivulgacaoFormRef;
     private IBrowserFile? _imgPadrao1;
+    private IBrowserFile? _imgPadrao2;
     private IBrowserFile? _imgPromocao1;
     private int _imgPadrao1Size = 0;
+    private int _imgPadrao2Size = 0;
     private int _imgPromocao1Size = 0;
     private bool _carregando = true;
     private bool _carregandoImgPadrao1 = false;
+    private bool _carregandoImgPadrao2 = false;
     private bool _carregandoImgPromocao1 = false;
     private bool _verificando = true;
 
@@ -241,6 +290,68 @@
         finally
         {
             _carregandoImgPadrao1 = false;
+            StateHasChanged();
+        }
+    }
+
+    private async void UploadImgPadrao2(IBrowserFile file)
+    {
+        try
+        {
+            _carregandoImgPadrao2 = true;
+
+            const int maxSizeInBytes = 200000;
+            _imgPadrao2 = file;
+
+            using var stream = file.OpenReadStream();
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            var imageBytes = memoryStream.ToArray();
+
+            using var inputStream = new SKManagedStream(new MemoryStream(imageBytes));
+            using var original = SKBitmap.Decode(inputStream);
+
+            if (original == null)
+            {
+                Snack.Add("Erro ao decodificar imagem.", Severity.Error);
+                _carregandoImgPadrao2 = false;
+                return;
+            }
+
+            using var image = SKImage.FromBitmap(original);
+
+            // Tenta várias qualidades até caber no tamanho desejado
+            int qualidade = 100;
+            byte[] finalBytes = Array.Empty<byte>();
+
+            while (qualidade > 10)
+            {
+                using var dados = image.Encode(SKEncodedImageFormat.Jpeg, qualidade);
+                finalBytes = dados.ToArray();
+
+                if (finalBytes.Length <= maxSizeInBytes)
+                    break;
+
+                qualidade -= 5;
+            }
+
+            if (finalBytes.Length > maxSizeInBytes)
+            {
+                Snack.Add($"Não foi possível reduzir a imagem para menos de 200 KB mesmo com compressão.", Severity.Warning);
+                _carregandoImgPadrao2 = false;
+                return;
+            }
+
+            _imgPadrao2Size = finalBytes.Length;
+            _produtoDivulgacaoForm.img_padrao_2 = Convert.ToBase64String(finalBytes);
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar fazer o upload da imagem!", Severity.Warning);
+        }
+        finally
+        {
+            _carregandoImgPadrao2 = false;
             StateHasChanged();
         }
     }

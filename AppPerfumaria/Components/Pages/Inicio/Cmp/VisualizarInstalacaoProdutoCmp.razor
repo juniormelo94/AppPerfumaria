@@ -120,26 +120,19 @@
                                                 -@value.desconto_venda%
                                             </div>
                                         }
-                                        <MudSpacer />
                                         @if (_existeDivulgacaoPromocional != null && _existeDivulgacaoPromocional == true)
                                         {                                  
+                                            <MudSpacer />
                                             <MudIconButton Icon="@Icons.Material.Filled.Share"
                                                            Variant="Variant.Filled" Color="Color.Default" Size="Size.Small"
                                                            OnClick="(() => CompartilharDivulgacaoPromocional(value))" />
                                         }
-                                        <MudSpacer />
-                                        @if (_existeDivulgacaoPorcentagem != null && _existeDivulgacaoPorcentagem == true)
+                                        @if (!string.IsNullOrEmpty(_instalacaoProduto!.produto.img_1))
                                         {
-                                            <MudIconButton Icon="@Icons.Material.Filled.LocalFireDepartment"
-                                                           Variant="Variant.Filled" Color="Color.Error" Size="Size.Small"
-                                                           OnClick="(() => CompartilharDivulgacaoPorcentagem(value))" />
-                                        }
-                                        <MudSpacer />
-                                        @if (_existeDivulgacaoPorcentagem != null && _existeDivulgacaoPorcentagem == true)
-                                        {
+                                            <MudSpacer />
                                             <MudIconButton Icon="@Icons.Material.Filled.Image"
                                                            Variant="Variant.Filled" Color="Color.Error" Size="Size.Small"
-                                                           OnClick="(() => CompartilharDivulgacaoIA(value))" />
+                                                           OnClick="(() => CompartilharMontarDivulgacao(value))" />
                                         }
                                         <MudSpacer />
                                         <MudIconButton Icon="@(_produtosCarinho?.FirstOrDefault(w => w.id == value!.id) != null ? Icons.Material.Filled.RemoveShoppingCart : Icons.Material.Filled.AddShoppingCart)"
@@ -247,7 +240,6 @@
         while (_auth == null || _instalacao == null || _produtosCarinho == null);
 
         await existeDivulgacaoPromocional();
-        await existeDivulgacaoPorcentagem();
 
         _carregando = false;
         StateHasChanged();
@@ -311,33 +303,6 @@
         }
     }
 
-    private async Task existeDivulgacaoPorcentagem()
-    {
-        try
-        {
-            var reinoCompany = new ReinoCompany();
-            var response = await reinoCompany.ProdutosDivulagacoesExisteValorColuna(_auth!.token!, _instalacaoProduto!.produtos_id, "img_padrao_1");
-
-            if (response!.status)
-            {
-                _existeDivulgacaoPorcentagem = response!.data!.exists;
-            }
-            else
-            {
-                if (!string.IsNullOrEmpty(response.message))
-                {
-                    Snack.Add(response.message, Severity.Warning);
-                }
-            }
-
-            StateHasChanged();
-        }
-        catch (Exception e)
-        {
-            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar buscar a divulgação do produto!");
-        }
-    }
-
     public async Task CompartilharDivulgacaoPromocional(Estoques item)
     {
         var itemProduto = item.Clone();
@@ -364,33 +329,7 @@
         }
     }
 
-    public async Task CompartilharDivulgacaoPorcentagem(Estoques item)
-    {
-        var itemProduto = item.Clone();
-        itemProduto!.produto = _instalacaoProduto!.produto;
-
-        var options = new DialogOptions
-            {
-                MaxWidth = MaxWidth.ExtraExtraLarge,
-                FullWidth = true,
-                BackdropClick = false,
-                CloseButton = true,
-                Position = DialogPosition.TopCenter
-            };
-        var param = new DialogParameters
-            {
-                ["_auth"] = _auth,
-                ["_estoque"] = itemProduto
-            };
-        var dialog = Dialog.Show<PublicidadePorcentagemCmp>("Divulgação Porcentagem", param, options);
-        var result = await dialog.Result;
-        if (!result.Canceled && (bool)result.Data == true)
-        {
-            Snack.Add("Produto compartilhado com sucesso!", Severity.Success);
-        }
-    }
-
-    public async Task CompartilharDivulgacaoIA(Estoques item)
+    public async Task CompartilharMontarDivulgacao(Estoques item)
     {
         var itemProduto = item.Clone();
         itemProduto!.produto = _instalacaoProduto!.produto;
@@ -408,7 +347,7 @@
             ["_auth"] = _auth,
             ["_estoque"] = itemProduto
         };
-        var dialog = Dialog.Show<PublicidadeIACmp>("Divulgação IA", param, options);
+        var dialog = Dialog.Show<MontarPublicidadeCmp>("Divulgação", param, options);
         var result = await dialog.Result;
         if (!result.Canceled && (bool)result.Data == true)
         {
