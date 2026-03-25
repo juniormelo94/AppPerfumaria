@@ -5,10 +5,23 @@
 <MudDialogProvider />
 <MudSnackbarProvider />
 
-<div class="page" style="@($"background:{Colors.Pink.Darken3};")">
+@* <div class="page" style="@($"background:{Colors.Pink.Darken3};")"> *@
+<div class="page" style="@($"background:{CustomColor};")">
 @*     <main>
         <article class="content px-4"> *@
             @Body
 @*         </article>
     </main> *@
 </div>
+
+@code {
+    // Você pode definir um valor padrão
+    public string CustomColor { get; set; } = "#FFFFFF";
+
+    // Método para outros componentes chamarem
+    public void ChangeColor(string hex)
+    {
+        CustomColor = hex;
+        StateHasChanged();
+    }
+}

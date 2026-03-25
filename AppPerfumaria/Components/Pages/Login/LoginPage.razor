@@ -63,25 +63,32 @@
         {
             <Animate class="w-100" Animation="Animations.FadeUp" Duration="TimeSpan.FromSeconds(0.5)" Delay="TimeSpan.FromSeconds(0.3)">
                 <MudPaper Class="px-4 py-5 w-100" Elevation="4">
+                    @if (_divisoes?.Count() > 1)
+                    {
+                        <MudText Class="mt-5" Typo="Typo.body1" Align="Align.Left">Por favor, selecione uma divisão:</MudText>
 
-                    <MudText Class="mt-5" Typo="Typo.body1" Align="Align.Left">Por favor, selecione uma divisão:</MudText>
-
-                    <MudSelect Variant="Variant.Outlined" Label="Divisões" Margin="Margin.Dense"
-                               Value="_divisoes_id" ValueChanged="(async (string id) => { _divisoes_id = id; await SelecionarDivisao(id); })">
-                        @if (_divisoes != null)
-                        {
-                            @foreach (var divisao in _divisoes)
+                        <MudSelect Variant="Variant.Outlined" Label="Divisão" Margin="Margin.Dense"
+                                   Value="_divisoes_id" ValueChanged="(async (string id) => { _divisoes_id = id; await SelecionarDivisao(id); })">
+                            @if (_divisoes != null)
                             {
-                                <MudSelectItem Value="divisao.id.ToString()">
-                                    @divisao.nome.ToUpper()
-                                </MudSelectItem>
+                                @foreach (var divisao in _divisoes)
+                                {
+                                    <MudSelectItem Value="divisao.id.ToString()">
+                                        @divisao.nome.ToUpper()
+                                    </MudSelectItem>
+                                }
                             }
-                        }
-                    </MudSelect>
+                        </MudSelect>
+                    }
+                    else if(_divisao != null)
+                    {
+                        <MudText Class="mt-5 mb-2" Typo="Typo.h6" Align="Align.Center">@_divisao.nome.ToUpper()</MudText>
+                        <MudDivider />
+                    }
 
                     <MudText Class="mt-5" Typo="Typo.body1" Align="Align.Left">Por favor, selecione uma instalação:</MudText>
 
-                    <MudSelect Variant="Variant.Outlined" Label="Instalações" Margin="Margin.Dense"
+                    <MudSelect Variant="Variant.Outlined" Label="Instalação" Margin="Margin.Dense"
                                Value="_instalacoes_id" ValueChanged="(async (string id) => { _instalacoes_id = id; await SelecionarInstalacao(id); })">
                         @if(_instalacoes != null)
                         {
