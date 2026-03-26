@@ -198,7 +198,7 @@
                                 </MudText>
                             </MudCardContent>
                             <MudCardActions Class="d-block py-0 pb-1">
-                                @if (produto!.instalacao_produtos!.Count() > 0)
+                                @if (produto!.instalacao_produtos != null && produto!.instalacao_produtos.Any())
                                 {
                                     <MudFab Class="w-100" Label="Associado" StartIcon="@Icons.Material.Filled.Check"
                                     Size="Size.Small" Disabled="true" />

@@ -361,7 +361,11 @@
 
             if (response!.status)
             {
+                // mantendo informações sobre se esse produto é associado a essa instalação.
+                var instalacao_produtos = _produtoForm.instalacao_produtos;
+
                 _produtoForm = response.data!;
+                _produtoForm.instalacao_produtos = instalacao_produtos;
                 _mudDialog!.Close(DialogResult.Ok<Produtos>(_produtoForm));
             }
             else

@@ -1,0 +1,284 @@
+﻿@using AppPerfumaria.Api.ReinoCompany
+@using AppPerfumaria.Components.CmpsGerais
+@using AppPerfumaria.Exceptions
+@using AppPerfumaria.Models.Auth
+@using AppPerfumaria.Models.Resources
+@using AppPerfumaria.Models.Tables
+
+@inject IDialogService Dialog
+@inject ExceptionService ExceptionService
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject ISnackbar Snack
+
+<MudDialog Style="max-height: 70%;">
+    <DialogContent>
+        <EditForm Model="_divisaoForm" OnValidSubmit="Salvar" @ref="_divisaoFormRef">
+            <DataAnnotationsValidator />
+
+            <MudFocusTrap Disabled="false" DefaultFocus="DefaultFocus.FirstChild">
+                <MudTextField T="string" @bind-Value="_divisaoForm.nome" Variant="Variant.Outlined"
+                              Label="Nome*" Disabled="_verificando" Margin="Margin.Dense" />
+                <ValidationMessage For="() => _divisaoForm.nome" />
+
+                <MudTextField T="string" @bind-Value="_divisaoForm.ramo" Variant="Variant.Outlined"
+                              Label="Ramo*" Disabled="_verificando" Margin="Margin.Dense" />
+                <ValidationMessage For="() => _divisaoForm.ramo" />
+
+                <MudTextField T="string" @bind-Value="_divisaoForm.cnpj" Variant="Variant.Outlined"
+                              Label="CNPJ" Disabled="_verificando" Margin="Margin.Dense" />
+                <ValidationMessage For="() => _divisaoForm.cnpj" />
+
+                <div class="d-flex">
+                    <MudColorPicker Label="Cor Primária" Clearable="true" @bind-Text="_divisaoForm.cor_primaria" 
+                                    ColorPickerMode="ColorPickerMode.HEX" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    <MudIcon Icon="@(!string.IsNullOrEmpty(_divisaoForm.cor_primaria) ? Icons.Material.Filled.Circle : Icons.Material.Outlined.Circle)" 
+                             Class="mt-4 ml-1" Style="@($"color: {_divisaoForm.cor_primaria};")" />
+                </div>
+                <ValidationMessage For="() => _divisaoForm.cor_primaria" />
+
+                <div class="d-flex">
+                    <MudColorPicker Label="Cor Secundária" Clearable="true" @bind-Text="_divisaoForm.cor_secundaria" 
+                                    ColorPickerMode="ColorPickerMode.HEX" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    <MudIcon Icon="@(!string.IsNullOrEmpty(_divisaoForm.cor_secundaria) ? Icons.Material.Filled.Circle : Icons.Material.Outlined.Circle)" 
+                             Class="mt-4 ml-1" Style="@($"color: {_divisaoForm.cor_secundaria};")" />
+                </div>
+                <ValidationMessage For="() => _divisaoForm.cor_secundaria" />
+
+                <div class="d-flex">
+                    <MudColorPicker Label="Cor Terciária" Clearable="true" @bind-Text="_divisaoForm.cor_tercearia" 
+                                    ColorPickerMode="ColorPickerMode.HEX" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    <MudIcon Icon="@(!string.IsNullOrEmpty(_divisaoForm.cor_tercearia) ? Icons.Material.Filled.Circle : Icons.Material.Outlined.Circle)" 
+                             Class="mt-4 ml-1" Style="@($"color: {_divisaoForm.cor_tercearia};")" />
+                </div>
+                <ValidationMessage For="() => _divisaoForm.cor_tercearia" />
+
+                <MudFileUpload T="IBrowserFile" FilesChanged="UploadFiles" Accept="image/*">
+                    <ActivatorContent>
+                        <MudButton Variant="Variant.Outlined" Size="Size.Medium" Class="w-100 mt-1"
+                                   StartIcon="@Icons.Material.Filled.FileUpload">
+                                   Carregar Imagem
+                        </MudButton>
+                        @if (_carregandoImagem)
+                        {
+                            <MudProgressLinear Color="Color.Secondary" Rounded="true" Striped="true"
+                                               Size="Size.Medium" Value="100" />
+                        }
+                    </ActivatorContent>
+                </MudFileUpload>
+                <ValidationMessage For="() => _divisaoForm.logo_img" />
+                @if (_imagem != null)
+                {
+                    <div class="d-flex">
+                        <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                       OnClick="VisualizarImagem" />
+                        <div>
+                            <MudText Class="d-block">
+                                <p class="my-0">
+                                    @if (_imagem.Name.Length > 24)
+                                    {
+                                        @($"{_imagem.Name.Substring(0, 24)}...")
+                                    }
+                                    else
+                                    {
+                                        @_imagem.Name
+                                    }
+                                </p>
+                                <code class="my-0">@_imagem.Size bytes</code>
+                            </MudText>
+                        </div>
+                    </div>
+                }
+                else if (_divisaoForm.logo_img != null)
+                {
+                    <div class="d-flex">
+                        <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                       OnClick="VisualizarImagem" />
+                        <MudText Class="mt-3">logo-marca.png</MudText>
+                    </div>
+                }
+
+                <MudSelect @bind-Value="_divisaoForm.status" Variant="Variant.Outlined"
+                           Label="Status*" Margin="Margin.Dense" >
+                    <MudSelectItem Value="@("Ativo")" />
+                    <MudSelectItem Value="@("Inativo")" />
+                </MudSelect>
+                <ValidationMessage For="() => _divisaoForm.status" />
+            </MudFocusTrap>
+        </EditForm>
+    </DialogContent>
+    <DialogActions>
+        <div class="d-block w-100 px-2">
+            @if (_carregando)
+            {
+                <MudProgressLinear Color="Color.Secondary" Rounded="true" Striped="true"
+                                   Size="Size.Medium" Value="100" Class="mb-2" />
+            }
+            <MudFab Class="w-100" Label="Salvar" Size="Size.Medium"
+                    OnClick="ValidarDadosForm" Disabled="_verificando" />
+            <MudFab Class="w-100 mt-2 mb-5" Label="Fechar" OnClick="(() => _mudDialog!.Cancel())"
+                    Size="Size.Medium" Disabled="_verificando" />
+        </div>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance? _mudDialog { get; set; }
+    [Parameter]
+    public Divisoes? _divisaoForm { get; set; }
+    private Auth? _auth;
+    private EditForm? _divisaoFormRef;
+    private IBrowserFile? _imagem;
+    private bool _carregando = false;
+    private bool _carregandoImagem = false;
+    private bool _verificando = false;
+
+    private async Task ValidarDadosForm()
+    {
+        try
+        {
+            _carregando = true;
+            _verificando = true;
+
+            if (_divisaoFormRef!.EditContext!.Validate())
+            {
+                await Salvar();
+            }
+            else
+            {
+                Snack.Add("Por favor, verifique todos os campos!", Severity.Warning);
+                _verificando = false;
+                _carregando = false;
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar validar dados!", Severity.Warning);
+        }
+    }
+
+    private async void UploadFiles(IBrowserFile file)
+    {
+        try
+        {
+            _carregandoImagem = true;
+
+            // Limite de 50 KB
+            var maxSizeInBytes = 50000;
+            var targetWidth = 1024;
+            var targetHeight = int.MaxValue;
+
+            while (file.Size > maxSizeInBytes)
+            {
+                // Reduz a largura e a altura proporcionalmente em 10%
+                targetWidth = (int)(targetWidth * 0.9);
+                targetHeight = (int)(targetHeight * 0.9);
+
+                // Garante que as dimensões não sejam reduzidas abaixo de 100 pixels
+                if (targetWidth < 100 || targetHeight < 100)
+                {
+                    Snack.Add("Não foi possível redimensionar a imagem abaixo de 50 KB!", Severity.Warning);
+                    return;
+                }
+
+                file = await file.RequestImageFileAsync(file.ContentType, targetWidth, targetHeight);
+            }
+
+            if (file.Size > maxSizeInBytes)
+            {
+                Snack.Add("Tivemos um problema pois a imagem é maior do que 50 KB!", Severity.Warning);
+                return;
+            }
+
+            _imagem = file;
+
+            using var stream = file.OpenReadStream(maxAllowedSize: maxSizeInBytes);
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            var base64String = Convert.ToBase64String(memoryStream.ToArray());
+            _divisaoForm!.logo_img = base64String;
+
+            _carregandoImagem = false;
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar fazer o upload da imagem!", Severity.Warning);
+            _carregandoImagem = false;
+        }
+    }
+
+    private void VisualizarImagem()
+    {
+        try
+        {
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullWidth = true,
+                    CloseButton = true,
+                };
+            var param = new DialogParameters { ["Imagem"] = _divisaoForm!.logo_img };
+            Dialog.Show<VisualizarImagem>("Visualizar Imagem", param, options);
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar exibir a imagem!", Severity.Warning);
+        }
+    }
+
+    public async Task Salvar()
+    {
+        try
+        {
+            _auth = await LocalStorage.GetItemAsync<Auth>("auth");
+            var reinoCompany = new ReinoCompany();
+            DivisoesResource? response;
+
+            if (_divisaoForm!.id > 0)
+            {
+                response = await reinoCompany.DivisoesAtualizar(_auth!.token!, _divisaoForm!);
+            }
+            else
+            {
+                response = await reinoCompany.DivisoesCriar(_auth!.token!, _divisaoForm!);
+            }
+
+            if (response!.status)
+            {
+                _mudDialog!.Close(DialogResult.Ok<Divisoes>(_divisaoForm));
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+
+                if (response.erros != null)
+                {
+                    var erros = response.erros;
+                    foreach (var propriedade in erros.GetType().GetProperties())
+                    {
+                        List<string>? propErros = (List<string>)erros.GetType().GetProperty(propriedade.Name).GetValue(erros, null);
+                        if (propErros != null)
+                        {
+                            foreach (var mensagem in propErros)
+                            {
+                                Snack.Add(mensagem, Severity.Warning);
+                            }
+                        }
+                    }
+                }
+                _verificando = false;
+                _carregando = false;
+            }
+        }
+        catch (Exception e)
+        {
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar salvar!");
+            _verificando = false;
+            _carregando = false;
+        }
+    }
+}

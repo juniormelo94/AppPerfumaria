@@ -1,0 +1,359 @@
+﻿@using AppPerfumaria.Api.ReinoCompany
+@using AppPerfumaria.Components.CmpsGerais
+@using AppPerfumaria.Components.Pages.Divisoes.Cmp
+@using AppPerfumaria.Exceptions
+@using AppPerfumaria.Models.Auth
+@using System.Text.Json.Serialization
+@using AppPerfumaria.Models.Collections
+@using AppPerfumaria.Models.Pagination
+@using AppPerfumaria.Models.Tables
+
+@inject IDialogService Dialog
+@inject ExceptionService ExceptionService
+@inject ISnackbar Snack
+
+<MudOverlay DarkBackground Visible="_carregando" ZIndex="10">
+    <MudProgressCircular Indeterminate="true" Color="Color.Default" />
+</MudOverlay>
+
+<MudPaper Class="px-2 w-100" Elevation="4" Style="position:fixed; z-index: 9;">
+    <!-- Barra de pesquisa e botão filtro -->
+    <div class="d-flex">
+        <MudTextField Value="_pesquisarFiltro" Label="Pesquisar" Variant="Variant.Outlined"
+                      Adornment="Adornment.End" Margin="Margin.Dense" Immediate="true" 
+                      ValueChanged="(async (string v) => { _pesquisarFiltro = v; await Pesquisar(v); })"
+                      AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Inherit" 
+                      ClearIcon="@Icons.Material.Filled.Clear" Clearable="true" />
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.FilterList" OnClick="Filtro"
+                        Color="Color.Inherit" Size="Size.Medium" />
+    </div>
+    <!-- Barra de filtros -->
+    <MudPopover Open="@_exibirFiltro" Fixed="true" Class="px-4 pt-4 w-100" 
+                AnchorOrigin="Origin.TopRight" TransformOrigin="Origin.TopRight" >
+        <MudGrid Spacing="2" Justify="Justify.Center" Class="mb-1">
+            <MudItem xs="6">
+                <MudSelect @bind-Value="_porPagina" Variant="Variant.Outlined"
+                            Label="Carregar De" Margin="Margin.Dense">
+                    <MudSelectItem Value="@("10")" />
+                    <MudSelectItem Value="@("15")" />
+                    <MudSelectItem Value="@("20")" />
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="6">
+                <MudSelect T="string" @bind-Value="_statusFiltro" Variant="Variant.Outlined"
+                            Label="Status" Margin="Margin.Dense">
+                    <MudSelectItem Value="@("Todos")" />
+                    <MudSelectItem Value="@("Ativo")" />
+                    <MudSelectItem Value="@("Inativo")" />
+                </MudSelect>
+            </MudItem>
+        </MudGrid>
+        <MudDivider />
+        <div class="d-flex my-2 float-end">
+            <MudFab Label="Fechar" Size="Size.Small" 
+                    OnClick="Filtro" Class="mr-2" />
+            <MudFab Label="Filtrar" Size="Size.Small" 
+                    OnClick="AplicarFiltros" />
+        </div>
+    </MudPopover>
+    <!-- Barra de card e botão criar -->
+    <div class="d-flex">
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.Add" OnClick="CriarDivisao"
+                       Color="Color.Inherit" Size="Size.Medium" />
+    </div>
+</MudPaper>
+
+<div class="pa-2" style="margin-top: 100px;">
+    <!-- Listar resultados das divisões -->
+    <MudGrid Spacing="2" Justify="Justify.Center">
+        @if (_listarDivisoes != null && _listarDivisoes.Count() > 0)
+        {
+            @foreach (var divisao in _listarDivisoes)
+            {
+                <MudItem xs="6">
+                    <MudCard Style="height: 380px;" @onclick="(() => VisualizarDivisao(divisao))">
+                        <MudIcon Style="position:absolute;" Class="mt-2 ml-2" Color="@(divisao.status == "Ativo" ? Color.Dark : Color.Default)"
+                                 Icon="@(divisao.status == "Ativo" ? Icons.Material.Filled.ThumbUp : Icons.Material.Filled.ThumbDown)" />
+                        <MudCardMedia Image="@($"data:image/png;base64,{divisao.logo_img}")" Height="200" />
+                        <MudCardContent Class="py-2">
+                            <MudText Class="fw-bold" Typo="Typo.caption">
+                                @if (divisao.nome.Length > 48)
+                                {
+                                    @($"{divisao.nome.Substring(0, 48).ToUpper()}...")
+                                }
+                                else
+                                {
+                                    @divisao.nome.ToUpper()
+                                }
+                            </MudText>
+                        </MudCardContent>
+                        <MudCardActions Class="d-block py-0 pb-1">
+                            <div class="d-flex mt-1 px-3">
+                                <MudIconButton Size="Size.Medium" OnClick="(() => AtualizarDivisao(divisao))"
+                                                Icon="@Icons.Material.Filled.Edit" />
+                                <MudSpacer />
+                                <MudIconButton Size="Size.Medium" OnClick="(() => DeletarDivisao(divisao))"
+                                                Icon="@Icons.Material.Filled.Delete" />
+                            </div>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            }
+
+            <MudItem Class="py-5" xs="12">
+                @if (_paginacaoDivisoes!.current_page != _paginacaoDivisoes!.last_page)
+                {
+                    <MudFab Class="w-100" Label="Carregar Mais" OnClick="CarregarMais"
+                            Disabled="false" Size="Size.Small" />
+                }
+
+                <MudText Align="Align.Center" Typo="Typo.body2" Class="mt-2 w-100">
+                    @($"Total: {_paginacaoDivisoes!.total} | Exibidos: {_paginacaoDivisoes!.to}")
+                </MudText>
+            </MudItem>
+        }
+        else
+        {
+            @if (!_carregando)
+            {
+                <MudItem Class="py-5" xs="12">
+                    <Animate class="w-100" Animation="Animations.FadeDown" Duration="TimeSpan.FromSeconds(0.5)" Delay="TimeSpan.FromSeconds(0.4)">
+                        <MudText Class="mt-5" Align="Align.Center" Typo="Typo.body1">Nenhum resultado foi encontrado!</MudText>
+                    </Animate>
+                </MudItem>
+            }
+        }
+    </MudGrid>
+</div>
+
+@code {
+    [Parameter] public Auth? Auth { get; set; }
+    [Parameter] public Instalacoes? Instalacao { get; set; }
+    private List<Divisoes>? _listarDivisoes = new List<Divisoes>();
+    private MetaPagination? _paginacaoDivisoes;
+    private MudTabs? tabs;
+    private int _indiceMenuMarca = 0;
+    private bool _carregando = true;
+    private bool _exibirFiltro = false;
+    private string? _pesquisarFiltro;
+    private string? _statusFiltro = "Todos";
+    private string _porPagina = "10";
+    private int _paginaPaginacao = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        do
+        {
+            await Task.Delay(300);
+        }
+        while (Auth == null || Instalacao == null);
+
+        await ListarDivisoes();
+    }
+
+    private async Task Pesquisar(string pesquisar)
+    {
+        await Task.Delay(1500);
+
+        if (pesquisar == _pesquisarFiltro)
+        {
+            await AplicarFiltros();
+        }
+    }
+
+    public async Task CarregarMais()
+    {
+        _paginaPaginacao++;
+        await ListarDivisoes();
+    }
+
+    private void Filtro()
+    {
+        _exibirFiltro = !_exibirFiltro;
+    }
+
+    public string? PegarFiltros()
+    {
+        string filtros = $"?page={_paginaPaginacao}&por_pagina={_porPagina}";
+
+        if (!string.IsNullOrEmpty(_pesquisarFiltro))
+        {
+            filtros += $"&pesquisar={_pesquisarFiltro}";
+        }
+        if (!string.IsNullOrEmpty(_statusFiltro) && _statusFiltro != "Todos")
+        {
+            filtros += $"&status={_statusFiltro}";
+        }
+
+        return filtros;
+    }
+
+    public async Task AplicarFiltros()
+    {
+        _exibirFiltro = false;
+        await LimparEListarDivisoes();
+    }
+
+    public async Task LimparEListarDivisoes()
+    {
+        _paginaPaginacao = 1;
+        _listarDivisoes = new List<Divisoes>();
+        await ListarDivisoes();
+    }
+
+    public async Task ListarDivisoes()
+    {
+        try
+        {
+            _carregando = true;
+            StateHasChanged();
+            string? filtros = PegarFiltros();
+
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.DivisoesListar(Auth!.token!, filtros);
+
+            if (response!.status)
+            {
+                _paginacaoDivisoes = response.meta;
+                _listarDivisoes!.AddRange(response!.data!);
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+            }
+
+            _carregando = false;
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar listar as divisões!");
+            _carregando = false;
+        }
+    }
+
+    private void VisualizarDivisao(Divisoes divisao)
+    {
+        try
+        {
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullWidth = true,
+                    FullScreen = true,
+                    CloseButton = false,
+                };
+            var param = new DialogParameters { ["_divisao"] = divisao };
+            Dialog.Show<VisualizarDivisaoCmp>("Visualizar Divisão", param, options);
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar exibir a divisão!", Severity.Warning);
+        }
+    }
+
+    public async Task CriarDivisao()
+    {
+        try
+        {
+            var options = new DialogOptions { 
+                    MaxWidth = MaxWidth.ExtraExtraLarge, 
+                    FullWidth = true, 
+                    BackdropClick = false, 
+                    CloseButton = true, 
+                    Position = DialogPosition.TopCenter 
+            };
+            var param = new DialogParameters { ["_divisaoForm"] = new Divisoes() };
+            var dialog = Dialog.Show<DivisoesFormCmp>("Adicionar Divisão", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled)
+            {
+                Snack.Add("Divisão criada com sucesso!", Severity.Success);
+                tabs.ActivatePanel(1);
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar criar a divisão!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    public async Task AtualizarDivisao(Divisoes divisao)
+    {
+        try
+        {
+            var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.ExtraExtraLarge,
+                    FullWidth = true,
+                    BackdropClick = false,
+                    CloseButton = true,
+                    Position = DialogPosition.TopCenter
+                };
+            var param = new DialogParameters { ["_divisaoForm"] = divisao.Clone() };
+            var dialog = Dialog.Show<DivisoesFormCmp>("Atualizar Divisão", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled)
+            {
+                divisao = (Divisoes)result.Data;
+                var index = _listarDivisoes.FindIndex(ip => ip.id == divisao!.id);
+                if (index != -1)
+                {
+                    _listarDivisoes[index] = divisao!;
+                }
+                Snack.Add("Divisão atualizada com sucesso!", Severity.Success);
+                StateHasChanged();
+            }
+        }
+        catch (Exception e)
+        {
+            Snack.Add("Tivemos um problema ao tentar atualizar a divisão!", Severity.Warning);
+            _carregando = false;
+        }
+    }
+
+    public async Task DeletarDivisao(Divisoes divisao)
+    {
+        try
+        {
+            var param = new DialogParameters<AlertaDelete>
+            {
+                { x => x.ContentText, "Tem certeza que deseja deletar essa <b>DIVISÂO</b> e todos os dados a ela ligados?" }
+            };
+            var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+            var dialog = Dialog.Show<AlertaDelete>("Deletar Divisão", param, options);
+            var result = await dialog.Result;
+            if (!result.Canceled)
+            {
+                _carregando = true;
+                var reinoCompany = new ReinoCompany();
+                var response = await reinoCompany.DivisoesDeletar(Auth!.token!, divisao);
+
+                if (response!.status)
+                {
+                    Snack.Add("Divisão deletada com sucesso!", Severity.Success);
+                    await LimparEListarDivisoes();
+                }
+                else
+                {
+                    if (!string.IsNullOrEmpty(response.message))
+                    {
+                        Snack.Add(response.message, Severity.Warning);
+                    }
+                    _carregando = false;
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar deletar a divisão!");
+            _carregando = false;
+        }
+    }
+}

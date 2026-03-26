@@ -47,6 +47,34 @@ namespace AppPerfumaria.Api.ReinoCompany
             string responseString = await request.GetAsync($"{_baseUrl}/api/divisoes{filtros}", authorization: $"Bearer {token}");
             return JsonConvert.DeserializeObject<DivisoesCollection>(responseString);
         }
+
+        public async Task<DivisoesResource?> DivisoesCriar(string token, Divisoes divisao)
+        {
+            var request = new Request();
+            string responseString = await request.PostAsync($"{_baseUrl}/api/divisoes", authorization: $"Bearer {token}", data: divisao);
+            return JsonConvert.DeserializeObject<DivisoesResource>(responseString);
+        }
+
+        public async Task<DivisoesResource?> DivisoesBuscar(string token, int id)
+        {
+            var request = new Request();
+            string responseString = await request.GetAsync($"{_baseUrl}/api/divisoes/{id}", authorization: $"Bearer {token}");
+            return JsonConvert.DeserializeObject<DivisoesResource>(responseString);
+        }
+
+        public async Task<DivisoesResource?> DivisoesAtualizar(string token, Divisoes divisao)
+        {
+            var request = new Request();
+            string responseString = await request.PutAsync($"{_baseUrl}/api/divisoes/{divisao.id}", authorization: $"Bearer {token}", data: divisao);
+            return JsonConvert.DeserializeObject<DivisoesResource>(responseString);
+        }
+
+        public async Task<DivisoesResource?> DivisoesDeletar(string token, Divisoes divisao)
+        {
+            var request = new Request();
+            string responseString = await request.DeleteAsync($"{_baseUrl}/api/divisoes/{divisao.id}", authorization: $"Bearer {token}");
+            return JsonConvert.DeserializeObject<DivisoesResource>(responseString);
+        }
         #endregion
 
         #region Instalações

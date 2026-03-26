@@ -1,0 +1,57 @@
+﻿@using AppPerfumaria.Models.Tables
+
+<MudDialog ContentClass="bg-gray py-5" TitleClass="d-flex pb-0 pt-2">
+    <TitleContent>
+        <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft"
+                 OnClick="(() => _mudDialog!.Cancel())" />
+        <MudSpacer />
+        <MudIcon Icon="@Icons.Material.Filled.Discount" Class="mt-3" />
+    </TitleContent>
+    <DialogContent>
+        @if (!string.IsNullOrEmpty(_divisao!.logo_img))
+        {
+            <MudCardMedia Class="rounded-lg w-100" Image="@($"data:image/png;base64,{_divisao!.logo_img}")" Style="height: 350px;" />
+        }
+
+        <MudPaper Class="pa-2 mt-3" Elevation="0">
+            <MudAlert Icon="@(_divisao.status == "Ativo" ? Icons.Material.Filled.ThumbUp : Icons.Material.Filled.ThumbDown)"
+                      Severity="Severity.Normal" Dense="true" 
+                      ContentAlignment="HorizontalAlignment.Center" Class="fw-bold">
+                DIVISÃO
+            </MudAlert>
+
+            <MudText Class="fw-bold mt-2" Typo="Typo.body1">
+                @_divisao.nome.ToUpper()
+            </MudText>
+
+            <MudText Typo="Typo.body2">
+                @_divisao.ramo.ToUpper()
+            </MudText>
+
+            <MudText Typo="Typo.body2" Class="mt-2">
+                @if (!string.IsNullOrEmpty(_divisao!.cnpj))
+                {
+                    @($"CNPJ: {_divisao!.cnpj}")
+                }
+            </MudText>
+
+            <div class="mt-2">
+                <MudIcon Icon="@(!string.IsNullOrEmpty(_divisao.cor_primaria) ? Icons.Material.Filled.Circle : Icons.Material.Outlined.Circle)"
+                         Class="mr-1" Style="@($"color: {_divisao.cor_primaria};")" />
+                <MudIcon Icon="@(!string.IsNullOrEmpty(_divisao.cor_secundaria) ? Icons.Material.Filled.Circle : Icons.Material.Outlined.Circle)"
+                         Class="mr-1" Style="@($"color: {_divisao.cor_secundaria};")" />
+                <MudIcon Icon="@(!string.IsNullOrEmpty(_divisao.cor_tercearia) ? Icons.Material.Filled.Circle : Icons.Material.Outlined.Circle)"
+                         Class="mr-1" Style="@($"color: {_divisao.cor_tercearia};")" />
+            </div>
+        </MudPaper>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance? _mudDialog { get; set; }
+    [Parameter]
+    public Divisoes? _divisao { get; set; }
+
+    private void Ok() => _mudDialog!.Close(DialogResult.Ok(true));
+}
