@@ -5,23 +5,20 @@
 <MudDialogProvider />
 <MudSnackbarProvider />
 
-@* <div class="page" style="@($"background:{Colors.Pink.Darken3};")"> *@
-<div class="page" style="@($"background:{CustomColor};")">
-@*     <main>
-        <article class="content px-4"> *@
-            @Body
-@*         </article>
-    </main> *@
+<div class="page" style="@($"background:{CackgroundColor};")">
+    <CascadingValue Value="this">
+        @Body
+    </CascadingValue>
 </div>
 
 @code {
     // Você pode definir um valor padrão
-    public string CustomColor { get; set; } = "#FFFFFF";
+    public string CackgroundColor { get; set; } = "#EEEEEE";
 
     // Método para outros componentes chamarem
     public void ChangeColor(string hex)
     {
-        CustomColor = hex;
+        CackgroundColor = hex;
         StateHasChanged();
     }
 }

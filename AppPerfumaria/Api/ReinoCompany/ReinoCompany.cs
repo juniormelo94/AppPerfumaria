@@ -160,6 +160,43 @@ namespace AppPerfumaria.Api.ReinoCompany
         }
         #endregion
 
+        #region Categorias Produtos
+        public async Task<CategoriasProdutosCollection?> CategoriasProdutosListar(string token, string? filtros = null)
+        {
+            var request = new Request();
+            string responseString = await request.GetAsync($"{_baseUrl}/api/categoriasprodutos{filtros}", authorization: $"Bearer {token}");
+            return JsonConvert.DeserializeObject<CategoriasProdutosCollection>(responseString);
+        }
+
+        public async Task<CategoriasProdutosResource?> CategoriasProdutosCriar(string token, CategoriasProdutos categoriaProduto)
+        {
+            var request = new Request();
+            string responseString = await request.PostAsync($"{_baseUrl}/api/categoriasprodutos", authorization: $"Bearer {token}", data: categoriaProduto);
+            return JsonConvert.DeserializeObject<CategoriasProdutosResource>(responseString);
+        }
+
+        public async Task<CategoriasProdutosResource?> CategoriasProdutosBuscar(string token, int id)
+        {
+            var request = new Request();
+            string responseString = await request.GetAsync($"{_baseUrl}/api/categoriasprodutos/{id}", authorization: $"Bearer {token}");
+            return JsonConvert.DeserializeObject<CategoriasProdutosResource>(responseString);
+        }
+
+        public async Task<CategoriasProdutosResource?> CategoriasProdutosAtualizar(string token, CategoriasProdutos categoriaProduto)
+        {
+            var request = new Request();
+            string responseString = await request.PutAsync($"{_baseUrl}/api/categoriasprodutos/{categoriaProduto.id}", authorization: $"Bearer {token}", data: categoriaProduto);
+            return JsonConvert.DeserializeObject<CategoriasProdutosResource>(responseString);
+        }
+
+        public async Task<CategoriasProdutosResource?> CategoriasProdutosDeletar(string token, CategoriasProdutos categoriaProduto)
+        {
+            var request = new Request();
+            string responseString = await request.DeleteAsync($"{_baseUrl}/api/categoriasprodutos/{categoriaProduto.id}", authorization: $"Bearer {token}");
+            return JsonConvert.DeserializeObject<CategoriasProdutosResource>(responseString);
+        }
+        #endregion
+
         #region Produtos
         public async Task<ProdutosCollection?> ProdutosListar(string token, string? filtros = null)
         {

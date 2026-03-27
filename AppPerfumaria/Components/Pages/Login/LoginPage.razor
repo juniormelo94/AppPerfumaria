@@ -28,9 +28,10 @@
     <div class="d-flex justify-content-center align-items-center" style="height: 100vh;">
         @if (_pagina == 1)
         {
-            <Animate Animation="Animations.FadeUp" Duration="TimeSpan.FromSeconds(0.5)" Delay="TimeSpan.FromSeconds(0.3)">
-                <MudImage Src="img/logo_circulo.png" Alt="Logo aroma suave" Width="300" Height="300" />
-            </Animate>
+            <div class="d-block w-100">
+                <MudText Typo="Typo.body1" Align="Align.Center">Carregando</MudText>
+                <MudProgressLinear Color="Color.Primary" Striped="true" Size="Size.Large" Value="100" />
+            </div>
         }
         else if (_pagina == 2)
         {
@@ -63,11 +64,21 @@
         {
             <Animate class="w-100" Animation="Animations.FadeUp" Duration="TimeSpan.FromSeconds(0.5)" Delay="TimeSpan.FromSeconds(0.3)">
                 <MudPaper Class="px-4 py-5 w-100" Elevation="4">
+
+                    <div class="d-flex justify-content-center align-items-center" >
+                        @if (_divisao != null && !string.IsNullOrEmpty(_divisao.logo_img))
+                        {
+                            <Animate Animation="Animations.FadeUp" Duration="TimeSpan.FromSeconds(0.5)" Delay="TimeSpan.FromSeconds(0.3)">
+                                <MudImage Src="@($"data:image/png;base64,{_divisao.logo_img}")" Alt="Logo Divisão" Width="150" />
+                            </Animate>
+                        }
+                    </div>
+
                     @if (_divisoes?.Count() > 1)
                     {
                         <MudText Class="mt-5" Typo="Typo.body1" Align="Align.Left">Por favor, selecione uma divisão:</MudText>
 
-                        <MudSelect Variant="Variant.Outlined" Label="Divisão" Margin="Margin.Dense"
+                        <MudSelect Variant="Variant.Outlined" Label="Divisão" Margin="Margin.Dense" Disabled="_verificando"
                                    Value="_divisoes_id" ValueChanged="(async (string id) => { _divisoes_id = id; await SelecionarDivisao(id); })">
                             @if (_divisoes != null)
                             {
@@ -88,7 +99,7 @@
 
                     <MudText Class="mt-5" Typo="Typo.body1" Align="Align.Left">Por favor, selecione uma instalação:</MudText>
 
-                    <MudSelect Variant="Variant.Outlined" Label="Instalação" Margin="Margin.Dense"
+                    <MudSelect Variant="Variant.Outlined" Label="Instalação" Margin="Margin.Dense" Disabled="_verificando"
                                Value="_instalacoes_id" ValueChanged="(async (string id) => { _instalacoes_id = id; await SelecionarInstalacao(id); })">
                         @if(_instalacoes != null)
                         {
@@ -110,6 +121,8 @@
 </div>
 
 @code {
+    [CascadingParameter]
+    public Layout.WhiteLayout? Layout { get; set; }
     private LoginForm _loginForm = new LoginForm();
     private Auth? _auth;
     private Instalacoes? _instalacao;
@@ -242,6 +255,10 @@
                         {
                             _divisao = _divisoes[0];
                             _divisoes_id = _divisoes[0].id.ToString();
+                            if (!string.IsNullOrEmpty(_divisao.cor_primaria))
+                            {
+                                Layout?.ChangeColor(_divisao.cor_primaria);
+                            }
                             await ValidarInstalacoes();
                         }
 
@@ -442,6 +459,10 @@
             _verificando = true;
 
             _divisao = _divisoes!.FirstOrDefault(w => w.id == int.Parse(id));
+            if (!string.IsNullOrEmpty(_divisao.cor_primaria))
+            {
+                Layout?.ChangeColor(_divisao.cor_primaria);
+            }
             await ValidarInstalacoes();
         }
         catch (Exception e)

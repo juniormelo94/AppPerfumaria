@@ -28,6 +28,16 @@
                                  CloseIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Default" Variant="Variant.Outlined"
                                  Strict="false" Margin="Margin.Dense" >
                 </MudAutocomplete>
+                <ValidationMessage For="() => _produtoForm.marcas_id" />
+
+                <MudAutocomplete T="CategoriasProdutos" Label="Categoria*" Disabled="_verificando"
+                                 Value="@(_listarCategoriasProdutos?.FirstOrDefault(cp => cp.id == _produtoForm!.categorias_produtos_id))"
+                                 SearchFunc="@PesquisarCategoriasProdutos" ToStringFunc="@(cp => cp?.nome)"
+                                 ValueChanged="@((CategoriasProdutos cp) => { _produtoForm!.categorias_produtos_id = cp.id; })"
+                                 CloseIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Default" Variant="Variant.Outlined"
+                                 Strict="false" Margin="Margin.Dense">
+                </MudAutocomplete>
+                <ValidationMessage For="() => _produtoForm.categorias_produtos_id" />
 
                 <MudTextField T="string" @bind-Value="_produtoForm.tipo" Variant="Variant.Outlined"
                               Label="Tipo*" Disabled="_verificando" Margin="Margin.Dense" />
@@ -130,11 +140,13 @@
     private Instalacoes? _instalacao { get; set; }
     private EditForm? _produtoFormRef;
     private List<InstalacoesMarcas>? _listarInstalacoesMarcas;
+    private List<CategoriasProdutos>? _listarCategoriasProdutos;
     private IBrowserFile? _imagem;
     private bool _carregando = true;
     private bool _carregandoImagem = false;
     private bool _verificando = true;
     private string? _pesquisarMarca;
+    private string? _pesquisarCategoriaProduto;
 
     protected override async Task OnInitializedAsync()
     {
@@ -146,6 +158,11 @@
             _pesquisarMarca = await BuscarMarca(_produtoForm!.marcas_id);
         }
         _listarInstalacoesMarcas = await ListarInstalacoesMarcas(_pesquisarMarca!);
+        if (_produtoForm!.id > 0)
+        {
+            _pesquisarMarca = await BuscarCategoriaProduto(_produtoForm!.categorias_produtos_id);
+        }
+        _listarCategoriasProdutos = await ListarCategoriasProdutos(_pesquisarCategoriaProduto!);
 
         _carregando = false;
         _verificando = false;
@@ -164,6 +181,20 @@
         }
 
         return _listarInstalacoesMarcas;
+    }
+
+    private async Task<IEnumerable<CategoriasProdutos>?> PesquisarCategoriasProdutos(string pesquisar, CancellationToken token)
+    {
+        _pesquisarCategoriaProduto = pesquisar;
+        await Task.Delay(1500);
+
+        if (pesquisar == _pesquisarCategoriaProduto)
+        {
+            _listarCategoriasProdutos = await ListarCategoriasProdutos(pesquisar);
+            return _listarCategoriasProdutos;
+        }
+
+        return _listarCategoriasProdutos;
     }
 
     private async Task<List<InstalacoesMarcas>?> ListarInstalacoesMarcas(string? pesquisar = null)
@@ -198,8 +229,45 @@
         }
         catch (Exception e)
         {
-            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar listar marcas!");
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar listar as marcas!");
             return new List<InstalacoesMarcas>();
+        }
+    }
+
+    private async Task<List<CategoriasProdutos>?> ListarCategoriasProdutos(string? pesquisar = null)
+    {
+        try
+        {
+            string filtros = $"?por_pagina=20&status=Ativo";
+
+            if (!string.IsNullOrEmpty(pesquisar))
+            {
+                filtros += $"&pesquisar={pesquisar}";
+            }
+
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.CategoriasProdutosListar(_auth!.token!, filtros);
+
+            List<CategoriasProdutos>? listarCategoriasProdutos = new List<CategoriasProdutos>();
+
+            if (response!.status)
+            {
+                listarCategoriasProdutos = response!.data!;
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+            }
+
+            return listarCategoriasProdutos;
+        }
+        catch (Exception e)
+        {
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar listar as categorias!");
+            return new List<CategoriasProdutos>();
         }
     }
 
@@ -226,7 +294,35 @@
         }
         catch (Exception e)
         {
-            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar buscar marca!");
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar buscar a marca!");
+            return "";
+        }
+    }
+
+    private async Task<string?> BuscarCategoriaProduto(int categoriaProdutoId)
+    {
+        try
+        {
+            var reinoCompany = new ReinoCompany();
+            var response = await reinoCompany.CategoriasProdutosBuscar(_auth!.token!, categoriaProdutoId);
+
+            if (response!.status)
+            {
+                return response!.data!.nome;
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(response.message))
+                {
+                    Snack.Add(response.message, Severity.Warning);
+                }
+            }
+
+            return "";
+        }
+        catch (Exception e)
+        {
+            ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar buscar a categoria!");
             return "";
         }
     }

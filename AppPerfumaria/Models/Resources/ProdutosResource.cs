@@ -27,6 +27,7 @@ namespace AppPerfumaria.Models.Resources
         public List<string>? img_2 { get; set; }
         public List<string>? img_3 { get; set; }
         public List<string>? marcas_id { get; set; }
+        public List<string>? categorias_produtos_id { get; set; }
         public List<string>? status { get; set; }
         public List<string>? created_at { get; set; }
         public List<string>? updated_at { get; set; }

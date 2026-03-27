@@ -24,6 +24,8 @@ namespace AppPerfumaria.Models.Tables
         public string? img_3 { get; set; }
         [Required(ErrorMessage = "A marca é obrigatória.")]
         public int marcas_id { get; set; }
+        [Required(ErrorMessage = "A categoria é obrigatória.")]
+        public int categorias_produtos_id { get; set; }
         [Required(ErrorMessage = "O status é obrigatório.")]
         public string status { get; set; }
         public DateTime created_at { get; set; }
