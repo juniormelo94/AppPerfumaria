@@ -163,7 +163,6 @@
             else if (_auth != null)
             {
                 _pagina = 3;
-                // await ValidarPermissoes();
                 await ValidarDivisoes();
                 return;
             }
@@ -209,7 +208,6 @@
             {
                 await LocalStorage.SetItemAsync("auth", response);
                 _auth = await LocalStorage.GetItemAsync<Auth>("auth");
-                // await ValidarPermissoes();
                 await ValidarDivisoes();
             }
             else
@@ -259,6 +257,7 @@
                             {
                                 Layout?.ChangeColor(_divisao.cor_primaria);
                             }
+                            await UsuarioService.SetDivisao(_divisao);
                             await ValidarInstalacoes();
                         }
 
@@ -350,73 +349,6 @@
         }
     }
 
-    // public async Task ValidarPermissoes()
-    // {
-    //     try
-    //     {
-    //         //Setando dados do usuário
-    //         await UsuarioService.Set(_auth!);
-
-    //         List<string>? divisoes_ids = _auth?.data?.colaborador_user?.divisoes_ids;
-    //         if (divisoes_ids?.Count() > 0 && divisoes_ids.Contains(_divisoes_id))
-    //         {
-    //             List<string>? instalacoes_ids = _auth?.data?.colaborador_user?.instalacoes_ids;
-    //             if (instalacoes_ids?.Count() > 0)
-    //             {
-    //                 var reinoCompany = new ReinoCompany();
-    //                 string filtros = $"?status=ativo&divisoes_id={_divisoes_id}";
-    //                 var response = await reinoCompany.InstalacoesListar(_auth!.token!, filtros);
-
-    //                 if (response!.status)
-    //                 {
-    //                     _instalacoes = response!.data!.Where(instalacao => instalacoes_ids.Contains(instalacao.id.ToString()))
-    //                                                     .ToList();
-
-    //                     if (_instalacoes?.Count() > 0)
-    //                     {
-    //                         if (_instalacoes?.Count() == 1)
-    //                         {
-    //                             await LocalStorage.SetItemAsync("instalacao", _instalacoes[0]);
-    //                             Nav.NavigateTo("/base", true);
-    //                             return;
-    //                         }
-    //                         _pagina = 3;
-    //                         StateHasChanged();
-    //                     }
-    //                     else
-    //                     {
-    //                         Snack.Add("Essas instalações não disponíveis para o seu acesso!", Severity.Warning);
-    //                     }
-    //                 }
-    //                 else
-    //                 {
-    //                     if (!string.IsNullOrEmpty(response.message))
-    //                     {
-    //                         Snack.Add(response.message, Severity.Warning);
-    //                     }
-    //                 }
-    //             }
-    //             else
-    //             {
-    //                 Snack.Add("Não existe nenhuma instalação disponível para o seu acesso!", Severity.Warning);
-    //             }
-    //         }
-    //         else
-    //         {
-    //             Snack.Add("Essa divisão não disponível para o seu acesso!", Severity.Warning);
-    //         }
-
-    //         _verificando = false;
-    //         _carregando = false;
-    //     }
-    //     catch (Exception e)
-    //     {
-    //         ExceptionService.HandleAsync(e, "Tivemos um problema ao tentar validar acesso!");
-    //         _verificando = false;
-    //         _carregando = false;
-    //     }
-    // }
-
     public async Task Voltar()
     {
         try
@@ -463,6 +395,7 @@
             {
                 Layout?.ChangeColor(_divisao.cor_primaria);
             }
+            await UsuarioService.SetDivisao(_divisao);
             await ValidarInstalacoes();
         }
         catch (Exception e)

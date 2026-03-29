@@ -1,5 +1,4 @@
-﻿@using AppPerfumaria.Api.GemineAI
-@using AppPerfumaria.Api.ReinoCompany
+﻿@using AppPerfumaria.Api.ReinoCompany
 @using AppPerfumaria.Exceptions
 @using AppPerfumaria.Models.Auth
 @using AppPerfumaria.Models.Tables
@@ -285,9 +284,11 @@
             _imagemMontadaBase64 = Convert.ToBase64String(dados.ToArray());
             _caminhoImagemGerada = caminho;
             StateHasChanged();
-            Snack.Add("Montagem concluída!", Severity.Success);
         }
-        catch (Exception e) { Snack.Add($"Erro: {e.Message}", Severity.Error); }
+        catch (Exception e) 
+        { 
+            Snack.Add("Tivemos um problema ao tentar gerar a imagem!", Severity.Warning);
+        }
     }
 
     private string FormatarNomeProduto(string nome)

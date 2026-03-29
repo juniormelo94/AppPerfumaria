@@ -73,7 +73,7 @@
             @foreach (var divisao in _listarDivisoes)
             {
                 <MudItem xs="6">
-                    <MudCard Style="height: 380px;" @onclick="(() => VisualizarDivisao(divisao))">
+                    <MudCard Style="height: 350px;" @onclick="(() => VisualizarDivisao(divisao))">
                         <MudIcon Style="position:absolute;" Class="mt-2 ml-2" Color="@(divisao.status == "Ativo" ? Color.Dark : Color.Default)"
                                  Icon="@(divisao.status == "Ativo" ? Icons.Material.Filled.ThumbUp : Icons.Material.Filled.ThumbDown)" />
                         <MudCardMedia Image="@($"data:image/png;base64,{divisao.logo_img}")" Height="200" />

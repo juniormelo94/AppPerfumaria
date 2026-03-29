@@ -5,7 +5,7 @@
 <MudDialogProvider />
 <MudSnackbarProvider />
 
-<div class="page" style="@($"background:{CackgroundColor};")">
+<div class="page" style="@($"background:{BackgroundColor};")">
     <CascadingValue Value="this">
         @Body
     </CascadingValue>
@@ -13,12 +13,12 @@
 
 @code {
     // Você pode definir um valor padrão
-    public string CackgroundColor { get; set; } = "#EEEEEE";
+    public string BackgroundColor { get; set; } = "#EEEEEE";
 
     // Método para outros componentes chamarem
     public void ChangeColor(string hex)
     {
-        CackgroundColor = hex;
+        BackgroundColor = hex;
         StateHasChanged();
     }
 }

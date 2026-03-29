@@ -89,6 +89,15 @@
                         </MudExpansionPanels>
                     }
 
+                    @if (!string.IsNullOrEmpty(_produtoDivulgacao!.img_padrao_2))
+                    {
+                        <MudExpansionPanels Class="mt-2">
+                            <MudExpansionPanel Text="Imagem Padrão 2:" HeaderClass="fw-bold py-0" Expanded="true">
+                                <MudImage Class="rounded-lg w-100" Src="@($"data:image/png;base64,{_produtoDivulgacao!.img_padrao_2}")" />
+                            </MudExpansionPanel>
+                        </MudExpansionPanels>
+                    }
+
                     @if (!string.IsNullOrEmpty(_produtoDivulgacao!.img_promocao_1))
                     {
                         <MudExpansionPanels Class="mt-2">

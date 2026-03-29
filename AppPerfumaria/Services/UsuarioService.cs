@@ -13,9 +13,12 @@ namespace AppPerfumaria.Services
 {
     public class UsuarioService
     {
-        private Users? _usuario { get; set; }
-        private List<string> _permissoes { get; set; } = new();
-        private List<string> _instalacoes_ids { get; set; } = new();
+        private Users? Usuario { get; set; }
+        private List<string> Permissoes { get; set; } = new();
+        private List<string> InstalacoesIds { get; set; } = new();
+        public string CorPrimaria { get; set; }
+        public string CorSecundaria { get; set; }
+        public string CorTerciaria { get; set; }
 
         /// <summary>
         /// Carrega dados do usuário
@@ -27,19 +30,36 @@ namespace AppPerfumaria.Services
 
             if (response!.status)
             {
-                _usuario = response.data;
+                Usuario = response.data;
 
-                if(_usuario != null && _usuario.colaborador_user != null)
+                if(Usuario != null && Usuario.colaborador_user != null)
                 {
                     // Setando instalações do usuário
-                    _instalacoes_ids = _usuario.colaborador_user!.instalacoes_ids!;
+                    InstalacoesIds = Usuario.colaborador_user!.instalacoes_ids!;
 
                     // Setando permissoes do usuário
-                    if (_usuario.colaborador_user.tipo_user != null && _usuario.colaborador_user.tipo_user.permissoes != null)
+                    if (Usuario.colaborador_user.tipo_user != null && Usuario.colaborador_user.tipo_user.permissoes != null)
                     {
-                        _permissoes = _usuario.colaborador_user.tipo_user.permissoes;
+                        Permissoes = Usuario.colaborador_user.tipo_user.permissoes;
                     }
                 }
+            }
+            else
+            {
+                throw new Exception("Tivemos um problema ao tentar carregar os dados do usuário!");
+            }
+        }
+
+        /// <summary>
+        /// Carrega dados da divisão
+        /// </summary>
+        public async Task SetDivisao(Divisoes divisao)
+        {
+            if (divisao != null)
+            {
+                CorPrimaria = divisao.cor_primaria ?? "";
+                CorSecundaria = divisao.cor_secundaria ?? "";
+                CorTerciaria = divisao.cor_tercearia ?? "";
             }
             else
             {
@@ -56,7 +76,7 @@ namespace AppPerfumaria.Services
             {
                 foreach (var chave in chaves)
                 {
-                    if (!string.IsNullOrWhiteSpace(chave) && _permissoes.Contains(chave))
+                    if (!string.IsNullOrWhiteSpace(chave) && Permissoes.Contains(chave))
                     {
                         return true;
                     }
@@ -71,9 +91,9 @@ namespace AppPerfumaria.Services
         /// </summary>
         public int CountInstalacoes()
         {
-            if (_instalacoes_ids != null)
+            if (InstalacoesIds != null)
             {
-                return _instalacoes_ids.Count();
+                return InstalacoesIds.Count();
             }
 
             return 0;

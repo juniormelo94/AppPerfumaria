@@ -84,7 +84,6 @@
         <PackageReference Include="Blazor-ApexCharts" Version="5.1.0" />
         <PackageReference Include="BlazorAnimate" Version="3.0.0" />
         <PackageReference Include="Blazored.LocalStorage" Version="4.5.0" />
-        <PackageReference Include="Google.GenAI" Version="1.4.0" />
         <PackageReference Include="Microsoft.Maui.Controls" Version="8.0.82" />
         <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="$(MauiVersion)" />
         <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="$(MauiVersion)" />

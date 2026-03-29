@@ -18,7 +18,7 @@
 <div class="sidebar">
     <MudLayout>
         @* Barra de menu superior *@
-        <MudAppBar Bottom="false" Fixed="true" Color="Color.Inherit" Elevation="4" Style="@($"background:{Colors.Pink.Darken3};")">
+        <MudAppBar Bottom="false" Fixed="true" Color="Color.Inherit" Elevation="4" Style="@($"background:{UsuarioService.CorPrimaria};")">
             @*             <MudIconButton Icon="@Icons.Material.Filled.QrCodeScanner"
             Color="Color.Inherit" Class="ml-2" OnClick="@(() => CarregarOpcaoBarraSuperior("ProdutosInicio"))" /> *@
             @*             <MudButton Class="h-100" Color="Color.Inherit">
@@ -261,7 +261,7 @@
 
     <MudLayout>
         @* Barra de menu inferior *@
-        <MudAppBar Bottom="true" Fixed="true" Color="Color.Inherit" Elevation="4" Style="@($"background:{Colors.Pink.Darken3};")">
+        <MudAppBar Bottom="true" Fixed="true" Color="Color.Inherit" Elevation="4" Style="@($"background:{UsuarioService.CorPrimaria};")">
             <MudButton Class="d-block" Color="Color.Inherit" OnClick="@(() => CarregarOpcaoBarraInferior("ProdutosInicio"))">
                 <MudIcon Icon="@Icons.Material.Filled.Home" Size="Size.Small" />
                 <MudText Typo="Typo.body1">Início</MudText>
