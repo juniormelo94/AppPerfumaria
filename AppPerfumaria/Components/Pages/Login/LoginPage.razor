@@ -188,7 +188,6 @@
             }
             else if (_auth != null)
             {
-                _pagina = 3;
                 await ValidarDivisoes();
                 return;
             }
@@ -285,6 +284,7 @@
                             }
                             await UsuarioService.SetDivisao(_divisao);
                             await ValidarInstalacoes();
+                            return;
                         }
 
                         _pagina = 3;
@@ -337,12 +337,13 @@
 
                     if (_instalacoes?.Count() > 0)
                     {
-                        if (_instalacoes?.Count() == 1)
+                        if (_instalacoes?.Count() == 1 && _divisoes?.Count() == 1)
                         {
                             await LocalStorage.SetItemAsync("instalacao", _instalacoes[0]);
                             Nav.NavigateTo("/base", true);
                             return;
                         }
+
                         _pagina = 3;
                         StateHasChanged();
                     }
