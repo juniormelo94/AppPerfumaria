@@ -157,6 +157,32 @@
             {
                 //Setando dados do usuário
                 await UsuarioService.Set(_auth!);
+
+                var reinoCompany = new ReinoCompany();
+                string filtros = $"?status=ativo";
+                var response = await reinoCompany.DivisoesListar(_auth!.token!, filtros);
+                if (response!.status)
+                {
+                    var divisoes = response!.data;
+
+                    if (divisoes.Any(a => a.id == _instalacao.divisoes_id))
+                    {
+                        _divisao = divisoes.FirstOrDefault(a => a.id == _instalacao.divisoes_id);
+                        if (!string.IsNullOrEmpty(_divisao.cor_primaria))
+                        {
+                            Layout?.ChangeColor(_divisao.cor_primaria);
+                        }
+                        await UsuarioService.SetDivisao(_divisao);
+                    }
+                }
+                else
+                {
+                    if (!string.IsNullOrEmpty(response.message))
+                    {
+                        Snack.Add(response.message, Severity.Warning);
+                    }
+                }
+
                 Nav.NavigateTo("/base", true);
                 return;
             }
