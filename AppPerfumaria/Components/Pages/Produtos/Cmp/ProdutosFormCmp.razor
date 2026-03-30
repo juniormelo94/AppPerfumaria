@@ -4,6 +4,7 @@
 @using AppPerfumaria.Models.Auth
 @using AppPerfumaria.Models.Resources
 @using AppPerfumaria.Models.Tables
+@using SkiaSharp
 @using ZXing.Net.Maui
 
 @inject IDialogService Dialog
@@ -369,54 +370,72 @@
         return await cameraPage.WaitForResultAsync();
     }
 
-    private async void UploadFiles(IBrowserFile file)
+    private async Task UploadFiles(IBrowserFile file)
     {
         try
         {
             _carregandoImagem = true;
+            long maxSizeInBytes = 100 * 1024; // 100 KB
 
-            // Limite de 100 KB
-            var maxSizeInBytes = 100 * 1024;
-            var targetWidth = 1024;
-            var targetHeight = int.MaxValue;
+            // 1️⃣ Ler o arquivo original para a memória
+            // Permitimos ler até 5MB iniciais para processar imagens de câmeras modernas
+            using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            byte[] imageBytes = ms.ToArray();
 
-            while (file.Size > maxSizeInBytes)
+            // 2️⃣ Decodificar com SkiaSharp
+            using var originalBitmap = SKBitmap.Decode(imageBytes);
+            if (originalBitmap == null)
             {
-                // Reduz a largura e a altura proporcionalmente em 10%
-                targetWidth = (int)(targetWidth * 0.9);
-                targetHeight = (int)(targetHeight * 0.9);
-
-                // Garante que as dimensões não sejam reduzidas abaixo de 100 pixels
-                if (targetWidth < 100 || targetHeight < 100)
-                {
-                    Snack.Add("Não foi possível redimensionar a imagem abaixo de 100 KB!", Severity.Warning);
-                    return;
-                }
-
-                file = await file.RequestImageFileAsync(file.ContentType, targetWidth, targetHeight);
-            }
-
-            if (file.Size > maxSizeInBytes)
-            {
-                Snack.Add("Tivemos um problema pois a imagem é maior do que 100 KB!", Severity.Warning);
+                Snack.Add("Não foi possível ler a imagem. Use JPG ou PNG.", Severity.Error);
                 return;
             }
 
-            _imagem = file;
+            // 3️⃣ Redimensionamento Inteligente (opcional)
+            // Se a imagem for gigantesca (ex: 4000px), baixamos para 800px para poupar memória
+            // mas mantendo a nitidez necessária para um catálogo.
+            int targetWidth = 800;
+            int targetHeight = (int)(originalBitmap.Height * (800.0 / originalBitmap.Width));
+        
+            using var resizedBitmap = originalBitmap.Resize(new SKImageInfo(targetWidth, targetHeight), SKFilterQuality.High);
+            using var image = SKImage.FromBitmap(resizedBitmap);
 
-            using var stream = file.OpenReadStream(maxAllowedSize: maxSizeInBytes);
-            using var memoryStream = new MemoryStream();
-            await stream.CopyToAsync(memoryStream);
-            var base64String = Convert.ToBase64String(memoryStream.ToArray());
-            _produtoForm!.img_1 = base64String;
+            // 4️⃣ Loop de Qualidade (O pulo do gato 🐈)
+            // Em vez de diminuir o tamanho, diminuímos a qualidade de 5 em 5
+            int qualidade = 90;
+            byte[] finalBytes = Array.Empty<byte>();
 
+            while (qualidade > 10)
+            {
+                using var data = image.Encode(SKEncodedImageFormat.Jpeg, qualidade);
+                finalBytes = data.ToArray();
+
+                if (finalBytes.Length <= maxSizeInBytes)
+                    break;
+
+                qualidade -= 5; // Vai baixando a qualidade até caber nos 100KB
+            }
+
+            // 5️⃣ Verificação final
+            if (finalBytes.Length > maxSizeInBytes)
+            {
+                Snack.Add("Imagem muito complexa para o limite de 100KB. Tente outra.", Severity.Warning);
+                return;
+            }
+
+            // Salvar no Form
+            _produtoForm!.img_1 = Convert.ToBase64String(finalBytes);
+        
             _carregandoImagem = false;
+            Snack.Add($"Otimizada com sucesso! ({finalBytes.Length / 1024}KB)", Severity.Success);
             StateHasChanged();
         }
         catch (Exception e)
         {
-            Snack.Add("Tivemos um problema ao tentar fazer o upload da imagem!", Severity.Warning);
+            Snack.Add("Erro ao processar imagem!", Severity.Error);
             _carregandoImagem = false;
+            StateHasChanged();
         }
     }
 
