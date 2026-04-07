@@ -82,11 +82,9 @@
     {
         try
         {
-            // 1️⃣ Carregar imagens base
+            // 1️⃣ Carregar imagens base de forma eficiente
             using var stream = await FileSystem.OpenAppPackageFileAsync("wwwroot/img/divulgacoes/modelo_background_sem_fundo.png");
-            using var msFundo = new MemoryStream();
-            await stream.CopyToAsync(msFundo);
-            using var fundoBitmap = SKBitmap.Decode(msFundo.ToArray());
+            using var fundoBitmap = SKBitmap.Decode(stream); // Decode direto do stream é mais rápido
 
             using var streamEtiqueta = await FileSystem.OpenAppPackageFileAsync("wwwroot/img/divulgacoes/etiqueta_preco.png");
             using var etiquetaBitmap = SKBitmap.Decode(streamEtiqueta);
@@ -94,22 +92,27 @@
             using var streamLogo = await FileSystem.OpenAppPackageFileAsync("wwwroot/img/divulgacoes/logo_aroma_suave.png");
             using var logoBitmap = SKBitmap.Decode(streamLogo);
 
-            // 2️⃣ Carregar imagem do produto
+            // 2️⃣ Carregar imagem do produto (Base64)
             var produtoBase64 = _estoque?.produto?.img_1;
-
             if (!string.IsNullOrEmpty(_produtoDivulgacao.img_padrao_2))
-            {
                 produtoBase64 = _produtoDivulgacao.img_padrao_2;
-            }
 
             if (string.IsNullOrEmpty(produtoBase64)) return;
             byte[] produtoBytes = Convert.FromBase64String(produtoBase64);
             using var produtoBitmap = SKBitmap.Decode(produtoBytes);
 
-            // 3️⃣ Criar área de desenho
-            using var surface = SKSurface.Create(new SKImageInfo(fundoBitmap.Width, fundoBitmap.Height));
+            // 3️⃣ Criar área de desenho com a mesma info do fundo (mantém cores e profundidade)
+            using var surface = SKSurface.Create(fundoBitmap.Info);
             var canvas = surface.Canvas;
             canvas.Clear(SKColors.Transparent);
+
+            // 🎨 PAINT DE ALTA QUALIDADE (O segredo da nitidez no resize)
+            using var paintAltaQualidade = new SKPaint
+            {
+                IsAntialias = true,
+                FilterQuality = SKFilterQuality.High, // Evita serrilhado no redimensionamento
+                SubpixelText = true
+            };
 
             // 🎯 AJUSTES DO PRODUTO
             float percentualLargura = 0.90f;
@@ -124,11 +127,11 @@
             // --- CAMADA 1: PRODUTO ---
             canvas.Save();
             canvas.RotateDegrees(-6.0f, posX + (larguraFinalProduto / 2), posY + (alturaFinalProduto / 2));
-            canvas.DrawBitmap(produtoBitmap, new SKRect(posX, posY, posX + larguraFinalProduto, posY + alturaFinalProduto));
+            canvas.DrawBitmap(produtoBitmap, new SKRect(posX, posY, posX + larguraFinalProduto, posY + alturaFinalProduto), paintAltaQualidade);
             canvas.Restore();
 
             // --- CAMADA 2: FUNDO/MOLDURA ---
-            canvas.DrawBitmap(fundoBitmap, 0, 0);
+            canvas.DrawBitmap(fundoBitmap, 0, 0, paintAltaQualidade);
 
             // 🏷️ CAMADA 3 - TÍTULO
             string textoTitulo = FormatarNomeProduto(_estoque!.produto!.nome);
@@ -138,9 +141,11 @@
                 IsAntialias = true,
                 TextSize = 50,
                 Typeface = SKTypeface.FromFamilyName("Georgia", SKFontStyleWeight.Bold, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright),
-                TextAlign = SKTextAlign.Center
+                TextAlign = SKTextAlign.Center,
+                LcdRenderText = true // Melhora renderização de fontes
             };
 
+            // Lógica de quebra de linha (mantida conforme seu original)
             var linhas = new List<string>();
             var palavras = textoTitulo.Split(' ');
             var linhaAtual = "";
@@ -162,16 +167,18 @@
                 retangulos.Add(new SKRect(x, y, x + w, y + h));
             }
 
+            // Paint para Sombra
             using var paintSombraDensa = new SKPaint
             {
                 IsAntialias = true,
-                ImageFilter = SKImageFilter.CreateDropShadow(0, 8, 12, 12, SKColors.Black.WithAlpha(130))
+                ImageFilter = SKImageFilter.CreateDropShadow(0, 8, 12, 12, SKColors.Black.WithAlpha(130)),
+                FilterQuality = SKFilterQuality.High
             };
             using var paintBranco = new SKPaint { Color = SKColors.White, IsAntialias = true };
 
             foreach (var rect in retangulos) canvas.DrawRoundRect(rect, 15, 15, paintSombraDensa);
 
-            // --- 4️⃣ DESENHAR ETIQUETA COM PREÇO DINÂMICO ---
+            // --- 4️⃣ DESENHAR ETIQUETA ---
             canvas.Save();
             float escalaEtiqueta = 0.8f;
             float larguraEtiqueta = etiquetaBitmap.Width * escalaEtiqueta;
@@ -181,8 +188,11 @@
 
             canvas.RotateDegrees(5.0f, xEtiqueta + (larguraEtiqueta / 2), yEtiqueta + (alturaEtiqueta / 2));
             var rectEtiqueta = new SKRect(xEtiqueta, yEtiqueta, xEtiqueta + larguraEtiqueta, yEtiqueta + alturaEtiqueta);
+        
+            // Aplica a sombra e a qualidade ao desenhar o bitmap da etiqueta
             canvas.DrawBitmap(etiquetaBitmap, rectEtiqueta, paintSombraDensa);
 
+            // --- TEXTOS DE PREÇO (Lógica mantida, garantindo Antialias) ---
             var cultura = new System.Globalization.CultureInfo("pt-BR");
             using var paintPreco = new SKPaint
             {
@@ -249,7 +259,7 @@
             canvas.Restore();
             canvas.Restore();
 
-            // --- CAMADA FINAL ---
+            // --- CAMADA FINAL: TEXTO DO TÍTULO ---
             paintTexto.TextAlign = SKTextAlign.Center;
             foreach (var rect in retangulos) canvas.DrawRoundRect(rect, 15, 15, paintBranco);
             for (int i = 0; i < linhas.Count; i++)
@@ -257,19 +267,16 @@
                 canvas.DrawText(linhas[i], retangulos[i].MidX, retangulos[i].MidY + (paintTexto.TextSize / 2) - 4, paintTexto);
             }
 
-            // ==============================================================================
-            // 📸 LOGOMARCA E INSTAGRAM (SUBIDOS)
-            // ==============================================================================
+            // --- LOGOMARCA ---
             float larguraLogo = fundoBitmap.Width * 0.35f;
             float escalaLogo = larguraLogo / logoBitmap.Width;
             float alturaLogo = logoBitmap.Height * escalaLogo;
-            
             float posXLogo = fundoBitmap.Width - larguraLogo - 30;
-            // Alterado de -60 para -120 para subir a logo
             float posYLogo = fundoBitmap.Height - alturaLogo - 120;
 
-            canvas.DrawBitmap(logoBitmap, new SKRect(posXLogo, posYLogo, posXLogo + larguraLogo, posYLogo + alturaLogo), new SKPaint { IsAntialias = true });
+            canvas.DrawBitmap(logoBitmap, new SKRect(posXLogo, posYLogo, posXLogo + larguraLogo, posYLogo + alturaLogo), paintAltaQualidade);
 
+            // --- INSTAGRAM ---
             using var paintInstagram = new SKPaint
             {
                 Color = SKColors.DarkRed,
@@ -280,15 +287,16 @@
             };
 
             float centroXLogo = posXLogo + (larguraLogo / 2);
-            float posYInstagram = posYLogo + alturaLogo + 45; // Posicionado em relação à nova altura da logo
+            float posYInstagram = posYLogo + alturaLogo + 45;
             canvas.DrawText("@_aromasuave_", centroXLogo, posYInstagram, paintInstagram);
-            // ==============================================================================
 
-            // 6️⃣ Finalização
+            // 6️⃣ FINALIZAÇÃO (PNG com Qualidade Máxima)
             using var imagemFinal = surface.Snapshot();
             using var dados = imagemFinal.Encode(SKEncodedImageFormat.Png, 100);
+        
             var caminho = Path.Combine(FileSystem.CacheDirectory, "oferta_produto.png");
             if (File.Exists(caminho)) File.Delete(caminho);
+        
             using (var fileStream = File.OpenWrite(caminho)) dados.SaveTo(fileStream);
 
             _imagemMontadaBase64 = Convert.ToBase64String(dados.ToArray());
