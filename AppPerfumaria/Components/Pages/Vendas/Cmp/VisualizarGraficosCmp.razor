@@ -86,34 +86,38 @@
                 </ApexChart>
             </MudPaper>
 
-            <MudPaper Class="pa-2 mt-3" Elevation="0">
-                <ApexChart TItem="ChartModelo" Options="_optionsBarMarcas" 
-                Title="Marcas" @ref="_chartMarcas">
-                    <ApexPointSeries TItem="ChartModelo"
-                    Items="_dadosMarcas"
-                    Name="Investimento"
-                    SeriesType="SeriesType.Bar"
-                    XValue="@(e => e.Nome)"
-                    YValue="e=> Convert.ToDecimal(e.Valor1)" 
-                    ShowDataLabels />
+            <div style="overflow-x:auto;">
+                <div style="min-width:@(_dadosMarcas.Count * 120)px">
+                    <MudPaper Class="pa-2 mt-3" Elevation="0">
+                        <ApexChart TItem="ChartModelo" Options="_optionsBarMarcas"
+                                   Title="Marcas" @ref="_chartMarcas">
+                            <ApexPointSeries TItem="ChartModelo"
+                                             Items="_dadosMarcas"
+                                             Name="Investimento"
+                                             SeriesType="SeriesType.Bar"
+                                             XValue="@(e => e.Nome)"
+                                             YValue="e=> Convert.ToDecimal(e.Valor1)"
+                                             ShowDataLabels />
 
-                    <ApexPointSeries TItem="ChartModelo"
-                    Items="_dadosMarcas"
-                    Name="Lucratividade"
-                    SeriesType="SeriesType.Bar"
-                    XValue="@(e => e.Nome)"
-                    YValue="e=> Convert.ToDecimal(e.Valor2)" 
-                    ShowDataLabels />
+                            <ApexPointSeries TItem="ChartModelo"
+                                             Items="_dadosMarcas"
+                                             Name="Lucratividade"
+                                             SeriesType="SeriesType.Bar"
+                                             XValue="@(e => e.Nome)"
+                                             YValue="e=> Convert.ToDecimal(e.Valor2)"
+                                             ShowDataLabels />
 
-                    <ApexPointSeries TItem="ChartModelo"
-                    Items="_dadosMarcas"
-                    Name="Taxas"
-                    SeriesType="SeriesType.Bar"
-                    XValue="@(e => e.Nome)"
-                    YValue="e=> Convert.ToDecimal(e.Valor3)" 
-                    ShowDataLabels />
-                </ApexChart>
-            </MudPaper>
+                            <ApexPointSeries TItem="ChartModelo"
+                                             Items="_dadosMarcas"
+                                             Name="Taxas"
+                                             SeriesType="SeriesType.Bar"
+                                             XValue="@(e => e.Nome)"
+                                             YValue="e=> Convert.ToDecimal(e.Valor3)"
+                                             ShowDataLabels />
+                        </ApexChart>
+                    </MudPaper>
+                </div>
+            </div>
         }
     </DialogContent>
 </MudDialog>
