@@ -133,8 +133,6 @@
     [Parameter] public Instalacoes? Instalacao { get; set; }
     private List<Divisoes>? _listarDivisoes = new List<Divisoes>();
     private MetaPagination? _paginacaoDivisoes;
-    private MudTabs? tabs;
-    private int _indiceMenuMarca = 0;
     private bool _carregando = true;
     private bool _exibirFiltro = false;
     private string? _pesquisarFiltro;
@@ -274,7 +272,7 @@
             if (!result.Canceled)
             {
                 Snack.Add("Divisão criada com sucesso!", Severity.Success);
-                tabs.ActivatePanel(1);
+                await LimparEListarDivisoes();
             }
         }
         catch (Exception e)

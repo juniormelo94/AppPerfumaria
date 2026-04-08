@@ -16,6 +16,7 @@ namespace AppPerfumaria.Models.Tables
         [Required(ErrorMessage = "O ramo é obrigatório.")]
         public string ramo { get; set; }
         public string? cnpj { get; set; }
+        [Required(ErrorMessage = "A cor primária é obrigatória.")]
         public string cor_primaria { get; set; }
         public string? cor_secundaria { get; set; }
         public string? cor_tercearia { get; set; }

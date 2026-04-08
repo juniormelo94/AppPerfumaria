@@ -93,12 +93,12 @@
             @foreach (var instalacaoProduto in _listarInstalacoesProdutos)
             {
                 <MudItem xs="6" sm="6" md="4" lg="3" xl="3" xxl="2">
-                    <MudCard Style="@(VerificarEstoque(instalacaoProduto!.estoque!) ? "height:350px;" : "height:350px; opacity:0.3;")" @onclick="(() => VisualizarInstalacaoProduto(instalacaoProduto))">
-                        @if (instalacaoProduto!.estoque!.Any(p => p.preco_venda_desconto > 0))
+                    <MudCard Style="@(VerificarEstoque(instalacaoProduto!.estoques!) ? "height:350px;" : "height:350px; opacity:0.3;")" @onclick="(() => VisualizarInstalacaoProduto(instalacaoProduto))">
+                        @if (instalacaoProduto!.estoques!.Any(p => p.preco_venda_desconto > 0))
                         {
                             <div style="@($"background:{Colors.Pink.Darken3}; position:absolute; font-size:12px;")" 
                                  class="rounded mt-2 ml-2 pa-1 fw-bold text-white">
-                                -@instalacaoProduto!.estoque!.Max(p => p.desconto_venda)?.ToString("F1")%
+                                -@instalacaoProduto!.estoques!.Max(p => p.desconto_venda)?.ToString("F1")%
                             </div>
                         }
                         <MudCardMedia Image="@($"data:image/png;base64,{instalacaoProduto!.produto!.img_1}")" Style="width:100%; height:100%;" />
@@ -372,7 +372,7 @@
             if (!result.Canceled)
             {
                 instalacaoProduto = (InstalacoesProdutos)result.Data!;
-                _listarInstalacoesProdutos!.FirstOrDefault(w => w.id == instalacaoProduto.id)!.estoque = instalacaoProduto.estoque;
+                _listarInstalacoesProdutos!.FirstOrDefault(w => w.id == instalacaoProduto.id)!.estoques = instalacaoProduto.estoques;
                 StateHasChanged();
             }
         }

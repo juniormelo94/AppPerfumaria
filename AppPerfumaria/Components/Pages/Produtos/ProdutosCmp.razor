@@ -135,7 +135,7 @@
                                     <MudIconButton Size="Size.Medium" OnClick="(() => AtualizarInstalacaoProduto(instalacaoProduto))"
                                     Icon="@Icons.Material.Filled.Edit" />
                                     <MudIconButton OnClick="(() => VisualizarInstalacaoProduto(instalacaoProduto))">
-                                        <MudBadge Content="instalacaoProduto!.estoque!.Count()" Overlap="true" Visible="true" Color="Color.Dark">
+                                        <MudBadge Content="instalacaoProduto!.estoques!.Count()" Overlap="true" Visible="true" Color="Color.Dark">
                                             <MudIcon Icon="@Icons.Material.Filled.Storage" />
                                         </MudBadge>
                                     </MudIconButton>
@@ -536,7 +536,7 @@
             if (!result.Canceled)
             {
                 instalacaoProduto = (InstalacoesProdutos)result.Data!;
-                _listarInstalacoesProdutos!.FirstOrDefault(w => w.id == instalacaoProduto.id)!.estoque = instalacaoProduto.estoque;
+                _listarInstalacoesProdutos!.FirstOrDefault(w => w.id == instalacaoProduto.id)!.estoques = instalacaoProduto.estoques;
                 StateHasChanged();
             }
         }

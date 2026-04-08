@@ -87,7 +87,7 @@
             </div>
 
             <div class="d-flex pl-2">
-                <MudBadge Content="_instalacaoProduto!.estoque!.Count()" Class="mt-3"
+                <MudBadge Content="_instalacaoProduto!.estoques!.Count()" Class="mt-3"
                           Overlap="true" Visible="true" Color="Color.Dark">
                     <MudIcon Icon="@Icons.Material.Filled.Storage" />
                 </MudBadge>
@@ -96,11 +96,11 @@
                                Icon="@Icons.Material.Filled.Add" />
             </div>
 
-            @if (_instalacaoProduto!.estoque != null && _instalacaoProduto!.estoque.Count() > 0)
+            @if (_instalacaoProduto!.estoques != null && _instalacaoProduto!.estoques.Count() > 0)
             {
                 <MudDivider Class="mt-2" />
                 <MudGrid Spacing="2" Justify="Justify.Center" Class="mb-1">
-                    @foreach (var (index, value) in _instalacaoProduto!.estoque.Select((value, index) => (index, value)).OrderBy(o => o.value.vencimento != null ? 0 : 1).ThenBy(o => o.value.vencimento))
+                    @foreach (var (index, value) in _instalacaoProduto!.estoques.Select((value, index) => (index, value)).OrderBy(o => o.value.vencimento != null ? 0 : 1).ThenBy(o => o.value.vencimento))
                     {
                         <MudItem xs="12">
                             <MudExpansionPanels Class="mt-2">
